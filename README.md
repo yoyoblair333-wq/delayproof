@@ -14,11 +14,20 @@ a testnet pool, approve the claims it covers, and pay them once the ruling is fi
 Testnet only (GenLayer studionet). No real money. **Information, not legal advice.
 Airlines are not bound by a DelayProof ruling.**
 
-> **Deployment status.** This README describes contract **v3** in `contracts/delay_proof.py`
-> (fixes from [docs/QUALITY-R2.md](docs/QUALITY-R2.md)). The site still points at the
-> **v2** deployment `0x6F3dedC8…1FBF` until v3 is deployed. v2 does not have the v3 rules
-> below: on v2 a payer or registered respondent can finalize at once, the owner can
-> register itself as a respondent, and `BA117`/`BAW117` are separate keys.
+> **Deployment status (2026-11-01).** The site points at contract **v3**
+> `0x0f68cF95e2E735D0b2AbD8a55de6890D2c0eBfe1` on studionet, deployed by the owner from
+> Blair's wallet (`0x920fbbCf…a46A`, deploy tx `0xa7dd809f…6144`, challenge window 60 min).
+> Its stored code matches `contracts/delay_proof.py` (canonical sha256 `4aaea346…480b`;
+> check it yourself in `rig.html`). v2 `0x6F3dedC8…1FBF` is superseded and kept as history in
+> [docs/LIVE_EVIDENCE.md](docs/LIVE_EVIDENCE.md).
+>
+> **First live OWED rulings.** Ryanair FR1029 Palermo → Milan Malpensa on 2026-11-01 arrived
+> 9h 20m late (FlightStats) after a technical fault on the aircraft (news report quoting the
+> airport operator). Validators agreed **OWED, €250** (EU261, 904 km): first on v2 (claim #7),
+> then again on v3 (claim #1) with a different claimant. **Known gap:** on studionet the
+> payout transfer to a plain wallet address fails (the network looks for a contract at that
+> address), so a withdrawn payout leaves the pool but does not show in the wallet's balance.
+> Details and tx hashes: [docs/LIVE_EVIDENCE.md](docs/LIVE_EVIDENCE.md).
 
 ## The trust problem
 

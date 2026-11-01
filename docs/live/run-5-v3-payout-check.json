@@ -1,0 +1,27 @@
+{
+ "checked_at": "2026-11-01 ~19:25Z (eth_getTransactionByHash / eth_getBalance on https://studio.genlayer.com/api)",
+ "withdraw_tx": "0xa801463a554bafac78ffe9a5873e4ab552ff608c8243a3ee2f0844556e317f76",
+ "withdraw_status": "FINALIZED",
+ "withdraw_execution": "SUCCESS",
+ "withdraw_pending_transfer": [
+  {
+   "on": "finalized",
+   "value": 250000000000000000,
+   "address": "0xA383305581A3d5E4361809cdE6dd7A43B2bABA75",
+   "calldata": "Bg=="
+  }
+ ],
+ "triggered_transfer_tx": "0xe15fd21f7005536b8cc0b0f1c0fbdee9483bc244cf7c5cef3eb3fea1493baeff",
+ "transfer_from": "0x0f68cF95e2E735D0b2AbD8a55de6890D2c0eBfe1",
+ "transfer_to": "0xA383305581A3d5E4361809cdE6dd7A43B2bABA75",
+ "transfer_value": 250000000000000000,
+ "transfer_status": "FINALIZED",
+ "transfer_result": "NO_MAJORITY",
+ "transfer_execution": "ERROR",
+ "transfer_handler": "contract_not_found_handler",
+ "transfer_message": "Contract 0xA383305581A3d5E4361809cdE6dd7A43B2bABA75 not found",
+ "transfer_value_credited": false,
+ "claimant_balance_wei": "10000000000000000000",
+ "contract_balance_wei": "1750000000000000000",
+ "conclusion": "Same as v2: the 0.25 GEN left the contract (2.0 -> 1.75 GEN) but the transfer to the claimant's wallet address failed on studionet (contract_not_found_handler), value_credited=false; the claimant's balance stayed 10 GEN."
+}

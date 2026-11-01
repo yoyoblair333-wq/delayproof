@@ -10,6 +10,7 @@ import { describe as describeClaim, claimLetter, checkInputs, money } from "../s
 import { canonical } from "../src/lib/digest.js";
 import { cardState, voteDots, hm } from "../src/lib/ruling.js";
 import { proofCardSVG } from "../src/lib/card.js";
+import { CONTRACT_ADDRESS } from "../src/config.js";
 import { addTrip, emptyWallet, totals, tripsNewestFirst } from "../src/lib/wallet.js";
 import { SAMPLES } from "../src/lib/samples.js";
 import { readCallData, encodeCalldata, decodeCalldata } from "../src/lib/rpc.js";
@@ -404,7 +405,7 @@ test("R2: shared link keeps &tx= in the URL, shows votes, and a read-only visit 
         if (v === undefined) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, error: { message: "execution failed" } }) });
         result = enc(v);
       } else if (body.method === "eth_getTransactionByHash") {
-        result = { hash: tx, to_address: "0x6F3dedC893C5769305912AA3fADd095E02FB1FBF", status: "FINALIZED", consensus_data: { votes: { a: "agree", b: "agree", c: "agree", d: "idle", e: "idle" } } };
+        result = { hash: tx, to_address: CONTRACT_ADDRESS, status: "FINALIZED", consensus_data: { votes: { a: "agree", b: "agree", c: "agree", d: "idle", e: "idle" } } };
       }
       return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, result }) });
     });

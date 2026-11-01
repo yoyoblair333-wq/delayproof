@@ -12,6 +12,7 @@ def votes(v):
 
 
 SOURCE_NOTES = {
+    "FR1029": "Timing from the live FlightStats page for that date: scheduled arrival 09:25 CET, actual 18:45 CET (\"Arrived, Delayed by 9h 20m\"); departed 17:15 instead of 07:40. adsbdb gave PMO → MXP, matching the status page, so the route is confirmed. The cause came from the attached news page (Palermo airport operator Gesap: \"a technical problem with the Ryanair aircraft\", no security alarm): a technical fault is within the airline's control under CJEU case law, so the ruling is OWED. The agreed minutes differ between the two runs: 560 on v2 (actual arrival read as 18:45 CET, matching the page checked by hand) and 577 on v3 about 25 minutes later (the v3 reason gives actual arrival 19:02 CET; when checked by hand at about 18:15 UTC the page still said 18:45). Each run's validators read the page themselves and only have to agree with each other within 15 minutes; both readings are in the 4h+ band, so the ruling and amount are the same.",
     "BA117": "Timing from the live FlightStats page for that date (scheduled 12:20, actual 11:56 EDT: early). No evidence page. Pool-linked: the payer approved it, the claimant's finalize inside the 10-minute challenge window reverted, and the finalize after it succeeded; NOT_OWED, so no payout.",
     "LOG31": "Timing (cancelled) from FlightStats; the cause pass read the attached AirHelp page tying the cancellation to the Kirkwall ATC staffing closure. Appealed to 3 analysts per validator, who all agreed.",
     "SN3289": "FlightStats said DATE IS OUT OF RANGE. The attached page reports the cancellation, but in v2 evidence pages can't set timing, so the status is UNKNOWN and the ruling INSUFFICIENT_DATA. (Under v1 the same page produced POSSIBLY_OWED_CANCELLATION.) The page still informed the cause: crew illness, CONTROLLABLE.",
@@ -19,12 +20,37 @@ SOURCE_NOTES = {
     "ZZ9999": "No source knew the flight: FLIGHT_NOT_FOUND.",
 }
 
-CURRENT_NOTE = ("No live claim has reached OWED yet: no flight in FlightStats' free 3-day window arrived 3+ hours late on a covered route "
-                "during the runs. The OWED payout path (approve, window, finalize, withdraw) is covered by the direct-mode tests. "
-                "All guards above reverted with the expected `[EXPECTED]` reason; ACCEPTED with ERROR is the final state for a revert. "
+V2_NOTE = ("All guards above reverted with the expected `[EXPECTED]` reason; ACCEPTED with ERROR is the final state for a revert. "
                 "The claimant in this run is a fresh burner key; the payer is the throwaway test key. "
                 "The demo pool (id 1) expires 2026-11-03T16:50:17Z (read live with `get_pool(1)` on 2026-11-01); after that the site "
-                "disables the payout option.\n")
+                "disables the payout option. The first live OWED ruling (claim #7, FR1029) also ran on this v2 contract; see its own section above.\n")
+
+V3_NOTE = ("This is the deployment the site uses. Blair deployed `contracts/delay_proof.py` (v3) from her own wallet with "
+           "`challenge_minutes = 60`; `get_config` reads owner `0x920fbbCf2106B693A857D1995c198e341220a46A` and challenge window 60, and "
+           "the stored code's canonical sha256 (CRLF → LF, one final newline, the rule `rig.html` uses) equals the source file's. "
+           "Every transaction after the deploy was signed by test keys, not the owner wallet: the demo pool (id 1, the one the site offers) was created and "
+           "funded with 2 testnet GEN by the throwaway payer key, which also approved the claim, and the claim was opened, assessed, "
+           "finalized and withdrawn by a fresh claimant burner. The withdraw had to wait out the full 60-minute challenge window. "
+           "FR1029 is the same flight that produced the first live OWED on v2 (next section), re-run on v3 by a different claimant.\n")
+
+V3 = {"deployer": "0x920fbbCf2106B693A857D1995c198e341220a46A", "deployer_note": "Blair's wallet; `get_config` names it as owner",
+      "deploy": {"tx": "0xa7dd809f9a85206cf2ab19d22e71f5edad0855d244684f7042a79934264d6144", "final": {"status": "FINALIZED"}},
+      "owner_deploy": True}
+
+
+def payout_check(w, chk, fname):
+    w.append("### Did the test payout arrive? Not on studionet\n")
+    w.append(f"`withdraw_payout` finalized with SUCCESS and queued a transfer of {int(chk['transfer_value']) / 1e18:g} GEN to the claimant "
+             f"(`{chk['transfer_to']}`). The pool's balance dropped from 2.0 to 1.75 GEN and the contract's `eth_getBalance` reads "
+             f"{int(chk['contract_balance_wei']) / 1e18:g} GEN (it was funded with 2.0 for this one pool), so the money left the contract.But the claimant's `eth_getBalance` stayed at "
+             f"{int(chk['claimant_balance_wei']) / 1e18:g} GEN before, after and in later checks. Reading the transfer the withdraw triggered "
+             f"(`{chk['triggered_transfer_tx']}`) shows why: status {chk['transfer_status']}, result {chk['transfer_result']}, execution "
+             f"{chk['transfer_execution']}, handled by `{chk['transfer_handler']}` with the message \"{chk['transfer_message']}\", and "
+             f"`value_credited: {str(chk['transfer_value_credited']).lower()}`. Studionet treated a transfer to a plain wallet address as a call "
+             "to a missing contract, so **the payout was recorded and debited but not credited to the wallet**. Raw facts: "
+             f"`docs/live/{fname}`. Until that changes, a \"paid\" claim on this site means the contract recorded the "
+             "payout and released it from the pool, not that the GEN reached the wallet.\n")
+
 
 
 def render(run, w, heading):
@@ -33,11 +59,11 @@ def render(run, w, heading):
     w.append(f"| Contract | `{run['contract']}` |")
     dep = run.get("deploy") or {}
     w.append(f"| Deploy tx | `{dep.get('tx', '-')}` ({(dep.get('final') or {}).get('status', '-')}) |")
-    w.append(f"| Deployer | `{run['deployer']}` (throwaway test key, not Blair's wallet; owner deploy is a later step) |")
+    w.append(f"| Deployer | `{run['deployer']}` ({run.get('deployer_note', 'throwaway test key, not the owner wallet')}) |")
     w.append(f"| Source | `contracts/delay_proof.py`, sha256 `{run['contract_code_sha256']}` |")
     w.append(f"| Stored code sha256 | `{run.get('stored_code_sha256')}` ({'MATCH' if run.get('code_matches') else 'MISMATCH'}) |")
     if run.get("challenge_minutes"):
-        w.append(f"| Challenge window | {run['challenge_minutes']} min (short for this throwaway run; the owner deploy uses 60) |")
+        w.append(f"| Challenge window | {run['challenge_minutes']} min{' (owner deploy)' if run.get('owner_deploy') else ' (short for this throwaway run; the owner deploy uses 60)'} |")
         w.append(f"| Roles | payer `{run.get('payer')}` (throwaway test key), claimant `{run.get('claimant')}` (fresh burner key) |")
     w.append(f"| Run | {run['startedAt']} → {run.get('finishedAt', '(unfinished)')} |\n")
     w.append("### Transactions\n")
@@ -95,14 +121,34 @@ def main():
     w.append("# Live evidence (GenLayer studionet)\n")
     w.append("Generated by `scripts/live_evidence.py` from `docs/live/*.json`. Every hash below can be looked up on studionet "
              "(`eth_getTransactionByHash` / `gen_getContractCode` at https://studio.genlayer.com/api). Testnet only, no real money. "
-             "All deployments so far are from a throwaway test key; the owner deployment from Blair's wallet is a later step.\n")
+             "The current deployment (v3) was deployed by the owner from Blair's wallet; every earlier one was from a throwaway test key. "
+             "Pools, claims and approvals below are always signed by test keys (a throwaway payer and a fresh claimant burner per run).\n")
+    v3 = LIVE / "run-5-v3.json"
+    if v3.exists():
+        cur3 = {**json.loads(v3.read_text()), **V3, "_current": True}
+        render(cur3, w, "## Current deployment (2026-11-01, contract v3, owner deploy from Blair's wallet)\n")
+        w.append(V3_NOTE)
+        chk3 = LIVE / "run-5-v3-payout-check.json"
+        if chk3.exists():
+            payout_check(w, json.loads(chk3.read_text()), "run-5-v3-payout-check.json")
+    owed = LIVE / "run-4b-owed-fr1029.json"
+    if owed.exists():
+        o = json.loads(owed.read_text())
+        o["_current"] = True
+        render(o, w, "## First live OWED ruling (2026-11-01, claim #7 on the v2 contract `0x6F3dedC8…1FBF`, now superseded)\n")
+        w.append("Run on v2 before v3 was deployed, with a one-claim plan (`DP_ADDRESS` = v2, `DP_POOL_ID=1`). The table's Deploy tx is blank "
+                 "because this invocation reused the v2 deployment listed further down. The flight was found in the news the same day: "
+                 "FR1029 was postponed after passengers boarded and were taken off again.\n")
+        chk = LIVE / "run-4b-payout-check.json"
+        if chk.exists():
+            payout_check(w, json.loads(chk.read_text()), "run-4b-payout-check.json")
     cur = json.loads((LIVE / "run-4.json").read_text())
     cur["_current"] = True
-    render(cur, w, "## Current deployment (2026-11-01, contract v2 after the round-1 security review)\n")
-    w.append(CURRENT_NOTE)
+    render(cur, w, "## Superseded deployment (2026-11-01, contract v2 after the round-1 security review, throwaway test key)\n")
+    w.append(V2_NOTE)
     prev = json.loads((LIVE / "run-3.json").read_text())
     render(prev, w, "## Previous deployment (2026-11-01, `0xAC6b99E9…a31f`, v1, superseded by v2)\n")
-    w.append("Under v1 an attached page could set timing (SN3289 and BA707 above). v2 refuses that by design; see the current deployment.\n")
+    w.append("Under v1 an attached page could set timing (SN3289 and BA707 above). v2 refuses that by design; see the v2 section.\n")
     old = json.loads((LIVE / "run-1.json").read_text())
     render(old, w, "## Earlier deployment (2026-11-01, `0x76b28bDC…4BC45`, superseded)\n")
     ladder = LIVE / "run-2-ladder.json"

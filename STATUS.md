@@ -110,3 +110,20 @@
 ## 2026-11-01 — polish round 2 (branch `polish-r2`, not deployed)
 - Contract v3 + web fixes for docs/QUALITY-R2.md; fix status in its section 7. Contract tests 189, web tests 30.
   Not deployed: the site still points at v2, so merge only together with a v3 deploy (rig.html would show MISMATCH).
+
+## 2026-11-01 ~19:25 UTC — v3 live, owner deploy
+- **Contract v3 deployed by Blair from her wallet**: `0x0f68cF95e2E735D0b2AbD8a55de6890D2c0eBfe1` (deploy tx
+  `0xa7dd809f…6144`, FINALIZED). `get_config`: owner `0x920fbbCf…a46A`, challenge window 60 min. Stored code
+  canonical sha256 `4aaea346…480b` = `contracts/delay_proof.py`. The site now points at v3; v2 `0x6F3dedC8…1FBF`
+  is superseded and stays in LIVE_EVIDENCE as history.
+- **First live OWED** (on v2, claim #7): Ryanair FR1029 PMO→MXP 2026-11-01, FlightStats "Arrived, delayed by
+  9h 20m", cause a technical fault on the aircraft (news report quoting the airport operator) → **OWED €250**
+  (EU261, 904 km, 560 min, CONTROLLABLE); approved by the payer, finalized after the 10-min window, withdrawn.
+- **Same flight on v3** (claim #1, new claimant burner, new demo pool #1 funded with 2 test GEN by the throwaway
+  payer, expires 2026-12-01): OWED €250 (577 min agreed), approved, finalized after the full 60-min window
+  (`0x643305f7…94a2`), withdrawn (`0xa801463a…7f76`).
+- **Open: payouts don't reach wallets on studionet.** Both withdraws finalized with SUCCESS and the pool dropped
+  2.0 → 1.75 GEN, but the transfer each one triggered (`0x79550c58…c0eb` on v2, `0xe15fd21f…aeff` on v3) ended
+  NO_MAJORITY / ERROR in `contract_not_found_handler` ("Contract 0x… not found"), `value_credited: false`, and the
+  claimants' balances stayed 10 GEN. The site's "paid" banner now says the payout was released from the pool,
+  not credited.

@@ -1,0 +1,348 @@
+{
+ "network": "studionet",
+ "startedAt": "2026-11-01T17:52:35.381Z",
+ "deployer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+ "payer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+ "claimant": "0x024351a8c18f3fD87c046FeFE4B260115A66a215",
+ "challenge_minutes": 10,
+ "contract": "0x6F3dedC893C5769305912AA3fADd095E02FB1FBF",
+ "contract_file": "contracts/delay_proof.py",
+ "contract_code_sha256": "567cfec1688b26aa81d4bab793151b4a22ead3585333e879e521ed37c45bf673",
+ "steps": [
+  {
+   "label": "open FR1029 2026-11-01 (PMO-MXP, FlightStats: arrived 9h20m late; Gesap: technical problem)",
+   "fn": "open_claim",
+   "args": [
+    "FR1029",
+    "2026-11-01",
+    "",
+    "[\"https://www.bigodino.it/attualita/volo-ryanair-palermo-milano-passeggeri-fatti-scendere-per-sicurezza-sette-ore-di-ritardo.html\"]",
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:52:38.164Z",
+   "as": "claimant",
+   "tx": "0x4f3b210e182fa3b7b995897c5bf087cd81d64216937e4d198fefdd5241abf45e",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:52:38.658Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:52:44.076Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "assess #7",
+   "fn": "assess",
+   "args": [
+    "7"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:52:44.078Z",
+   "as": "claimant",
+   "tx": "0xc6032a899c3e85da350824b06d2fd1e1197e1a95c858c9f7474b5f4cfe86c228",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:52:44.526Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:52:49.861Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T17:53:00.638Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T17:53:32.851Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T17:54:04.463Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "idle": 2,
+     "agree": 3
+    },
+    "error": null
+   },
+   "claim_id": 7
+  },
+  {
+   "label": "approve #7 (payer consent)",
+   "fn": "approve_claim",
+   "args": [
+    "7"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:54:04.471Z",
+   "as": "payer",
+   "tx": "0x9db9880a9cc83074c363d43852a7ed6173b6188e89f21a72131af95c3365789a",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:54:04.923Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:54:10.098Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T17:54:41.324Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "idle": 1,
+     "agree": 4
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "finalize #7 (claimant, after window)",
+   "fn": "finalize",
+   "args": [
+    "7"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T18:03:14.070Z",
+   "as": "claimant",
+   "tx": "0x1ac241698c4b52d9bd830d7204f17d063f36399d4845879c57db0e8015b44c3a",
+   "transitions": [
+    {
+     "at": "2026-11-01T18:03:14.945Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T18:03:20.409Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 5
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "withdraw #7",
+   "fn": "withdraw_payout",
+   "args": [
+    "7"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T18:03:21.633Z",
+   "as": "claimant",
+   "tx": "0xbd49a135ce4b6af8a20c574079fb808bae8fc5ea8f8e2e7be9f6f12c173eecc8",
+   "transitions": [
+    {
+     "at": "2026-11-01T18:03:22.470Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T18:03:27.937Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T18:04:00.637Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   },
+   "balance_before": "0x8ac7230489e80000",
+   "balance_after": "0x8ac7230489e80000"
+  }
+ ],
+ "stored_code_sha256": "567cfec1688b26aa81d4bab793151b4a22ead3585333e879e521ed37c45bf673",
+ "code_matches": true,
+ "pool": {
+  "active": true,
+  "balance": "2000000000000000000",
+  "claims_paid": 0,
+  "expires_at": "2026-11-03T16:50:17Z",
+  "id": 1,
+  "max_per_flight": 1,
+  "name": "Demo card-perk pool",
+  "owed_only": false,
+  "paid_out": 0,
+  "payer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+  "regime": "ANY",
+  "units_per_currency": 1000000000000000
+ },
+ "claims": [
+  {
+   "analysts": 1,
+   "approved": true,
+   "assessed_at": "2026-11-01T17:52:44.340017Z",
+   "challenge_ends": "2026-11-01T18:02:44Z",
+   "claimant": "0x024351a8c18f3fD87c046FeFE4B260115A66a215",
+   "created_at": "2026-11-01T17:52:38.471400Z",
+   "date": "2026-11-01",
+   "evidence": [
+    {
+     "side": "claimant",
+     "url": "https://www.bigodino.it/attualita/volo-ryanair-palermo-milano-passeggeri-fatti-scendere-per-sicurezza-sette-ore-di-ritardo.html"
+    }
+   ],
+   "flight": "FR1029",
+   "history": [],
+   "id": 7,
+   "note": "",
+   "paid": false,
+   "pool_id": 1,
+   "record": {
+    "analysts": [
+     {
+      "cause_class": "CONTROLLABLE",
+      "delay_min": 560,
+      "status": "LANDED"
+     }
+    ],
+    "bucket": "H4_PLUS",
+    "cause_class": "CONTROLLABLE",
+    "cause_label": "technical fault on the aircraft",
+    "delay_min": 560,
+    "reason": "Scheduled arrival 09:25 CET, actual arrival 18:45 CET on 01-Nov-2026, resulting in a 560-minute delay. | The claimant-supplied news article reports a technical problem required passengers to disembark for safety, with a replacement aircraft arranged.",
+    "route": {
+     "airline": "FR",
+     "airline_country": "IE",
+     "airline_name": "Ryanair",
+     "dest": "MXP",
+     "dest_country": "IT",
+     "dest_lat": 45630600,
+     "dest_lon": 8728110,
+     "origin": "PMO",
+     "origin_country": "IT",
+     "origin_lat": 38176000,
+     "origin_lon": 13091000
+    },
+    "seen_route": "PMO-MXP",
+    "sources": [
+     {
+      "name": "adsbdb",
+      "ok": true
+     },
+     {
+      "name": "flightstats",
+      "ok": true
+     },
+     {
+      "name": "evidence:claimant",
+      "ok": true
+     }
+    ],
+    "status": "LANDED",
+    "timing_source": "flight-status page"
+   },
+   "ruling": {
+    "amount": 250,
+    "band": "short",
+    "bucket": "H4_PLUS",
+    "cause_class": "CONTROLLABLE",
+    "currency": "EUR",
+    "delay_min": 560,
+    "distance_km": 904,
+    "explanation": "Arrived 3+ hours late for a reason within the airline's control.",
+    "flags": [],
+    "outcome": "OWED",
+    "regime": "EU261",
+    "rule_set": "EU261 + CJEU case law (3 hours or more, door-open)",
+    "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+    "timing_source": "flight-status page"
+   },
+   "status": "final",
+   "tier": 1,
+   "updated_at": "2026-11-01T18:03:14.701609Z"
+  }
+ ],
+ "pool_after": {
+  "active": true,
+  "balance": "1750000000000000000",
+  "claims_paid": 1,
+  "expires_at": "2026-11-03T16:50:17Z",
+  "id": 1,
+  "max_per_flight": 1,
+  "name": "Demo card-perk pool",
+  "owed_only": false,
+  "paid_out": "250000000000000000",
+  "payer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+  "regime": "ANY",
+  "units_per_currency": 1000000000000000
+ },
+ "config": {
+  "challenge_minutes": 10,
+  "delay_threshold_min": 180,
+  "delay_tolerance_min": 15,
+  "long_km": 3500,
+  "next_claim": 8,
+  "next_pool": 2,
+  "owner": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+  "paused": false,
+  "route_source": "https://api.adsbdb.com/v0/callsign/{flight}",
+  "rules": {
+   "EU261": {
+    "currency": "EUR",
+    "long": 600,
+    "long_3_4h": 300,
+    "medium": 400,
+    "short": 250
+   },
+   "UK261": {
+    "currency": "GBP",
+    "long": 520,
+    "long_3_4h": 260,
+    "medium": 350,
+    "short": 220
+   }
+  },
+  "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+  "short_km": 1500,
+  "status_sources": [
+   "flightstats"
+  ],
+  "tier_analysts": {
+   "1": 1,
+   "2": 3,
+   "3": 5
+  }
+ },
+ "finishedAt": "2026-11-01T18:04:18.210Z"
+}

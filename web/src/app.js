@@ -210,7 +210,7 @@ function renderResult(claim, { txs = {}, votes = [], sample = false } = {}) {
       <p class="dp-verdict__eyebrow">${sample ? "Sample · " : ""}${esc(k.eyebrow.charAt(0) + k.eyebrow.slice(1).toLowerCase())}</p>
       <h2 class="dp-verdict__title" id="v-title" tabindex="-1">${esc(state === "pending" ? (claim.status === "open" && claim.tier === 0 && txs.assess ? "Too early: the flight hasn't landed yet" : d.headline) : possibly ? "Possibly owed: it depends on the notice you were given" : unless ? "Owed, unless the airline proves extraordinary circumstances" : k.title)}</h2>
       ${amount ? `<p class="dp-verdict__amount"><span class="dp-sr-only">${esc(amount)}</span>${[...amount].map((ch, i) => `<span class="tile" style="animation-delay:${i * 90}ms" aria-hidden="true">${esc(ch)}</span>`).join("")}</p><p class="dp-verdict__per">${possibly ? "at most, " : ""}per passenger · claim #${esc(claim.id)} · ${esc(tierName(claim.tier))}</p>` : `<p class="dp-verdict__per">Claim #${esc(claim.id)} · ${esc(tierName(claim.tier))}</p>`}
-      ${state === "paid" ? `<p class="paidwarn" role="note">TEST MODE · NOT A REAL PAYMENT. Paid by the demo payer.</p>` : ""}
+      ${state === "paid" ? `<p class="paidwarn" role="note">TEST MODE · NOT A REAL PAYMENT. Released from the demo payer's pool; studionet doesn't yet credit it to your wallet balance.</p>` : ""}
       <p class="dp-verdict__body">${esc(verdictBody(claim, state, votes))}</p>
       <div class="dp-verdict__actions">
         <a class="dp-btn dp-btn--primary" href="#proof">${icon("verified-seal")} Get my proof card</a>
