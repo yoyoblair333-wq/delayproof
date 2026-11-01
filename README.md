@@ -14,6 +14,12 @@ a testnet pool, approve the claims it covers, and pay them once the ruling is fi
 Testnet only (GenLayer studionet). No real money. **Information, not legal advice.
 Airlines are not bound by a DelayProof ruling.**
 
+> **Deployment status.** This README describes contract **v3** in `contracts/delay_proof.py`
+> (fixes from [docs/QUALITY-R2.md](docs/QUALITY-R2.md)). The site still points at the
+> **v2** deployment `0x6F3dedC8…1FBF` until v3 is deployed. v2 does not have the v3 rules
+> below: on v2 a payer or registered respondent can finalize at once, the owner can
+> register itself as a respondent, and `BA117`/`BAW117` are separate keys.
+
 ## The trust problem
 
 - EU and UK law owe **€250–600 / £220–520 per passenger** when a flight lands 3+ hours
@@ -35,7 +41,12 @@ Airlines are not bound by a DelayProof ruling.**
    flight code shape (IATA `BA117` or ICAO `LOG31`), a real date that is not in the future
    and under 6 years old, a public note without emails or booking references, and at most
    3 evidence links that must be `https://` on a public domain name (no IP addresses,
-   localhost, internal hosts or booking pages). One claim per flight, date and claimant.
+   localhost, internal hosts or booking pages). One claim per flight, date and claimant,
+   where the flight key is the canonical airline code plus the number: IATA and ICAO
+   spellings of the same airline (`BA117`, `BAW117`) and an operational suffix (`BA117A`)
+   are the same flight, for airlines in the contract's `ICAO_TO_IATA` table. An airline
+   missing from that table keeps its own spelling, so its two codes would still be two keys.
+   Only the claimant can request the first `assess`.
 2. `assess(claim_id)` runs one non-deterministic block. The leader fetches:
    - the route from adsbdb (airports, countries, coordinates, operating airline),
    - the **date-specific** FlightStats tracker page (scheduled and actual times): the only
@@ -48,14 +59,18 @@ Airlines are not bound by a DelayProof ruling.**
    - **cause passes** see the flight-status page, the agreed timing and the evidence pages,
      and return only the cause class.
 
-   Web text is fenced with a per-transaction nonce and fence-like text is stripped from
-   pages, so an evidence page can't forge a "flight-status" block. Every validator repeats
+   Web text is fenced with a per-transaction nonce. The nonce, fence brackets (`[[ ]]`,
+   `<< >>`) and invisible characters are stripped from page text, so an evidence page
+   can't forge a "flight-status" block. Every validator repeats
    the whole thing and accepts the leader's record only if the route, status, seen
    airports and cause match exactly, the delay is within 15 minutes, and the computed
    ruling (outcome, amount, currency, band, regime, flags) is identical. Records are
-   whitelisted and size-capped; ties between analysts become UNKNOWN. If the airports on
-   the page disagree with the route database, the ruling is INSUFFICIENT_DATA
-   (`route_conflict`) instead of a wrong amount.
+   whitelisted and size-capped; ties between analysts become UNKNOWN. The route database
+   is only used when the airports the validators read on the status page match it: if
+   they disagree (`route_conflict`) or the page shows no airports (`route_unconfirmed`),
+   the ruling is INSUFFICIENT_DATA with no regime, distance or band, instead of a guessed
+   route. The leader's free-text `reason`, `cause_label`, per-analyst lines and source
+   `ok` flags are not compared by validators; the web app labels them "leader's notes".
 3. `compute_ruling` (deterministic) applies [research/RULES.md](research/RULES.md):
    coverage (EU261 / UK261 by departure airport, arrival airport and carrier), great-circle
    distance band, the 3-hour threshold (≥180 min under EU261 + case law; >180 min under
@@ -67,28 +82,39 @@ Airlines are not bound by a DelayProof ruling.**
 4. `appeal(claim_id)` re-runs it with 3, then 5 analyst passes. Claimant evidence can only
    be added by the claimant; respondent evidence only by the linked pool's payer or the
    airline's registered respondent address.
-5. `finalize`: the payer or registered respondent can accept a ruling at any time; the
-   claimant can lock it only after the **challenge window** (60 minutes by default,
-   restarted by each appeal), during which the other side can appeal.
+   An appeal that comes back TOO_EARLY changes nothing and adds no history row.
+5. `finalize`: any party (claimant, linked payer, registered respondent) can make a
+   ruling final, but **nobody** can do it before the **challenge window** ends
+   (`challenge_minutes`, set at deploy, 60 by default; read it with `get_config`;
+   restarted by each appeal). The one exception is the top tier (5 analysts): no appeal
+   is left, so it can be finalized at once.
 6. Pools: `create_pool(name, regime, rate, days_valid, max_per_flight, owed_only)` is
-   payable. The payer must `approve_claim` each claim it covers (at most `max_per_flight`
-   per flight and date); `withdraw_payout` then pays a final, payable ruling once. After
-   expiry, `withdraw_pool` returns unused funds to the payer.
+   payable. The payer `approve_claim`s each claim it covers, and only while that claim's
+   current ruling is one the pool pays (at most `max_per_flight` approved claims per
+   canonical flight and date). Approval **reserves** the band's full amount: closing the
+   pool (`set_pool_active(False)`, which only stops new links and approvals), expiry or a
+   pause can't take it back, and `withdraw_payout` pays an approved, final, payable ruling
+   once, even after expiry. If an approved claim ends final with a ruling the pool doesn't
+   pay, the reservation and the per-flight slot are released. After expiry,
+   `withdraw_pool` returns only the unreserved balance. A reservation whose claimant never
+   withdraws stays locked (testnet trade-off, see QUALITY-R2).
 
 ### Roles and powers
 
 | Role | Can | Cannot |
 |---|---|---|
-| Claimant | open, assess, appeal, add claimant evidence, finalize after the window, withdraw an approved payout | add respondent evidence, finalize early |
-| Pool payer | create/top up/close its pool, approve claims, appeal and add respondent evidence on claims in its pool, finalize them, reclaim funds after expiry | touch other pools or claims outside its pool |
-| Registered airline respondent | appeal, add respondent evidence and finalize on its airline's claims | anything else |
-| Owner | pause, register a respondent address per airline code, transfer ownership | assess, appeal, finalize, or move anyone's money |
+| Claimant | open, request the first assessment, appeal, add claimant evidence, finalize after the window, withdraw an approved payout | add respondent evidence, finalize inside the window |
+| Pool payer | create/top up/close its pool, approve claims whose current ruling it pays, appeal and add respondent evidence on claims in its pool, finalize them after the window, reclaim unreserved funds after expiry | assess first, finalize inside the window, take back a reserved amount, touch other pools |
+| Registered airline respondent | appeal, add respondent evidence and finalize after the window on its airline's claims (any spelling of the code) | assess first, finalize inside the window, anything else |
+| Owner | pause, register a respondent address per airline code, transfer ownership | be a respondent or a payer (refused at registration and at `create_pool`, and every party check treats the current owner as a non-party), assess, appeal, finalize, or move anyone's money |
 
-Pause blocks every claim and pool write except a payer reclaiming an expired pool.
-Registering an airline respondent is a trust step: a real deployment would verify the
-address with the airline first. Security review and fixes:
-[docs/SECURITY-R1.md](docs/SECURITY-R1.md); regression tests in
-`tests/direct/test_security_r1.py`.
+Pause blocks every claim and pool write except a payer reclaiming the **unreserved**
+part of an expired pool, so a pause can delay an owed payout but can't hand it back to
+the payer. The owner chooses who the respondent address is for each airline code; that is
+still a trust step (the owner could register a friend's address), and a real deployment
+would verify the address with the airline first. Reviews and fixes:
+[docs/SECURITY-R1.md](docs/SECURITY-R1.md), [docs/QUALITY-R2.md](docs/QUALITY-R2.md);
+regression tests in `tests/direct/test_security_r1.py` and `test_security_r2.py`.
 
 ## Verify in 5 minutes
 
@@ -110,12 +136,18 @@ Expected ending: `VERIFY: PASS`.
 
 ## Web app
 
-`web/` (esbuild, genlayer-js 1.1.8, loaded on demand). A per-browser testnet key signs
-`open_claim`, `assess`, `appeal`, `add_evidence`, `finalize` and `withdraw_payout`; a status
-rail follows each transaction through ACCEPTED to FINALIZED; the ruling is read back from
-the contract and shown as a proof card with a claim letter. Shared links carry the
-deciding transaction, so the recipient sees its validator votes. `rig.html` hashes the deployed code in your browser and compares it with
-the pinned digest. `review.html` maps the GenLayer quality bar to proof.
+`web/` (esbuild). Reads use plain `fetch` JSON-RPC (`web/src/lib/rpc.js`, byte-for-byte
+the same calls genlayer-js makes, checked in the tests); genlayer-js 1.1.8 and viem load
+only when this browser signs a write. A per-browser testnet key signs `open_claim`,
+`assess`, `appeal`, `add_evidence`, `finalize` and `withdraw_payout`; a status rail follows
+each transaction through ACCEPTED to FINALIZED; the ruling is read back from the contract
+and shown as a proof card with a claim letter. After a check, the page URL and the "Copy
+link" button carry the deciding transaction (`?claim=N&tx=0x…`), and My trips links keep
+it, so the recipient sees its validator votes; a bare `?claim=N` link (for example from
+Recent rulings) shows the ruling without the votes, because the contract doesn't store the
+tx hash. `rig.html` hashes the deployed code in your browser and compares it with the
+pinned digest and the source file on `main`. `review.html` maps the GenLayer quality bar
+to proof.
 
 ```bash
 cd web && npm ci && npm run build && npx serve dist   # any static server

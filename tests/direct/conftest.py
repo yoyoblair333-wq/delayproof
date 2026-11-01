@@ -63,7 +63,20 @@ def route_body(flight):
     return json.dumps({"response": {"flightroute": {"callsign": flight, "origin": o, "destination": d, "airline": a}}})
 
 
+# The flight most recently passed to mock_sources: analyst() reports that flight's airports
+# by default, as a real flight-status page shows them (contract v3 needs them to confirm the route).
+_LAST = {"flight": ""}
+AUTO = object()
+
+
+@pytest.fixture(autouse=True)
+def _reset_last_flight():
+    _LAST["flight"] = ""
+    yield
+
+
 def mock_sources(vm, flight, status_text="Flight Arrival Times Scheduled 11:20 Actual 15:30"):
+    _LAST["flight"] = flight
     if flight in ROUTES:
         vm.mock_web(r"api\.adsbdb\.com/v0/callsign/" + flight + r"$", {"method": "GET", "status": 200, "body": route_body(flight)})
     else:
@@ -73,6 +86,9 @@ def mock_sources(vm, flight, status_text="Flight Arrival Times Scheduled 11:20 A
 
 
 def analyst(status="LANDED", delay=250, cause="CONTROLLABLE", label="technical fault", reason="FlightStats shows a 15:30 actual arrival.",
-            origin="", dest=""):
+            origin=AUTO, dest=AUTO):
+    o, d = (ROUTES[_LAST["flight"]][0]["iata_code"], ROUTES[_LAST["flight"]][1]["iata_code"]) if _LAST["flight"] in ROUTES else ("", "")
+    origin = o if origin is AUTO else origin
+    dest = d if dest is AUTO else dest
     return json.dumps({"status": status, "arrival_delay_min": delay, "cause_class": cause,
                        "cause_label": label, "reason": reason, "origin_iata": origin, "dest_iata": dest})

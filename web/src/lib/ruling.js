@@ -23,11 +23,46 @@ export function regimeCurrency(regime) {
   return regime === "UK261" ? "GBP" : regime === "EU261" ? "EUR" : "";
 }
 
-/** The route to display: empty when the contract rejected it (route_conflict). */
+/**
+ * Whether the route database's route was confirmed by the airports the validators
+ * agreed they saw on the flight-status page (record.seen_route, e.g. "LHR-JFK"):
+ * confirmed | conflict | unconfirmed | none. Only a confirmed route is ever shown
+ * (QUALITY-R2 P1-4: live claim #4 had an adsbdb guess and no airports on the page).
+ */
+export function routeStatus(claim) {
+  const route = claim?.record?.route ?? {};
+  if (!route.origin || !route.dest) return "none";
+  if ((claim?.ruling?.flags ?? []).includes("route_conflict")) return "conflict";
+  const [o, d] = String(claim?.record?.seen_route ?? "-").split("-");
+  if (!o || !d) return "unconfirmed";
+  return o === route.origin && d === route.dest ? "confirmed" : "conflict";
+}
+
+/** The route to display: empty unless the status page confirmed it. */
 export function shownRoute(claim) {
-  const flags = claim?.ruling?.flags ?? [];
-  if (flags.includes("route_conflict")) return {};
-  return claim?.record?.route ?? {};
+  return routeStatus(claim) === "confirmed" ? claim.record.route : {};
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "30 Oct 2026" from "2026-10-30" or a Date; with time: "30 Oct 2026, 14:05" (local time). */
+export function prettyDate(v, { time = false } = {}) {
+  if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const [y, m, d] = v.split("-").map(Number);
+    return `${d} ${MONTHS[m - 1]} ${y}`;
+  }
+  const dt = v instanceof Date ? v : new Date(v);
+  if (Number.isNaN(dt.getTime())) return "";
+  const base = `${dt.getDate()} ${MONTHS[dt.getMonth()]} ${dt.getFullYear()}`;
+  return time ? `${base}, ${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}` : base;
+}
+
+/** Challenge-window length in words, from the contract's challenge_minutes. */
+export function windowText(minutes) {
+  const m = Number(minutes);
+  if (!Number.isFinite(m) || m <= 0) return "set by the contract";
+  if (m % 1440 === 0) return `${m / 1440} day${m === 1440 ? "" : "s"}`;
+  if (m % 60 === 0) return `${m / 60} hour${m === 60 ? "" : "s"}`;
+  return `${m} minute${m === 1 ? "" : "s"}`;
 }
 
 /**
@@ -97,15 +132,16 @@ export function describe(claim) {
   const rec = claim.record ?? {};
   const o = OUTCOME_TEXT[r.outcome] ?? { headline: r.outcome, tone: "maybe" };
   const sr = shownRoute(claim);
-  const route = sr.origin ? `${sr.origin} → ${sr.dest}` : (r.flags ?? []).includes("route_conflict") ? "route disputed" : "route unknown";
+  const rs = routeStatus(claim);
+  const route = sr.origin ? `${sr.origin} → ${sr.dest}` : rs === "conflict" ? "route disputed" : rs === "unconfirmed" ? "route not confirmed" : "route unknown";
   const happened = rec.status === "LANDED" ? (rec.bucket === "NONE" ? "landed, arrival delay not established" : "landed, " + BUCKET_TEXT[rec.bucket])
     : rec.status === "DIVERTED" ? `diverted${rec.bucket !== "NONE" ? ", " + BUCKET_TEXT[rec.bucket] : ""}` : (rec.status ?? "").toLowerCase().replace("_", " ");
   const lines = [
     `${claim.flight} on ${claim.date}, ${route}${r.distance_km > 0 && sr.origin ? ` (${r.distance_km.toLocaleString("en-GB")} km)` : ""}`,
     `What happened: ${happened}`,
-    `Why: ${CAUSE_TEXT[rec.cause_class] ?? "unknown"}${rec.cause_label && rec.cause_label !== "not stated" ? ` (${rec.cause_label})` : ""}`,
+    `Why: ${CAUSE_TEXT[rec.cause_class] ?? "unknown"}`,
   ];
-  if (r.regime) lines.push(`Rules: ${r.regime}${r.amount ? `, ${r.outcome === "POSSIBLY_OWED_CANCELLATION" ? "up to " : ""}${money(r.amount, r.currency)} per passenger` : ""}`);
+  if (r.regime && sr.origin) lines.push(`Rules: ${r.regime}${r.amount ? `, ${r.outcome === "POSSIBLY_OWED_CANCELLATION" ? "up to " : ""}${money(r.amount, r.currency)} per passenger` : ""}`);
   lines.push(r.explanation);
   return { headline: o.headline, tone: o.tone, amount: money(r.amount, r.currency), lines };
 }
@@ -131,7 +167,7 @@ export function claimLetter(claim, { name = "[Your name]", booking = "[Booking r
   const timing = "The flight's status and arrival time come from the public flight-status page (FlightStats) for that date; attached pages were not used for timing.";
   const cause = rec.cause_class === "UNKNOWN"
     ? "No public source stated a cause."
-    : `The cause (${CAUSE_TEXT[rec.cause_class]}${rec.cause_label && rec.cause_label !== "not stated" ? `: ${rec.cause_label}` : ""}) was assessed from the flight-status page${ev.length ? ` and the attached public page${ev.length > 1 ? "s" : ""} ${ev.join(", ")}` : ""}.`;
+    : `The cause (${CAUSE_TEXT[rec.cause_class]}) was assessed from the flight-status page${ev.length ? ` and the attached public page${ev.length > 1 ? "s" : ""} ${ev.join(", ")}` : ""}.`;
   return [
     `Subject: Compensation claim, flight ${claim.flight} on ${claim.date}${booking ? `, booking ${booking}` : ""}`,
     "",

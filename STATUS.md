@@ -106,3 +106,7 @@
   appeal"; "validators hosted by GenLayer"; the letter names the deciding sources and says "may be owed";
   fees 25–50% (AirHelp 35% + 15%). BA707's date re-checked against its page: 2026-10-19 is right.
 - Still open: a live OWED ruling; P2-5/6/7/8/11/13 (listed in SECURITY-R1).
+
+## 2026-11-01 — polish round 2 (branch `polish-r2`, not deployed)
+- Contract v3 + web fixes for docs/QUALITY-R2.md; fix status in its section 7. Contract tests 189, web tests 30.
+  Not deployed: the site still points at v2, so merge only together with a v3 deploy (rig.html would show MISMATCH).

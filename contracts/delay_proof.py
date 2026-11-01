@@ -18,27 +18,43 @@ Two kinds of analyst pass, separated in code (security review R1, P0-2):
   * CAUSE passes see the flight-status pages, the agreed timing and the
     attached evidence pages. They decide only the cause class.
 
-Every web text block is fenced with a per-transaction nonce, and fence-like
-sequences are stripped from page text before it reaches a prompt.
+Every web text block is fenced with a per-transaction nonce. The nonce, the
+fence brackets ([[ ]], << >>) and invisible characters are stripped from page
+text before it reaches a prompt.
 
 Validators recompute everything and accept the leader's result only if the
 route, status, cause, seen airports and the full computed ruling (outcome,
 amount, band, regime, flags) match, and the delay minutes are within
 DELAY_TOLERANCE_MIN. Stored records are whitelisted and size-capped.
 
+The route (and so regime, distance and band) is used only when the airports
+the validators read on the flight-status page match the route database. If the
+status page shows no airports, or different ones, the ruling is
+INSUFFICIENT_DATA and carries no regime, distance or band.
+
 Deterministic code applies one rules table (EU261 / UK261 scope, distance
 bands, amounts). Appeals: 1 -> 3 -> 5 analyst passes per validator.
 
 Testnet payout pools: a payer (insurer, card perk, travel group) deposits
 testnet GEN, sets a rate, an expiry, a per-flight cap and which outcomes it
-pays. A claim can only be paid from a pool after the PAYER approves that claim.
-The claimant can finalize only after a challenge window, during which the payer
-or a registered airline respondent can appeal. Unused funds return to the payer
-after expiry. Testnet only: no real money.
+pays. A claim can only be paid from a pool after the PAYER approves that claim,
+and only while its current ruling is payable by that pool. Approval reserves
+the band's full amount: closing the pool, expiry or a pause never returns a
+reserved amount to the payer. A reservation is released only if the claim ends
+final with a ruling the pool does not pay.
+
+Challenge window: after every assessment or appeal NOBODY (claimant, payer or
+airline respondent) can finalize until the window ends, except at the top tier
+(5 analysts), where no further appeal exists. Only the claimant can request
+the first assessment. Unused, unreserved funds return to the payer after
+expiry. Testnet only: no real money.
 
 Roles: the owner can pause the contract, register an airline respondent
-address per airline code, and transfer ownership. The owner cannot assess,
-appeal, finalize or move pool funds.
+address per airline code, and transfer ownership. The owner can never be a
+respondent or a payer: register_respondent refuses the owner's address,
+create_pool refuses the owner, and every respondent check treats the current
+owner as a non-party. Airline codes are canonicalised (BAW117 == BA117) for
+uniqueness, the per-flight cap and respondent lookup.
 
 Information only, not legal advice; airlines are not bound by a ruling. Rules
 table and sources: research/RULES.md.
@@ -113,6 +129,20 @@ STATUS_OPEN = "open"
 STATUS_ASSESSED = "assessed"
 STATUS_FINAL = "final"
 
+# ICAO -> IATA for airlines whose two codes are both in common use, so the same flight
+# entered either way has one key (security review R2, P1-3). Codes not listed stay as
+# entered; that is safe because a code with no alias here has only one spelling.
+ICAO_TO_IATA = {
+    "BAW": "BA", "VIR": "VS", "EZY": "U2", "EZS": "DS", "EJU": "EC", "RYR": "FR", "DLH": "LH", "AFR": "AF",
+    "KLM": "KL", "IBE": "IB", "VLG": "VY", "SWR": "LX", "AUA": "OS", "BEL": "SN", "SAS": "SK", "FIN": "AY",
+    "EIN": "EI", "TAP": "TP", "ITY": "AZ", "LOT": "LO", "WZZ": "W6", "NAX": "DY", "EWG": "EW", "CFG": "DE",
+    "TOM": "BY", "EXS": "LS", "AEE": "A3", "THY": "TK", "UAE": "EK", "QTR": "QR", "ETD": "EY", "AAL": "AA",
+    "UAL": "UA", "DAL": "DL", "ACA": "AC", "LGL": "LG", "CSA": "OK", "BTI": "BT", "TRA": "HV", "TVF": "TO",
+    "VOE": "V7", "LOG": "LM", "DLA": "EN", "EDW": "WK", "PGT": "PC", "ASL": "JU", "CTN": "OU", "ROT": "RO",
+    "LZB": "FB", "AFL": "SU", "ELY": "LY", "MSR": "MS", "ETH": "ET", "SIA": "SQ", "CPA": "CX", "QFA": "QF",
+    "ANA": "NH", "JAL": "JL", "AIC": "AI", "WJA": "WS", "JBU": "B6", "ASA": "AS", "SWA": "WN", "ICE": "FI",
+}
+
 # 3-letter ICAO airline code (LOG31, EZY8077) or 2-character IATA code (BA117, U28077).
 FLIGHT_RE = re.compile(r"([A-Z]{3}|[A-Z0-9]{2})([0-9]{1,4})([A-Z]?)")
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
@@ -172,6 +202,7 @@ class Claim:
     updated_at: str
     assessed_at: str          # tx time of the latest assess/appeal ("" if none)
     paid: bool
+    reserved: u256            # pool units reserved for this claim by the payer's approval
 
 
 @allow_storage
@@ -183,6 +214,7 @@ class Pool:
     regime: str               # "EU261" | "UK261" | "ANY"
     units_per_currency: u256  # testnet wei paid per EUR/GBP of the ruling
     balance: u256
+    encumbered: u256          # part of balance reserved for approved claims; never reclaimable
     paid_out: u256
     claims_paid: u32
     expires_at: str           # after this, no payouts; the payer can reclaim the balance
@@ -232,6 +264,20 @@ def _parse_flight(raw: str) -> tuple:
         raise  # unreachable
     number = str(int(m.group(2))) + m.group(3)
     return m.group(1) + number, m.group(1), number
+
+
+def _canon_airline(code: str) -> str:
+    c = str(code or "").strip().upper()
+    return ICAO_TO_IATA.get(c, c)
+
+
+def _flight_key(flight: str) -> str:
+    """One key per real flight: canonical airline code + number, without an
+    operational suffix letter (BA117, BAW117 and BA117A are the same key)."""
+    m = FLIGHT_RE.fullmatch(str(flight))
+    if m is None:
+        return str(flight)
+    return _canon_airline(m.group(1)) + str(int(m.group(2)))
 
 
 def _parse_date(raw: str) -> datetime:
@@ -356,32 +402,43 @@ def compute_ruling(record: dict, claim_date: datetime, now: datetime) -> dict:
             "rules_version": RULES_VERSION, "bucket": record["bucket"], "delay_min": record["delay_min"],
             "cause_class": record["cause_class"], "flags": flags, "timing_source": record.get("timing_source", "")}
 
-    def out(outcome: str, why: str, amount: int = 0, band: str = "") -> dict:
+    def out(outcome: str, why: str, amount: int = 0, band: str = "", unconfirmed: bool = False) -> dict:
         r = dict(base)
         r["outcome"] = outcome
         r["explanation"] = why
         r["band"] = band
         r["flags"] = list(flags)
+        if unconfirmed:
+            # Nothing route-derived is shown as fact when the route was not confirmed (R2 P1-4).
+            r["regime"], r["rule_set"], r["distance_km"] = "", "", -1
+            r["flags"] = [f for f in r["flags"] if f != "near_distance_band_edge"]
         if amount:
             r["amount"] = amount
             r["currency"] = RULES[regime]["currency"]
         return r
 
     if status == "NOT_FOUND":
-        return out(OUTCOME_NOT_FOUND, "No flight-status record of this flight on this date was found.")
+        return out(OUTCOME_NOT_FOUND, "No flight-status record of this flight on this date was found.", unconfirmed=True)
     if status == "NOT_YET" or claim_date.date() > now.date():
-        return out(OUTCOME_TOO_EARLY, "The flight has not arrived yet; ask again after it lands.")
+        return out(OUTCOME_TOO_EARLY, "The flight has not arrived yet; ask again after it lands.", unconfirmed=True)
     if status == "UNKNOWN":
-        return out(OUTCOME_UNKNOWN, "The flight-status source did not show enough to decide (for example, the date is outside its window).")
+        return out(OUTCOME_UNKNOWN, "The flight-status source did not show enough to decide (for example, the date is outside its window).", unconfirmed=True)
     seen = str(record.get("seen_route", "-")).split("-")
-    if route and len(seen) == 2 and seen[0] and seen[1] and (seen[0], seen[1]) != (route.get("origin"), route.get("dest")):
+    seen_ok = len(seen) == 2 and bool(seen[0]) and bool(seen[1])
+    if route and seen_ok and (seen[0], seen[1]) != (route.get("origin"), route.get("dest")):
         flags.append("route_conflict")
         return out(OUTCOME_UNKNOWN, f"The route database lists {route.get('origin')}-{route.get('dest')} but the flight-status page shows "
-                   f"{seen[0]}-{seen[1]}, so coverage and distance can't be trusted.")
+                   f"{seen[0]}-{seen[1]}, so coverage and distance can't be trusted.", unconfirmed=True)
+    if route and not seen_ok:
+        flags.append("route_unconfirmed")
+        return out(OUTCOME_UNKNOWN, "The flight-status page did not show both airports, so the route (and with it coverage, distance and "
+                   "amount) can't be confirmed.", unconfirmed=True)
+    if not route:
+        return out(OUTCOME_UNKNOWN, "The route could not be established.", unconfirmed=True)
     if not regime:
         return out(OUTCOME_NOT_COVERED, "Neither EU261 nor UK261 covers this route and airline (US law has no cash delay compensation).")
     if km < 0:
-        return out(OUTCOME_UNKNOWN, "The route distance could not be established.")
+        return out(OUTCOME_UNKNOWN, "The route distance could not be established.", unconfirmed=True)
     band = _band(regime, route, km)
     t = RULES[regime]
     if status == "CANCELLED":
@@ -449,8 +506,9 @@ def fence_nonce(*parts) -> str:
 
 def defang(text: str, nonce: str) -> str:
     """Remove anything that could close or forge a fence."""
-    t = str(text).replace(nonce, "")
-    t = re.sub(r"<{2,}|>{2,}", " ", t)
+    t = _INVISIBLE_RE.sub("", str(text))
+    t = t.replace(nonce, "")
+    t = re.sub(r"<{2,}|>{2,}|\[{2,}|\]{2,}", " ", t)
     return t
 
 
@@ -651,9 +709,9 @@ class DelayProof(gl.Contract):
     next_pool: u256
     claims: TreeMap[u256, Claim]
     pools: TreeMap[u256, Pool]
-    claim_keys: TreeMap[str, u256]       # "FLIGHT|DATE|claimant" -> claim id
-    flight_counts: TreeMap[str, u32]     # "pool|FLIGHT|DATE" -> approved claims
-    respondents: TreeMap[str, Address]   # airline code -> registered respondent address
+    claim_keys: TreeMap[str, u256]       # "FLIGHTKEY|DATE|claimant" -> claim id (canonical flight key)
+    flight_counts: TreeMap[str, u32]     # "pool|FLIGHTKEY|DATE" -> approved claims
+    respondents: TreeMap[str, Address]   # canonical airline code -> registered respondent address
 
     def __init__(self, challenge_minutes: int = DEFAULT_CHALLENGE_MIN):
         if int(challenge_minutes) < 1 or int(challenge_minutes) > 7 * 24 * 60:
@@ -691,13 +749,21 @@ class DelayProof(gl.Contract):
 
     def _respondent_for(self, c: Claim) -> Address | None:
         m = FLIGHT_RE.fullmatch(c.flight)
-        code = m.group(1) if m else ""
+        code = _canon_airline(m.group(1)) if m else ""
         return self.respondents.get(code, None)
 
+    def _is_owner(self) -> bool:
+        return gl.message.sender_address == self.owner
+
     def _is_payer(self, c: Claim) -> bool:
+        # The owner is never a party, even if it holds a payer address (e.g. after transfer_ownership).
+        if self._is_owner():
+            return False
         return int(c.pool_id) != 0 and gl.message.sender_address == self._get_pool(int(c.pool_id)).payer
 
     def _is_respondent(self, c: Claim) -> bool:
+        if self._is_owner():
+            return False
         if self._is_payer(c):
             return True
         r = self._respondent_for(c)
@@ -781,13 +847,18 @@ class DelayProof(gl.Contract):
 
         return gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
 
-    def _apply(self, c: Claim, record: dict, tier: int) -> dict:
+    def _apply(self, c: Claim, record: dict, tier: int, hist_entry=None) -> dict:
         now = _parse_tx_time(self._now())
         ruling = compute_ruling(record, _parse_date(c.date), now)
         if ruling["outcome"] == OUTCOME_TOO_EARLY:
-            # Same-day claims: nothing is decided, so the claim stays open for a later assessment.
+            # Same-day claims: nothing is decided, so the claim keeps its tier and ruling and
+            # no history row is added (R2 P2-3).
             c.updated_at = self._now()
             return ruling
+        if hist_entry is not None:
+            hist = json.loads(c.history_json)
+            hist.append(hist_entry)
+            c.history_json = json.dumps(hist)
         c.tier = u8(tier)
         c.record_json = json.dumps(record, sort_keys=True)
         c.ruling_json = json.dumps(ruling, sort_keys=True)
@@ -814,7 +885,7 @@ class DelayProof(gl.Contract):
             p = self._get_pool(int(pool_id))
             if not p.active or _parse_tx_time(self._now()) >= _parse_tx_time(p.expires_at):
                 _fail("pool is not accepting claims")
-        key = code + "|" + date + "|" + gl.message.sender_address.as_hex
+        key = _flight_key(code) + "|" + date + "|" + gl.message.sender_address.as_hex
         if key in self.claim_keys:
             _fail("you already have a claim for this flight and date")
         cid = self.next_claim
@@ -822,7 +893,7 @@ class DelayProof(gl.Contract):
             id=cid, claimant=gl.message.sender_address, flight=code, date=date, note=clean_note,
             evidence_json=json.dumps(ev), pool_id=u256(int(pool_id)), approved=False, status=STATUS_OPEN, tier=u8(0),
             record_json="", ruling_json="", history_json="[]", created_at=self._now(),
-            updated_at=self._now(), assessed_at="", paid=False,
+            updated_at=self._now(), assessed_at="", paid=False, reserved=u256(0),
         )
         self.claim_keys[key] = cid
         self.next_claim = u256(int(cid) + 1)
@@ -851,13 +922,15 @@ class DelayProof(gl.Contract):
 
     @gl.public.write
     def assess(self, claim_id: int) -> dict:
-        """Tier 1: one timing pass and one cause pass per validator."""
+        """Tier 1: one timing pass and one cause pass per validator. Claimant only,
+        so a respondent can't run (and then lock) the first ruling before the
+        claimant has added evidence (R2 P1-1)."""
         self._not_paused()
         c = self._get_claim(claim_id)
         if c.status != STATUS_OPEN:
             _fail("claim already assessed")
-        if not self._is_party(c):
-            _fail("only a party can request the assessment")
+        if gl.message.sender_address != c.claimant:
+            _fail("only the claimant can request the first assessment")
         record = self._assess(c, TIER_ANALYSTS[1])
         return self._apply(c, record, 1)
 
@@ -874,30 +947,51 @@ class DelayProof(gl.Contract):
         tier = int(c.tier)
         if tier >= MAX_TIER:
             _fail("already at the top tier")
-        hist = json.loads(c.history_json)
-        hist.append({"tier": tier, "record": json.loads(c.record_json), "ruling": json.loads(c.ruling_json)})
+        entry = {"tier": tier, "record": json.loads(c.record_json), "ruling": json.loads(c.ruling_json)}
         record = self._assess(c, TIER_ANALYSTS[tier + 1])
-        c.history_json = json.dumps(hist)
-        return self._apply(c, record, tier + 1)
+        return self._apply(c, record, tier + 1, entry)
 
     @gl.public.write
     def finalize(self, claim_id: int) -> None:
-        """The claimant can finalize only after the challenge window since the
-        latest assessment; the payer or respondent can accept it at any time."""
+        """Any party (claimant, linked payer, registered respondent) can finalize,
+        but only after the challenge window since the latest assessment. The one
+        exception is the top tier: no appeal is left, so it can be finalized at once."""
         self._not_paused()
         c = self._get_claim(claim_id)
         if c.status != STATUS_ASSESSED:
             _fail("only an assessed claim can be finalized")
-        if self._is_respondent(c):
-            pass
-        elif gl.message.sender_address == c.claimant:
+        if not self._is_party(c):
+            _fail("only a party can finalize")
+        if int(c.tier) < MAX_TIER:
             opens = _parse_tx_time(c.assessed_at) + timedelta(minutes=int(self.challenge_min))
             if _parse_tx_time(self._now()) < opens:
                 _fail(f"challenge window open until {opens.strftime('%Y-%m-%dT%H:%M:%SZ')}")
-        else:
-            _fail("only a party can finalize")
         c.status = STATUS_FINAL
         c.updated_at = self._now()
+        if c.approved and int(c.pool_id) != 0:
+            p = self._get_pool(int(c.pool_id))
+            if self._pool_pays(p, json.loads(c.ruling_json)) != "":
+                # Final and not payable by this pool: release the reservation and the per-flight slot (R2 P2-4).
+                self._release(c, p)
+
+    def _pool_pays(self, p: Pool, ruling: dict) -> str:
+        """Empty string if the pool pays this ruling, else the reason it does not."""
+        payable = (OUTCOME_OWED,) if p.owed_only else PAYABLE_OUTCOMES
+        if ruling.get("outcome") not in payable:
+            return "ruling is not payable"
+        if p.regime != "ANY" and p.regime != ruling.get("regime"):
+            return "pool does not cover this regime"
+        if ruling.get("regime") not in RULES or ruling.get("band") not in ("short", "medium", "long"):
+            return "ruling is not payable"
+        return ""
+
+    def _release(self, c: Claim, p: Pool) -> None:
+        p.encumbered = u256(max(0, int(p.encumbered) - int(c.reserved)))
+        c.reserved = u256(0)
+        c.approved = False
+        key = str(int(p.id)) + "|" + _flight_key(c.flight) + "|" + c.date
+        used = int(self.flight_counts.get(key, u32(0)))
+        self.flight_counts[key] = u32(max(0, used - 1))
 
     # ---------------------------------------------------------------- pools (testnet GEN)
 
@@ -905,6 +999,8 @@ class DelayProof(gl.Contract):
     def create_pool(self, name: str, regime: str, units_per_currency: int, days_valid: int = 30,
                     max_per_flight: int = 1, owed_only: bool = False) -> int:
         self._not_paused()
+        if self._is_owner():
+            _fail("the owner cannot be a payer")
         if regime not in ("EU261", "UK261", "ANY"):
             _fail("regime must be EU261, UK261 or ANY")
         if int(units_per_currency) <= 0:
@@ -918,7 +1014,7 @@ class DelayProof(gl.Contract):
         pid = self.next_pool
         self.pools[pid] = Pool(id=pid, payer=gl.message.sender_address, name=clean, regime=regime,
                                units_per_currency=u256(int(units_per_currency)), balance=u256(int(gl.message.value)),
-                               paid_out=u256(0), claims_paid=u32(0), expires_at=expires,
+                               encumbered=u256(0), paid_out=u256(0), claims_paid=u32(0), expires_at=expires,
                                max_per_flight=u32(int(max_per_flight)), owed_only=bool(owed_only), active=True)
         self.next_pool = u256(int(pid) + 1)
         return int(pid)
@@ -933,6 +1029,8 @@ class DelayProof(gl.Contract):
 
     @gl.public.write
     def set_pool_active(self, pool_id: int, active: bool) -> None:
+        """Closing a pool stops new claim links and new approvals only. Claims it
+        already approved keep their reservation and can still be paid (R2 P1-2)."""
         p = self._get_pool(pool_id)
         if gl.message.sender_address != p.payer:
             _fail("only the payer can change the pool")
@@ -940,24 +1038,38 @@ class DelayProof(gl.Contract):
 
     @gl.public.write
     def approve_claim(self, claim_id: int) -> None:
-        """The payer consents to pay this claim (if the final ruling is payable).
+        """The payer commits to pay this claim. Only an assessed (or final) claim
+        whose current ruling this pool pays can be approved. Approval reserves the
+        band's full amount (a later appeal can move 3-4 h long-haul to 4 h+),
+        which closing the pool, expiry or a pause can't take back.
         At most max_per_flight approved claims per (flight, date)."""
         self._not_paused()
         c = self._get_claim(claim_id)
         if int(c.pool_id) == 0:
             _fail("claim is not linked to a pool")
         p = self._get_pool(int(c.pool_id))
-        if gl.message.sender_address != p.payer:
+        if gl.message.sender_address != p.payer or self._is_owner():
             _fail("only the payer can approve")
         if c.approved:
             _fail("already approved")
         if not p.active or _parse_tx_time(self._now()) >= _parse_tx_time(p.expires_at):
             _fail("pool is not accepting claims")
-        key = str(int(p.id)) + "|" + c.flight + "|" + c.date
+        if c.status == STATUS_OPEN or c.paid:
+            _fail("only an assessed, unpaid claim can be approved")
+        ruling = json.loads(c.ruling_json)
+        why = self._pool_pays(p, ruling)
+        if why:
+            _fail(why)
+        reserve = int(RULES[ruling["regime"]][ruling["band"]]) * int(p.units_per_currency)
+        if reserve > int(p.balance) - int(p.encumbered):
+            _fail("pool balance too low to reserve this claim")
+        key = str(int(p.id)) + "|" + _flight_key(c.flight) + "|" + c.date
         used = int(self.flight_counts.get(key, u32(0)))
         if used >= int(p.max_per_flight):
             _fail("pool's limit for this flight is reached")
         self.flight_counts[key] = u32(used + 1)
+        p.encumbered = u256(int(p.encumbered) + reserve)
+        c.reserved = u256(reserve)
         c.approved = True
 
     @gl.public.write
@@ -975,18 +1087,17 @@ class DelayProof(gl.Contract):
         if not c.approved:
             _fail("the pool's payer has not approved this claim")
         p = self._get_pool(int(c.pool_id))
-        if not p.active or _parse_tx_time(self._now()) >= _parse_tx_time(p.expires_at):
-            _fail("pool is closed")
+        # No active/expiry check: an approved claim is a commitment backed by its reservation (R2 P1-2).
         ruling = json.loads(c.ruling_json)
-        payable = (OUTCOME_OWED,) if p.owed_only else PAYABLE_OUTCOMES
-        if ruling["outcome"] not in payable:
-            _fail("ruling is not payable")
-        if p.regime != "ANY" and p.regime != ruling["regime"]:
-            _fail("pool does not cover this regime")
+        why = self._pool_pays(p, ruling)
+        if why:
+            _fail(why)
         amount = int(ruling["amount"]) * int(p.units_per_currency)
         if amount <= 0 or amount > int(p.balance):
             _fail("pool balance too low")
         c.paid = True
+        p.encumbered = u256(max(0, int(p.encumbered) - int(c.reserved)))
+        c.reserved = u256(0)
         p.balance = u256(int(p.balance) - amount)
         p.paid_out = u256(int(p.paid_out) + amount)
         p.claims_paid = u32(int(p.claims_paid) + 1)
@@ -995,16 +1106,18 @@ class DelayProof(gl.Contract):
 
     @gl.public.write
     def withdraw_pool(self, pool_id: int) -> dict:
-        """After expiry the payer reclaims whatever is left."""
+        """After expiry the payer reclaims whatever is NOT reserved for approved
+        claims. Reserved amounts stay for those claimants, so a pause that runs
+        past expiry can't hand owed money back to the payer (R2 P1-2)."""
         p = self._get_pool(pool_id)
         if gl.message.sender_address != p.payer:
             _fail("only the payer can reclaim")
         if _parse_tx_time(self._now()) < _parse_tx_time(p.expires_at):
             _fail(f"pool is open until {p.expires_at}")
-        amount = int(p.balance)
+        amount = int(p.balance) - int(p.encumbered)
         if amount <= 0:
             _fail("nothing to reclaim")
-        p.balance = u256(0)
+        p.balance = u256(int(p.encumbered))
         p.active = False
         gl.get_contract_at(p.payer).emit_transfer(value=u256(amount))
         return {"pool_id": int(p.id), "amount": amount}
@@ -1024,7 +1137,10 @@ class DelayProof(gl.Contract):
         code = str(airline_code).strip().upper()
         if not re.fullmatch(r"[A-Z]{3}|[A-Z0-9]{2}", code):
             _fail("airline code must be 2 (IATA) or 3 (ICAO) characters")
-        self.respondents[code] = Address(address)
+        addr = Address(address)
+        if addr == self.owner:
+            _fail("the owner cannot be an airline respondent")
+        self.respondents[_canon_airline(code)] = addr
 
     @gl.public.write
     def transfer_ownership(self, new_owner: str) -> None:
@@ -1046,7 +1162,7 @@ class DelayProof(gl.Contract):
             "ruling": json.loads(c.ruling_json) if c.ruling_json else None,
             "history": json.loads(c.history_json), "created_at": c.created_at,
             "updated_at": c.updated_at, "assessed_at": c.assessed_at, "challenge_ends": window_end,
-            "paid": bool(c.paid),
+            "paid": bool(c.paid), "reserved": int(c.reserved), "flight_key": _flight_key(c.flight),
         }
 
     @gl.public.view
@@ -1058,13 +1174,22 @@ class DelayProof(gl.Contract):
         p = self._get_pool(pool_id)
         return {"id": int(p.id), "payer": p.payer.as_hex, "name": p.name, "regime": p.regime,
                 "units_per_currency": int(p.units_per_currency), "balance": int(p.balance),
+                "reserved": int(p.encumbered),
                 "paid_out": int(p.paid_out), "claims_paid": int(p.claims_paid), "expires_at": p.expires_at,
                 "max_per_flight": int(p.max_per_flight), "owed_only": bool(p.owed_only), "active": bool(p.active)}
 
     @gl.public.view
     def get_respondent(self, airline_code: str) -> str:
-        r = self.respondents.get(str(airline_code).strip().upper(), None)
+        r = self.respondents.get(_canon_airline(airline_code), None)
         return r.as_hex if r is not None else ""
+
+    @gl.public.view
+    def get_claim_id(self, flight: str, date: str, claimant: str) -> int:
+        """The claimant's existing claim id for this flight and date (any IATA/ICAO
+        spelling), or 0. Lets the app link to it instead of failing on a repeat."""
+        code, _, _ = _parse_flight(flight)
+        key = _flight_key(code) + "|" + str(date) + "|" + Address(claimant).as_hex
+        return int(self.claim_keys.get(key, u256(0)))
 
     @gl.public.view
     def list_recent(self, limit: int, before_id: int = 0) -> list:

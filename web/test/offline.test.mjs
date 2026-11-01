@@ -12,6 +12,8 @@ import { cardState, voteDots, hm } from "../src/lib/ruling.js";
 import { proofCardSVG } from "../src/lib/card.js";
 import { addTrip, emptyWallet, totals, tripsNewestFirst } from "../src/lib/wallet.js";
 import { SAMPLES } from "../src/lib/samples.js";
+import { readCallData, encodeCalldata, decodeCalldata } from "../src/lib/rpc.js";
+import { routeStatus, prettyDate, windowText } from "../src/lib/ruling.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.join(here, "../dist");
@@ -19,7 +21,7 @@ const dist = path.join(here, "../dist");
 const claim = (outcome, extra = {}) => ({
   id: 7, flight: "BA117", date: "2026-10-30", status: "assessed", tier: 1, analysts: 1,
   record: { status: "LANDED", bucket: "H4_PLUS", delay_min: 250, cause_class: "UNKNOWN", cause_label: "not stated",
-    route: { origin: "LHR", dest: "JFK" }, sources: [{ name: "flightstats", ok: true }], analysts: [{ status: "LANDED", delay_min: 250, cause_class: "UNKNOWN" }] },
+    route: { origin: "LHR", dest: "JFK" }, seen_route: "LHR-JFK", sources: [{ name: "flightstats", ok: true }], analysts: [{ status: "LANDED", delay_min: 250, cause_class: "UNKNOWN" }] },
   ruling: { outcome, regime: "UK261", amount: 520, currency: "GBP", distance_km: 5540, rule_set: "UK261", rules_version: "v1", explanation: "x", flags: [], ...extra },
 });
 
@@ -193,6 +195,62 @@ test("public note: blocks emails and booking references", () => {
   assert.ok(checkInputs({ flight: "BA117", date: "2026-10-30", note: "4 hours late on BA117, crew said tech fault" }, today).ok);
 });
 
+// ---- QUALITY-R2 ----------------------------------------------------------
+
+test("R2 P2-8: fetch reads are byte-identical to genlayer-js readContract", async () => {
+  const { abi } = await import("genlayer-js");
+  const { calldata, transactions } = abi;
+  for (const [fn, args] of [["get_config", []], ["get_claim", [6]], ["list_recent", [10]], ["get_claim_id", ["BA117", "2026-10-30", "0x" + "ab".repeat(20)]], ["x", ["é漢字".repeat(30), -5, true, null]]]) {
+    const theirs = transactions.serialize([calldata.encode(calldata.makeCalldataObject(fn, args.map((a) => (typeof a === "number" ? BigInt(a) : a)), undefined)), false]);
+    assert.equal(readCallData(fn, args), theirs, fn);
+  }
+  const v = { a: 1, b: [true, null, "s", -3], z: { y: "é" } };
+  assert.deepEqual(decodeCalldata(calldata.encode(v)), v);
+  assert.deepEqual([...encodeCalldata(v)], [...calldata.encode(v)]);
+});
+
+test("R2 P1-4: a route is shown only when the status page confirmed it (live claim #4 shape)", () => {
+  // contract v2's BA707 record: adsbdb said ZRH-LHR, the status page showed no airports
+  const ba707 = claim("INSUFFICIENT_DATA", { regime: "EU261", amount: 0, currency: "", distance_km: 788 });
+  ba707.record = { ...ba707.record, status: "UNKNOWN", bucket: "NONE", delay_min: -1, route: { origin: "ZRH", dest: "LHR", origin_country: "CH", dest_country: "GB" }, seen_route: "-" };
+  assert.equal(routeStatus(ba707), "unconfirmed");
+  const card = proofCardSVG(ba707).svg;
+  assert.doesNotMatch(card, /ZRH|788 km|EU 261/);
+  assert.doesNotMatch(describeClaim(ba707).lines.join(" "), /ZRH|EU261/);
+  assert.match(describeClaim(ba707).lines[0], /route not confirmed/);
+  assert.equal(routeStatus(claim("OWED")), "confirmed");
+  const half = claim("OWED", {}); half.record.seen_route = "-JFK";
+  assert.equal(routeStatus(half), "unconfirmed");
+});
+
+test("R2: leader-only cause label is not stated as fact in the letter", () => {
+  const c = claim("OWED");
+  c.record.cause_class = "CONTROLLABLE"; c.record.cause_label = "crew sickness";
+  assert.doesNotMatch(claimLetter(c), /crew sickness/);
+  assert.doesNotMatch(describeClaim(c).lines.join(" "), /crew sickness/);
+});
+
+test("R2 P2-6: halved and appeal-won owed-unless cards say unless", () => {
+  const h = claim("OWED_UNLESS_EXTRAORDINARY", { band: "long", bucket: "H3_4", amount: 260 });
+  assert.match(proofCardSVG(h).svg, /Owed, unless the airline proves/);
+  const a = { ...claim("OWED_UNLESS_EXTRAORDINARY"), tier: 2, history: [{ tier: 1, ruling: { outcome: "BORDERLINE" } }] };
+  assert.match(proofCardSVG(a).svg, /Appeal won: owed, unless/);
+});
+
+test("R2: dates and the window length are formatted, not hard-coded", () => {
+  assert.equal(prettyDate("2026-10-30"), "30 Oct 2026");
+  assert.equal(windowText(10), "10 minutes");
+  assert.equal(windowText(60), "1 hour");
+  assert.equal(windowText(1440), "1 day");
+  assert.equal(windowText(undefined), "set by the contract");
+});
+
+test("R2: no-amount proof card has no dead gap above the ticket", () => {
+  const svg = proofCardSVG(claim("NOT_OWED_UNDER_3H", { amount: 0 })).svg;
+  const ys = [...svg.matchAll(/<text x="540" y="(\d+)"[^>]*font-size="28"/g)].map((m) => Number(m[1])).filter((y) => y < 770);
+  assert.ok(ys.length && 770 - Math.max(...ys) < 240, `gap ${770 - Math.max(...ys)}`);
+});
+
 // ---- browser smoke (network to the RPC blocked) --------------------------
 async function serve() {
   const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".map": "application/json" };
@@ -313,6 +371,119 @@ test("every result state renders from labelled samples, never writes, and export
     assert.match(await page.textContent("#formerr"), /sample page/);
     assert.ok(!rpc.some((b) => /eth_sendRawTransaction|gen_sendRawTransaction|sendRawTransaction/.test(b)), "no write was attempted");
     assert.deepEqual(errors, []);
+  } finally { await browser.close(); server.close(); }
+});
+
+test("R2: shared link keeps &tx= in the URL, shows votes, and a read-only visit never loads genlayer-js", async (t) => {
+  let chromium;
+  try { ({ chromium } = await import("playwright")); } catch { t.skip("playwright not installed"); return; }
+  const { server, url } = await serve();
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(String(e)));
+    const chunks = [];
+    page.on("request", (r) => { if (/\/chunks\//.test(r.url())) chunks.push(r.url()); });
+    const live = claim("OWED_UNLESS_EXTRAORDINARY");
+    live.id = 6; live.claimant = "0x" + "11".repeat(20); live.history = []; live.evidence = []; live.pool_id = 0; live.challenge_ends = "2026-11-01T13:00:00Z"; live.status = "assessed";
+    const enc = (v) => Buffer.from(encodeCalldata(v)).toString("hex");
+    const tx = "0x" + "ab".repeat(32);
+    const views = {
+      [readCallData("get_claim", [6])]: live,
+      [readCallData("list_recent", [10])]: [live],
+      [readCallData("get_config", [])]: { challenge_minutes: 10, rules_version: "v", tier_analysts: { 1: 1, 2: 3, 3: 5 }, next_claim: 7 },
+      [readCallData("get_pool", [1])]: { active: true, expires_at: "2026-11-03T16:50:17Z" },
+    };
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+    await page.route(/studio\.genlayer\.com/, (r) => {
+      const body = JSON.parse(r.request().postData() ?? "{}");
+      let result = null;
+      if (body.method === "gen_call") {
+        const v = views[body.params[0].data];
+        if (v === undefined) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, error: { message: "execution failed" } }) });
+        result = enc(v);
+      } else if (body.method === "eth_getTransactionByHash") {
+        result = { hash: tx, to_address: "0x6F3dedC893C5769305912AA3fADd095E02FB1FBF", status: "FINALIZED", consensus_data: { votes: { a: "agree", b: "agree", c: "agree", d: "idle", e: "idle" } } };
+      }
+      return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, result }) });
+    });
+    await page.goto(`${url}?claim=6&tx=${tx}`);
+    await page.waitForSelector(".dp-verdict");
+    assert.match(await page.textContent(".dp-verdict"), /agree 3, idle 2/);
+    assert.match(page.url(), new RegExp(`claim=6&tx=${tx}`), "the deciding tx stays in the URL");
+    assert.match(await page.textContent(".how-decided"), /Leader's notes, not checked by consensus/);
+    await page.waitForFunction(() => /10 minutes/.test(document.querySelector("#contract").textContent));
+    assert.match(await page.textContent(".after__list"), /10 minutes/, "window text from the contract");
+    await page.waitForTimeout(400);
+    // only app.js's small static imports load; the lazy genlayer-js/viem chunks never do
+    const app = await readFile(path.join(dist, "app.js"), "utf8");
+    const staticChunks = new Set([...app.matchAll(/(?:from|import)\s*"\.\/chunks\/([^"]+)"/g)].map((m) => m[1]));
+    const lazy = chunks.map((u) => u.split("/chunks/")[1]).filter((n) => !staticChunks.has(n));
+    assert.deepEqual(lazy, [], "no genlayer-js chunk on a read-only visit");
+    // My trips now links with the tx
+    assert.match(await page.getAttribute("#wallet a", "href"), new RegExp(`&tx=${tx}`));
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); server.close(); }
+});
+
+test("R2 P1-9: re-checking a flight this browser already claimed opens that claim, with no write", async (t) => {
+  let chromium;
+  try { ({ chromium } = await import("playwright")); } catch { t.skip("playwright not installed"); return; }
+  const { server, url } = await serve();
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(String(e)));
+    const me = "0x" + "22".repeat(20);
+    await page.addInitScript((addr) => localStorage.setItem("delayproof.testnet-burner.v1", JSON.stringify({ privateKey: "0x" + "01".repeat(32), address: addr })), me);
+    const mine = { ...claim("OWED"), id: 3, claimant: me, status: "assessed", history: [], evidence: [], pool_id: 0 };
+    const enc = (v) => Buffer.from(encodeCalldata(v)).toString("hex");
+    const methods = [];
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+    await page.route(/studio\.genlayer\.com/, (r) => {
+      const body = JSON.parse(r.request().postData() ?? "{}");
+      methods.push(body.method);
+      // the deployed v2 contract has no get_claim_id view, so the app falls back to list_recent
+      const views = { [readCallData("list_recent", [50])]: [mine], [readCallData("list_recent", [10])]: [mine], [readCallData("get_claim", [3])]: mine };
+      const v = body.method === "gen_call" ? views[body.params[0].data] : undefined;
+      if (v === undefined) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, error: { message: "execution failed" } }) });
+      return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, result: enc(v) }) });
+    });
+    await page.goto(url);
+    await page.fill("#flight", "BA117"); await page.fill("#date", "2026-10-30"); await page.check("#consent");
+    assert.match(await page.textContent("#dateecho"), /30 Oct 2026/);
+    await page.click("#go");
+    await page.waitForSelector('.dp-verdict');
+    assert.match(page.url(), /\?claim=3/);
+    assert.ok(!methods.some((m) => /sendRawTransaction/.test(m)), "no write was attempted");
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); server.close(); }
+});
+
+test("R2 P1-8: a closed demo pool disables the payout option instead of failing the check", async (t) => {
+  let chromium;
+  try { ({ chromium } = await import("playwright")); } catch { t.skip("playwright not installed"); return; }
+  const { server, url } = await serve();
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const enc = (v) => Buffer.from(encodeCalldata(v)).toString("hex");
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+    await page.route(/studio\.genlayer\.com/, (r) => {
+      const body = JSON.parse(r.request().postData() ?? "{}");
+      const views = { [readCallData("get_pool", [1])]: { active: true, expires_at: "2026-11-03T16:50:17Z" } };
+      const v = body.method === "gen_call" ? views[body.params[0].data] : undefined;
+      if (v === undefined) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, error: { message: "no" } }) });
+      return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, result: enc(v) }) });
+    });
+    // freeze the clock after the pool's expiry
+    await page.addInitScript(() => { const T = Date.parse("2026-11-04T00:00:00Z"); const D = Date; Date.now = () => T; });
+    await page.goto(url);
+    await page.waitForFunction(() => document.querySelector("#poolnote").textContent.length > 0);
+    assert.equal(await page.isDisabled("#pool"), true);
+    assert.match(await page.textContent("#poolnote"), /closed/);
   } finally { await browser.close(); server.close(); }
 });
 

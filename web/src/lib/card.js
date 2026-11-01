@@ -47,10 +47,15 @@ export function proofCardSVG(claim, { votes = [], contract = "", sample = false 
   const state = cardState(claim);
   const r = claim?.ruling ?? {};
   const possibly = r.outcome === "POSSIBLY_OWED_CANCELLATION";
-  const k = STATE_COPY[possibly ? "possibly" : state === "owed" && r.outcome === "OWED_UNLESS_EXTRAORDINARY" ? "owed-unless" : state];
+  const unless = r.outcome === "OWED_UNLESS_EXTRAORDINARY";
+  let k = STATE_COPY[possibly ? "possibly" : state === "owed" && unless ? "owed-unless" : state];
+  // halved and appeal-won rulings can still be "owed unless" (QUALITY-R2 P2-6)
+  if (unless && state === "halved") k = { ...k, title: "Owed, unless the airline proves", sub: `extraordinary circumstances. ${k.sub}` };
+  if (unless && state === "appeal-upheld") k = { ...k, title: "Appeal won: owed, unless", sub: "the airline proves extraordinary circumstances" };
   const rec = claim?.record ?? {};
   const route = shownRoute(claim);
-  const cur = regimeCurrency(r.regime);
+  // the currency (and so "€0") is only a fact when the route, and with it the rule, was confirmed
+  const cur = route.origin ? regimeCurrency(r.regime) : "";
   const amount = PAYABLE.has(r.outcome) || possibly ? money(r.amount, r.currency || cur) : state === "not-owed" && cur ? (cur === "GBP" ? "£0" : "€0") : "";
   // NONE means "no arrival delay established" (unknown, cancelled or diverted), never "on time".
   const BAND = { LT_2H: "Under 2h late", H2_3: "2 to 3h late", H3_4: "3 to 4h late", H4_PLUS: "4h+ late" };
@@ -58,9 +63,11 @@ export function proofCardSVG(claim, { votes = [], contract = "", sample = false 
     : BAND[rec.bucket] ? `${BAND[rec.bucket]} (agreed)` : rec.status === "LANDED" ? "Arrival delay not established" : "";
   const reported = rec.status !== "CANCELLED" && hm(rec.delay_min) ? `${hm(rec.delay_min)} at the gate, per the public record` : "";
   const d = describe(claim);
-  const why = state === "halved" ? k.sub : possibly ? `${k.sub}. Cancelled.` : k.sub && state === "owed" ? `${k.sub}. ${r.explanation ?? ""}` : (r.explanation ?? "");
+  const why = state === "halved" ? k.sub : possibly ? `${k.sub}. Cancelled.` : k.sub && (state === "owed" || state === "appeal-upheld") ? `${k.sub}. ${r.explanation ?? ""}` : (r.explanation ?? "");
   const wrapped = wrap(why, 52).slice(0, 3);
   const t = tally(votes);
+  // no amount tiles: move the heading block down so the text sits near the ticket, not above a dead gap
+  const off = amount ? 0 : 120;
   const alt = `${k.title}${amount ? " " + amount : ""}. Flight ${claim?.flight ?? ""} on ${claim?.date ?? ""}${route.origin ? `, ${route.origin} to ${route.dest}` : ""}${delay ? `, ${delay}` : ""}.${t ? " " + t + "." : ""} Information, not legal advice. Test mode.`;
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350" role="img" aria-label="${X(alt)}">
@@ -69,11 +76,11 @@ export function proofCardSVG(claim, { votes = [], contract = "", sample = false 
 <g transform="translate(72 84)"><rect width="56" height="56" rx="12" fill="${P.amber}"/><path d="M14 30l9 9 19-21" stroke="${P.bg}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="76" y="40" font-family="'Schibsted Grotesk','Inter',system-ui,sans-serif" font-weight="800" font-size="36" fill="${P.text}">DelayProof</text></g>
 <g transform="translate(1008 84)"><rect x="-236" width="236" height="48" rx="24" fill="${P.amber}"/><text x="-118" y="32" text-anchor="middle" font-family="'IBM Plex Mono',ui-monospace,monospace" font-weight="600" font-size="20" fill="${P.bg}">${sample ? "SAMPLE · TEST MODE" : "TEST MODE"}</text></g>
-<text x="540" y="246" text-anchor="middle" font-family="'IBM Plex Mono',ui-monospace,monospace" font-weight="600" font-size="26" letter-spacing="4" fill="${k.accent}">${X(k.eyebrow)}</text>
-<text x="540" y="322" text-anchor="middle" font-family="'Schibsted Grotesk','Inter',system-ui,sans-serif" font-weight="800" font-size="64" fill="${P.text}">${X(k.title)}</text>
+<text x="540" y="${246 + off}" text-anchor="middle" font-family="'IBM Plex Mono',ui-monospace,monospace" font-weight="600" font-size="26" letter-spacing="4" fill="${k.accent}">${X(k.eyebrow)}</text>
+<text x="540" y="${322 + off}" text-anchor="middle" font-family="'Schibsted Grotesk','Inter',system-ui,sans-serif" font-weight="800" font-size="64" fill="${P.text}">${X(k.title)}</text>
 ${amount ? tiles(amount, 540, 370, k.accent) : ""}
 ${amount ? `<text x="540" y="572" text-anchor="middle" font-family="'Inter',system-ui,sans-serif" font-size="26" fill="${P.muted}">${possibly ? "maximum " : ""}per passenger${r.regime ? ` · under ${X(r.regime === "UK261" ? "UK 261" : "EU 261/2004")}` : ""}</text>` : ""}
-${wrapped.map((l, i) => `<text x="540" y="${(amount ? 632 : 420) + i * 38}" text-anchor="middle" font-family="'Inter',system-ui,sans-serif" font-size="28" fill="${P.text}">${X(l)}</text>`).join("")}
+${wrapped.map((l, i) => `<text x="540" y="${(amount ? 632 : 420 + off) + i * 38}" text-anchor="middle" font-family="'Inter',system-ui,sans-serif" font-size="28" fill="${P.text}">${X(l)}</text>`).join("")}
 <g transform="translate(72 770)">
 <rect width="936" height="300" rx="24" fill="${P.bg2}" stroke="${P.line}"/>
 <line x1="660" y1="0" x2="660" y2="300" stroke="${P.line}" stroke-dasharray="8 8"/>

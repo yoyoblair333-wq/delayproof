@@ -15,14 +15,16 @@ SOURCE_NOTES = {
     "BA117": "Timing from the live FlightStats page for that date (scheduled 12:20, actual 11:56 EDT: early). No evidence page. Pool-linked: the payer approved it, the claimant's finalize inside the 10-minute challenge window reverted, and the finalize after it succeeded; NOT_OWED, so no payout.",
     "LOG31": "Timing (cancelled) from FlightStats; the cause pass read the attached AirHelp page tying the cancellation to the Kirkwall ATC staffing closure. Appealed to 3 analysts per validator, who all agreed.",
     "SN3289": "FlightStats said DATE IS OUT OF RANGE. The attached page reports the cancellation, but in v2 evidence pages can't set timing, so the status is UNKNOWN and the ruling INSUFFICIENT_DATA. (Under v1 the same page produced POSSIBLY_OWED_CANCELLATION.) The page still informed the cause: crew illness, CONTROLLABLE.",
-    "BA707": "FlightStats said DATE IS OUT OF RANGE, so timing is UNKNOWN and the ruling INSUFFICIENT_DATA; the attached page could only inform the cause (technical fault). Date checked against the page: it says the flight was \"scheduled to arrive on 19 October 2026\" (Larnaca to Heathrow, diverted to Gatwick, arrived after midnight), so 2026-10-19 is the scheduled date.",
+    "BA707": "FlightStats said DATE IS OUT OF RANGE, so timing is UNKNOWN and the ruling INSUFFICIENT_DATA; the attached page could only inform the cause (technical fault). Date checked against the page: it says the flight was \"scheduled to arrive on 19 October 2026\" (Larnaca to Heathrow, diverted to Gatwick, arrived after midnight), so 2026-10-19 is the scheduled date. The route database (adsbdb) returned ZRH → LHR for BA707; the status page showed no airports, so v2 had nothing to compare it with and did not flag it, and the ruling below still carries that unconfirmed route's EU261 regime and 788 km. The evidence page describes Larnaca → Heathrow, so the database route is wrong for this flight. Contract v3 (not yet deployed) makes such a ruling INSUFFICIENT_DATA with no regime or distance, and the web app no longer shows an unconfirmed route.",
     "ZZ9999": "No source knew the flight: FLIGHT_NOT_FOUND.",
 }
 
 CURRENT_NOTE = ("No live claim has reached OWED yet: no flight in FlightStats' free 3-day window arrived 3+ hours late on a covered route "
                 "during the runs. The OWED payout path (approve, window, finalize, withdraw) is covered by the direct-mode tests. "
                 "All guards above reverted with the expected `[EXPECTED]` reason; ACCEPTED with ERROR is the final state for a revert. "
-                "The claimant in this run is a fresh burner key; the payer is the throwaway test key.\n")
+                "The claimant in this run is a fresh burner key; the payer is the throwaway test key. "
+                "The demo pool (id 1) expires 2026-11-03T16:50:17Z (read live with `get_pool(1)` on 2026-11-01); after that the site "
+                "disables the payout option.\n")
 
 
 def render(run, w, heading):
@@ -42,7 +44,11 @@ def render(run, w, heading):
     w.append("| Step | Tx | Final status | Consensus | Execution | Validators | Note |\n|---|---|---|---|---|---|---|")
     for s in run["steps"]:
         f = s.get("final") or {}
-        w.append(f"| {s['label']} | `{s.get('tx', '-')}` | {f.get('status', '-')} | {f.get('result', '-')} | {f.get('execution', '-')} | {votes(f.get('votes'))} | {f.get('error') or s.get('error', '') or ''} |")
+        label = s["label"]
+        if run.get("_current") and "route database disagrees" in label:
+            # the label was written before this run; on v2 the status page showed no airports, so nothing disagreed on-chain
+            label = label.replace("route database disagrees", "label written before the run: on v2 the route was unconfirmed, not in conflict")
+        w.append(f"| {label} | `{s.get('tx', '-')}` | {f.get('status', '-')} | {f.get('result', '-')} | {f.get('execution', '-')} | {votes(f.get('votes'))} | {f.get('error') or s.get('error', '') or ''} |")
     w.append("")
     for c in run.get("claims", []):
         r, rec = c.get("ruling") or {}, c.get("record") or {}
@@ -57,7 +63,15 @@ def render(run, w, heading):
         if rec:
             route = rec.get("route") or {}
             w.append(f"- Agreed record: {rec.get('status')}, delay {rec.get('delay_min')} min ({rec.get('bucket')}), cause {rec.get('cause_class')} ({rec.get('cause_label')})")
-            w.append(f"- Route: {route.get('origin', '?')} → {route.get('dest', '?')} ({route.get('airline_name', '')})")
+            seen = str(rec.get("seen_route") or "-").split("-")
+            if route and len(seen) == 2 and seen == [route.get("origin"), route.get("dest")]:
+                w.append(f"- Route (database, confirmed by the status page): {route.get('origin')} → {route.get('dest')} ({route.get('airline_name', '')})")
+            elif route:
+                why = "showed different airports" if len(seen) == 2 and seen[0] and seen[1] else "showed no airports"
+                w.append(f"- Route database (adsbdb) said {route.get('origin', '?')} → {route.get('dest', '?')} ({route.get('airline_name', '')}); "
+                         f"**not confirmed**: the status page {why}, so this route is not a fact about the flight")
+            else:
+                w.append("- Route: unknown (the route database had no entry)")
             w.append(f"- Sources each validator loaded: " + ", ".join(f"{s['name']} {'ok' if s['ok'] else 'FAILED'}" for s in rec.get("sources", [])))
             w.append(f"- Analysts: " + "; ".join(f"{a['status']} {a['delay_min']} min {a['cause_class']}" for a in rec.get("analysts", [])))
             w.append(f"- Reason given: \"{rec.get('reason', '')}\"")

@@ -37,7 +37,7 @@
     <div class="hero__copy">
       <p class="kicker">Late flight? Check what the rules say.</p>
       <h1 id="hero-h" class="dp-display">Your flight was late. Find out if you're owed <span class="hl">€250 to €600</span>.</h1>
-      <p class="lede">What counts is how late you <b>arrived</b>: 3 hours or more on a flight covered by EU or UK rules (£220 to £520 in the UK). Validators hosted by GenLayer each pull the public flight record and must <b>agree</b> before a ruling exists. Free, public, appealable.</p>
+      <p class="lede">What counts is how late you <b>arrived</b>: 3 hours or more under EU rules, more than 3 hours under UK rules (£220 to £520). Validators hosted by GenLayer each pull the public flight record and must <b>agree</b> before a ruling exists. Free, public, appealable.</p>
 
       <form id="form" class="dp-card dp-card--raised checker" novalidate aria-labelledby="check-h">
         <h2 id="check-h" class="dp-label-caps">Check a flight</h2>
@@ -49,8 +49,9 @@
           </div>
           <div class="dp-field">
             <label class="dp-label" for="date">Date it was scheduled to leave</label>
-            <input class="dp-input" id="date" name="date" type="date" required aria-describedby="date-hint">
-            <p class="dp-hint" id="date-hint">Works best for the last few days. Older flight? Add a public evidence link under "More options".</p>
+            <input class="dp-input" id="date" name="date" type="date" required aria-describedby="date-hint dateecho">
+            <p class="dp-hint" id="date-hint">Works for flights in roughly the last 3 days: the public flight-status page doesn't cover older dates.</p>
+            <p class="dp-hint dateecho" id="dateecho" aria-live="polite"></p>
           </div>
         </div>
         <details class="more">
@@ -67,7 +68,8 @@
             <label class="dp-sr-only" for="ev2">Evidence link 2</label><input class="dp-input evurl" id="ev2" type="url" placeholder="https://…">
             <label class="dp-sr-only" for="ev3">Evidence link 3</label><input class="dp-input evurl" id="ev3" type="url" placeholder="https://…">
           </fieldset>
-          <label class="dp-check"><input type="checkbox" id="pool"> <span>Ask the demo payer to cover it if it's ruled owed (test mode, no real money; the payer has to approve)</span></label>
+          <label class="dp-check"><input type="checkbox" id="pool" aria-describedby="poolnote"> <span>Ask the demo payer to cover it if it's ruled owed (test mode, no real money; the payer has to approve)</span></label>
+          <p class="dp-hint" id="poolnote"></p>
         </details>
         <label class="dp-check"><input type="checkbox" id="consent"> <span>I understand my flight, date and note will be public, and this is information, not legal advice.</span></label>
         <p class="dp-error-text err" id="formerr" role="alert"></p>
@@ -114,7 +116,7 @@
     <ul class="after__list">
       <li><b>Proof card.</b> A shareable card with the flight, the delay band, the cause and the amount, linked to the public record.</li>
       <li><b>Claim letter.</b> If you're owed, a ready letter to the airline that cites the record. You send it yourself; there's no fee.</li>
-      <li><b>Appeal.</b> Think it's wrong? Ask for a bigger panel: 1, then 3, then 5 analysts. You can appeal, and so can a payer covering the claim or an airline address registered with the project; each can add public evidence first. You can lock the ruling once the challenge window (an hour) has passed.</li>
+      <li><b>Appeal.</b> Think it's wrong? Ask for a bigger panel: 1, then 3, then 5 analysts. You can appeal, and so can a payer covering the claim or an airline address registered with the project; each can add public evidence about the cause first. Nobody, not you, the payer or the airline, can make a ruling final until the challenge window (<span data-window>set by the contract</span>) after the latest decision has passed; only the 5-analyst final appeal can be made final at once.</li>
       <li><b>What the airline is bound by.</b> The law (EU261/UK261), not this ruling. The ruling is checkable evidence, not a court order. If the airline refuses, the UK CAA, a national enforcement body or a small-claims court decides.</li>
     </ul>
   </section>
@@ -134,7 +136,7 @@
   <section class="bands dp-container dp-container--wide" aria-labelledby="bands-h">
     <div class="bands__copy">
       <h2 id="bands-h" class="dp-h2">How much could you be owed?</h2>
-      <p>For a flight that lands 3 hours or more late, EU and UK rules set the amount by distance: <b>€250 / £220</b> up to 1,500 km, <b>€400 / £350</b> up to 3,500 km, and <b>€600 / £520</b> beyond that. A long-haul flight that is 3 to 4 hours late pays half (€300 / £260).</p>
+      <p>For a flight that lands 3 hours or more late, EU and UK rules set the amount by distance: <b>€250 / £220</b> up to 1,500 km, <b>€400 / £350</b> up to 3,500 km, and <b>€600 / £520</b> beyond that. A long-haul flight that is 3 to 4 hours late pays half (€300 / £260). Under EU rules a flight within the EU stays at €400 even beyond 3,500 km.</p>
       <p class="dp-hint">Not owed for "extraordinary circumstances" like severe weather or an air-traffic-control strike. Technical faults and the airline's own staff strikes usually don't count as extraordinary. Sources: Reg. (EC) 261/2004 Art. 7; UK CAA.</p>
     </div>
     <img class="bands__art" src="assets/owed-by-distance.svg" alt="Amounts by distance: up to 1,500 km €250 (UK £220); 1,500 to 3,500 km €400 (UK £350); over 3,500 km €600 (UK £520)." width="1080" height="1350" loading="lazy">

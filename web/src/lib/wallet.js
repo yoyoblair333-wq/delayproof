@@ -14,7 +14,7 @@ export const STAMPS = [
 export function emptyWallet() { return { v: 1, trips: {}, stamps: {} }; }
 
 /** Record (or refresh) a real claim this browser opened or viewed. */
-export function addTrip(wallet, claim, { mine = false, now = new Date() } = {}) {
+export function addTrip(wallet, claim, { mine = false, now = new Date(), tx = "" } = {}) {
   const w = structuredClone(wallet ?? emptyWallet());
   if (!claim || claim.id === undefined) return w;
   const prev = w.trips[claim.id] ?? {};
@@ -23,6 +23,8 @@ export function addTrip(wallet, claim, { mine = false, now = new Date() } = {}) 
     id: claim.id, flight: claim.flight, date: claim.date,
     state: cardState(claim), outcome: r.outcome ?? "", amount: PAYABLE.has(r.outcome) ? Number(r.amount) || 0 : 0,
     currency: r.currency ?? "", mine: prev.mine || mine, seen: now.toISOString(),
+    // the deciding tx, so My trips links can show the votes again (kept while the tier is unchanged)
+    tx: /^0x[0-9a-fA-F]{64}$/.test(tx) ? tx : prev.tier === claim.tier ? prev.tx ?? "" : "", tier: claim.tier,
   };
   if (w.trips[claim.id].mine) {
     stamp(w, "first-check", now);

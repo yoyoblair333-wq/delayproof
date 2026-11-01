@@ -98,10 +98,14 @@ class TestPoolDrain:
         with direct_vm.expect_revert("challenge window open until 2026-11-01T13:50:00Z"):
             dp.finalize(cid)
 
-    def test_payer_can_finalize_early(self, direct_vm, dp, direct_alice, direct_bob):
+    def test_payer_cannot_finalize_early(self, direct_vm, dp, direct_alice, direct_bob):
+        # Contract v3 (R2 P1-1): the window binds the payer too.
         pid = make_pool(direct_vm, dp, direct_bob)
         cid = assessed(direct_vm, dp, direct_alice, pid)
         direct_vm.sender = direct_bob
+        with direct_vm.expect_revert("challenge window open until 2026-11-01T13:00:00Z"):
+            dp.finalize(cid)
+        set_tx_time(direct_vm, LATER)
         dp.finalize(cid)
         assert dp.get_claim(cid)["status"] == "final"
 
@@ -142,11 +146,9 @@ class TestPoolDrain:
         pid = make_pool(direct_vm, dp, direct_bob, owed_only=True)
         cid = assessed(direct_vm, dp, direct_alice, pid, cause="UNKNOWN")
         direct_vm.sender = direct_bob
-        dp.approve_claim(cid)
-        dp.finalize(cid)
-        direct_vm.sender = direct_alice
+        # Contract v3: an OWED_UNLESS ruling can't be approved by an owed-only pool.
         with direct_vm.expect_revert("ruling is not payable"):
-            dp.withdraw_payout(cid)
+            dp.approve_claim(cid)
 
     def test_only_payer_tops_up(self, direct_vm, dp, direct_alice, direct_bob):
         pid = make_pool(direct_vm, dp, direct_bob)
@@ -171,16 +173,19 @@ class TestPoolExpiry:
         with direct_vm.expect_revert("nothing to reclaim"):
             dp.withdraw_pool(pid)
 
-    def test_no_payout_after_expiry(self, direct_vm, dp, direct_alice, direct_bob):
+    def test_approved_claim_still_paid_after_expiry(self, direct_vm, dp, direct_alice, direct_bob):
+        # Contract v3 (R2 P1-2): expiry no longer voids an approved claim; its reservation stays.
         pid = make_pool(direct_vm, dp, direct_bob, days=1)
         cid = assessed(direct_vm, dp, direct_alice, pid)
         direct_vm.sender = direct_bob
         dp.approve_claim(cid)
+        set_tx_time(direct_vm, LATER)
         dp.finalize(cid)
         set_tx_time(direct_vm, "2026-11-03T00:00:00Z")
+        assert dp.withdraw_pool(pid)["amount"] == 20_800 - 5200
         direct_vm.sender = direct_alice
-        with direct_vm.expect_revert("pool is closed"):
-            dp.withdraw_payout(cid)
+        assert dp.withdraw_payout(cid)["amount"] == 5200
+        assert dp.get_pool(pid)["balance"] == 0
 
     @pytest.mark.parametrize("args", [("p", "ANY", 10, 0, 1, False), ("p", "ANY", 10, 400, 1, False), ("p", "ANY", 10, 30, 0, False)])
     def test_bad_pool_limits(self, direct_vm, dp, args):
@@ -221,6 +226,7 @@ class TestRespondentAuth:
         mock_sources(direct_vm, "BAW117")
         direct_vm.mock_llm(PROMPT_RE, analyst())
         dp.appeal(cid)
+        set_tx_time(direct_vm, LATER)          # v3: the window binds respondents too
         dp.finalize(cid)
         assert dp.get_claim(cid)["status"] == "final"
 

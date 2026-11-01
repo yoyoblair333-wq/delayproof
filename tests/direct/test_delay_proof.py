@@ -48,7 +48,8 @@ class TestOpenClaim:
     def test_icao_flightstats_url(self, direct_vm, dp):
         direct_vm.mock_web(r"api\.adsbdb\.com/v0/callsign/LOG31$", {"method": "GET", "status": 200, "body": conftest.route_body("BA117")})
         direct_vm.mock_web(r"flightstats\.com/v2/flight-tracker/LOG/31\?year=2026&month=10&date=29$", {"method": "GET", "status": 200, "body": "Cancelled"})
-        direct_vm.mock_llm(PROMPT_RE, analyst(status="CANCELLED", delay=-1, cause="EXTRAORDINARY", label="ATC closure"))
+        direct_vm.mock_llm(PROMPT_RE, analyst(status="CANCELLED", delay=-1, cause="EXTRAORDINARY", label="ATC closure",
+                                                       origin="LHR", dest="JFK"))
         cid = dp.open_claim("LOG31", "2026-10-29")
         assert dp.assess(cid)["outcome"] == "LIKELY_EXTRAORDINARY"
 
@@ -216,7 +217,7 @@ class TestRulings:
     def test_flightstats_url_is_date_specific(self, direct_vm, dp):
         direct_vm.mock_web(r"api\.adsbdb\.com", {"method": "GET", "status": 200, "body": conftest.route_body("BA117")})
         direct_vm.mock_web(r"flightstats\.com/v2/flight-tracker/BA/117\?year=2026&month=10&date=30$", {"method": "GET", "status": 200, "body": "Arrival Scheduled 12:20 Actual 16:30"})
-        direct_vm.mock_llm(PROMPT_RE, analyst())
+        direct_vm.mock_llm(PROMPT_RE, analyst(origin="LHR", dest="JFK"))
         cid = dp.open_claim("BA117", "2026-10-30")
         assert dp.assess(cid)["outcome"] == "OWED"
 
@@ -256,8 +257,12 @@ class TestRulings:
 
     @pytest.mark.parametrize("bad", ["LONDON", "lh", "12A", None])
     def test_junk_iata_ignored(self, direct_vm, dp, bad):
+        # Junk codes are dropped; with only one airport seen the route is unconfirmed (R2 P1-4),
+        # so nothing route-derived is ruled on.
         cid, r = open_and_assess(direct_vm, dp, origin=bad, dest="JFK")
-        assert r["outcome"] == "OWED" and dp.get_claim(cid)["record"]["seen_route"] == "-JFK"
+        assert dp.get_claim(cid)["record"]["seen_route"] == "-JFK"
+        assert r["outcome"] == "INSUFFICIENT_DATA" and "route_unconfirmed" in r["flags"]
+        assert r["regime"] == "" and r["distance_km"] == -1 and r["amount"] == 0
 
     def test_rules_version_recorded(self, direct_vm, dp):
         _, r = open_and_assess(direct_vm, dp)
@@ -347,7 +352,8 @@ class TestConsensus:
         direct_vm.mock_llm(PROMPT_RE, analyst())
         cid = dp.open_claim("BA117", "2026-10-30")
         r = dp.assess(cid)
-        assert r["outcome"] == "NOT_COVERED" and dp.get_claim(cid)["record"]["route"] == {}
+        # An unknown route is not "not covered": nothing can be said about coverage (R2 P1-4).
+        assert r["outcome"] == "INSUFFICIENT_DATA" and r["regime"] == "" and dp.get_claim(cid)["record"]["route"] == {}
 
     def test_evidence_pages_are_fetched_and_labelled(self, direct_vm, dp):
         mock_sources(direct_vm, "BA117")
@@ -476,23 +482,41 @@ class TestPools:
         direct_vm.sender = direct_bob
         assert dp.appeal(cid)["outcome"] == "OWED"
 
+    def claim_assessed(self, vm, dp, claimant, pid, **llm):
+        vm.sender = claimant
+        mock_sources(vm, "BA117")
+        vm.mock_llm(PROMPT_RE, analyst(**llm))
+        cid = dp.open_claim("BA117", "2026-10-30", "", "", pid)
+        dp.assess(cid)
+        return cid
+
+    # Contract v3 (R2 P1-2 / P2-4): approval is a commitment, so it is refused up front
+    # when the current ruling isn't payable by the pool or the pool can't reserve it.
     def test_not_payable_outcome(self, direct_vm, dp, direct_alice, direct_bob):
         pid = self.make_pool(direct_vm, dp, direct_bob)
-        cid = self.claim_final(direct_vm, dp, direct_alice, direct_bob, pid, delay=60)
+        cid = self.claim_assessed(direct_vm, dp, direct_alice, pid, delay=60)
+        direct_vm.sender = direct_bob
         with direct_vm.expect_revert("ruling is not payable"):
+            dp.approve_claim(cid)
+        set_tx_time(direct_vm, "2026-11-01T13:01:00Z")
+        direct_vm.sender = direct_alice
+        dp.finalize(cid)
+        with direct_vm.expect_revert("payer has not approved"):
             dp.withdraw_payout(cid)
 
     def test_regime_mismatch(self, direct_vm, dp, direct_alice, direct_bob):
         pid = self.make_pool(direct_vm, dp, direct_bob, regime="EU261")
-        cid = self.claim_final(direct_vm, dp, direct_alice, direct_bob, pid)
+        cid = self.claim_assessed(direct_vm, dp, direct_alice, pid)
+        direct_vm.sender = direct_bob
         with direct_vm.expect_revert("pool does not cover this regime"):
-            dp.withdraw_payout(cid)
+            dp.approve_claim(cid)
 
     def test_balance_too_low(self, direct_vm, dp, direct_alice, direct_bob):
         pid = self.make_pool(direct_vm, dp, direct_bob, value=100)
-        cid = self.claim_final(direct_vm, dp, direct_alice, direct_bob, pid)
-        with direct_vm.expect_revert("pool balance too low"):
-            dp.withdraw_payout(cid)
+        cid = self.claim_assessed(direct_vm, dp, direct_alice, pid)
+        direct_vm.sender = direct_bob
+        with direct_vm.expect_revert("pool balance too low to reserve"):
+            dp.approve_claim(cid)
 
     def test_only_claimant_withdraws(self, direct_vm, dp, direct_alice, direct_bob):
         pid = self.make_pool(direct_vm, dp, direct_bob)
@@ -532,7 +556,7 @@ class TestAdmin:
         direct_vm.sender = direct_bob
         cid = c.open_claim("BA117", "2026-10-30")
         direct_vm.sender = direct_alice
-        with direct_vm.expect_revert("only a party can request the assessment"):
+        with direct_vm.expect_revert("only the claimant can request the first assessment"):
             c.assess(cid)
 
     def test_list_recent(self, direct_vm, dp):
