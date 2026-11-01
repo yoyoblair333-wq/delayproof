@@ -121,6 +121,12 @@ for (const c of PLAN.claims ?? []) {
   }
 }
 
+// ---- extra operations on existing claims (e.g. appeal ladder, respondent evidence) ----
+for (const op of PLAN.ops ?? []) {
+  await write(op.label, op.fn, op.args.map((x) => (typeof x === "number" ? BigInt(x) : x)), 0n, op.until ?? "FINALIZED");
+}
+for (const id of PLAN.snapshot ?? []) { (run.claims ??= []).push(plain(await read("get_claim", [BigInt(id)]))); save(); }
+
 // ---- guards that must revert ----
 for (const g of PLAN.guards ?? []) {
   await write(`guard: ${g.label}`, g.fn, g.args.map((x) => (typeof x === "number" ? BigInt(x) : x)), 0n, "ACCEPTED");

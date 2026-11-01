@@ -31,3 +31,19 @@
   recent rulings, code-hash page, reviewer guide). verify.sh: VERIFY: PASS
   (91 contract tests, lint, typecheck, web build, 9 offline web tests incl. 375 px browser).
 - Live evidence run #2 in progress on `0x76b28bDC23C86CFB9AE80b3f29643482Aed4BC45`.
+
+## 2026-11-01 ~08:15 PT — hour 3
+- **Live evidence complete** on `0x76b28bDC23C86CFB9AE80b3f29643482Aed4BC45` (stored code = source,
+  sha256 `cb2d3eb7…9b87`). docs/LIVE_EVIDENCE.md has every tx:
+  - BA117 30-Oct: validators fetched FlightStats, agreed LANDED on time → NOT_OWED_UNDER_3H; appeal to
+    3 analysts agreed; finalized.
+  - BA436 31-Oct with a claimant evidence page: agreed LANDED 40 min late ("departed 17 minutes late and
+    arrived 40 minutes late") → NOT_OWED_UNDER_3H; linked to the testnet pool; withdraw correctly refused.
+  - ZZ9999: agreed NOT_FOUND → FLIGHT_NOT_FOUND.
+  - Guards reverted on-chain: future date, prompt injection in note, bad flight code, withdraw non-payable.
+  - **Browser-signed** claim #4 (BA173 31-Oct) from the built page in headless Chromium: 33 s to an agreed
+    ruling. Then airline-side evidence, appeal to 3, appeal to 5 analysts (5/5 agree), appeal past the top
+    tier refused.
+- Not shown live: an OWED payout (no 3h+ delayed flight found within FlightStats' free window during the
+  run). The payout path is covered by direct-mode tests (pool lifecycle, double-pay, regime, balance).
+- Fixed: mobile stamp overlap on the proof card; final rail step now ticks done.

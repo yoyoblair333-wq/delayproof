@@ -55,6 +55,24 @@ def main():
         if run.get("pool_after"):
             w.append(f"- Pool after: `{json.dumps(run['pool_after'])}`")
         w.append("")
+    ladder = LIVE / "run-2-ladder.json"
+    if ladder.exists():
+        r2 = json.loads(ladder.read_text())
+        w.append("## Appeal ladder to the top tier (browser claim #4)\n")
+        w.append("Second invocation of `tools/live_run.mjs` (`docs/live/run-2-ladder.json`) on the same contract: the airline-side evidence slot, "
+                 "both appeals, and an appeal past the top tier that must revert.\n")
+        w.append("| Step | Tx | Final status | Execution | Validators | Note |\n|---|---|---|---|---|---|")
+        for st in r2["steps"]:
+            f = st.get("final") or {}
+            w.append(f"| {st['label']} | `{st.get('tx', '-')}` | {f.get('status', '-')} | {f.get('execution', '-')} | {votes(f.get('votes'))} | {f.get('error') or ''} |")
+        for c in r2.get("claims", []):
+            rec, r = c.get("record") or {}, c.get("ruling") or {}
+            w.append("")
+            w.append(f"- Claim #{c['id']} {c['flight']} {c['date']}: tier {c['tier']} ({c['analysts']} analysts per validator), "
+                     f"analysts: " + "; ".join(f"{a['status']} {a['delay_min']} min {a['cause_class']}" for a in rec.get("analysts", [])))
+            w.append(f"- Sources: " + ", ".join(f"{s2['name']} {'ok' if s2['ok'] else 'FAILED'}" for s2 in rec.get("sources", [])))
+            w.append(f"- Ruling: **{r.get('outcome')}**; earlier tiers: " + "; ".join(f"tier {h['tier']} {h['ruling'].get('outcome')}" for h in c.get("history", [])))
+        w.append("")
     b = LIVE / "browser-run.json"
     if b.exists():
         br = json.loads(b.read_text())

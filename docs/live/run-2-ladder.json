@@ -1,0 +1,426 @@
+{
+ "network": "studionet",
+ "startedAt": "2026-11-01T14:26:13.328Z",
+ "deployer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+ "contract": "0x76b28bDC23C86CFB9AE80b3f29643482Aed4BC45",
+ "contract_file": "contracts/delay_proof.py",
+ "contract_code_sha256": "cb2d3eb7f02b4b1dc8d4d5821ed3f5df8561641143f42f9873eae90773f19b87",
+ "steps": [
+  {
+   "label": "respondent evidence on #4",
+   "fn": "add_evidence",
+   "args": [
+    "4",
+    "respondent",
+    "[\"https://www.caa.co.uk/passengers/resolving-travel-problems/delays-and-cancellations/delays/\"]"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T14:26:13.780Z",
+   "tx": "0x5d356cde2f6c962a64f9fe60de41ddca0df8715c6a2ee17f3dbc7e95b33cbe41",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:26:14.318Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:26:19.698Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 4,
+     "idle": 1
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "appeal #4 to 3 analysts",
+   "fn": "appeal",
+   "args": [
+    "4"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T14:26:19.699Z",
+   "tx": "0xc20ea3e4c997cd473a1661d471bce656b27331b1ba58d79c5ba9c22ac82e6760",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:26:20.229Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:26:25.579Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T14:26:36.327Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T14:26:52.372Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T14:27:24.645Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "idle": 2,
+     "agree": 3
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "appeal #4 to 5 analysts",
+   "fn": "appeal",
+   "args": [
+    "4"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T14:27:24.649Z",
+   "tx": "0xa9cd965e2ec9796018bd8c2aa309c2b34516fa6aee4422c1fb4dda8ee7982b84",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:27:25.177Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:27:32.592Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T14:27:48.709Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T14:28:15.510Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T14:28:42.393Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "appeal #4 beyond top tier (must revert)",
+   "fn": "appeal",
+   "args": [
+    "4"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T14:28:42.395Z",
+   "tx": "0x1ee79256d90416347ef798597faf55e44272a6ccd66aecd4b93b43208f54fcef",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:28:42.942Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:28:48.325Z",
+     "status": "REVEALING"
+    },
+    {
+     "at": "2026-11-01T14:28:59.079Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "idle": 1,
+     "agree": 4
+    },
+    "error": "[EXPECTED] already at the top tier"
+   }
+  }
+ ],
+ "stored_code_sha256": "cb2d3eb7f02b4b1dc8d4d5821ed3f5df8561641143f42f9873eae90773f19b87",
+ "code_matches": true,
+ "claims": [
+  {
+   "analysts": 5,
+   "claimant": "0xCad8C71c982B8aDA35b52d4c36D60E6b3b08Bd06",
+   "created_at": "2026-11-01T14:24:21.578410Z",
+   "date": "2026-10-31",
+   "evidence": [
+    {
+     "side": "respondent",
+     "url": "https://www.caa.co.uk/passengers/resolving-travel-problems/delays-and-cancellations/delays/"
+    }
+   ],
+   "flight": "BA173",
+   "history": [
+    {
+     "record": {
+      "analysts": [
+       {
+        "cause_class": "UNKNOWN",
+        "delay_min": 0,
+        "status": "LANDED"
+       }
+      ],
+      "bucket": "LT_2H",
+      "cause_class": "UNKNOWN",
+      "cause_label": "not stated",
+      "delay_min": 0,
+      "reason": "According to flightstats, BA173 arrived at JFK at 15:19 EDT, which was 6 minutes earlier than the scheduled arrival time of 15:25 EDT.",
+      "route": {
+       "airline": "BA",
+       "airline_country": "GB",
+       "airline_name": "British Airways",
+       "dest": "JFK",
+       "dest_country": "US",
+       "dest_lat": 40639800,
+       "dest_lon": -73778900,
+       "origin": "LHR",
+       "origin_country": "GB",
+       "origin_lat": 51470600,
+       "origin_lon": -461940
+      },
+      "sources": [
+       {
+        "name": "adsbdb",
+        "ok": true
+       },
+       {
+        "name": "flightstats",
+        "ok": true
+       }
+      ],
+      "status": "LANDED"
+     },
+     "ruling": {
+      "amount": 0,
+      "band": "long",
+      "bucket": "LT_2H",
+      "cause_class": "UNKNOWN",
+      "currency": "",
+      "delay_min": 0,
+      "distance_km": 5540,
+      "explanation": "Arrived less than 3 hours late.",
+      "flags": [],
+      "outcome": "NOT_OWED_UNDER_3H",
+      "regime": "UK261",
+      "rule_set": "UK261 (more than 3 hours)",
+      "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)"
+     },
+     "tier": 1
+    },
+    {
+     "record": {
+      "analysts": [
+       {
+        "cause_class": "UNKNOWN",
+        "delay_min": 0,
+        "status": "LANDED"
+       },
+       {
+        "cause_class": "UNKNOWN",
+        "delay_min": 0,
+        "status": "LANDED"
+       },
+       {
+        "cause_class": "UNKNOWN",
+        "delay_min": 0,
+        "status": "LANDED"
+       }
+      ],
+      "bucket": "LT_2H",
+      "cause_class": "UNKNOWN",
+      "cause_label": "not stated",
+      "delay_min": 0,
+      "reason": "FlightStats shows that British Airways flight BA173 arrived on time on October 31, 2026.",
+      "route": {
+       "airline": "BA",
+       "airline_country": "GB",
+       "airline_name": "British Airways",
+       "dest": "JFK",
+       "dest_country": "US",
+       "dest_lat": 40639800,
+       "dest_lon": -73778900,
+       "origin": "LHR",
+       "origin_country": "GB",
+       "origin_lat": 51470600,
+       "origin_lon": -461940
+      },
+      "sources": [
+       {
+        "name": "adsbdb",
+        "ok": true
+       },
+       {
+        "name": "flightstats",
+        "ok": true
+       },
+       {
+        "name": "evidence:respondent",
+        "ok": true
+       }
+      ],
+      "status": "LANDED"
+     },
+     "ruling": {
+      "amount": 0,
+      "band": "long",
+      "bucket": "LT_2H",
+      "cause_class": "UNKNOWN",
+      "currency": "",
+      "delay_min": 0,
+      "distance_km": 5540,
+      "explanation": "Arrived less than 3 hours late.",
+      "flags": [],
+      "outcome": "NOT_OWED_UNDER_3H",
+      "regime": "UK261",
+      "rule_set": "UK261 (more than 3 hours)",
+      "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)"
+     },
+     "tier": 2
+    }
+   ],
+   "id": 4,
+   "note": "",
+   "paid": false,
+   "pool_id": 0,
+   "record": {
+    "analysts": [
+     {
+      "cause_class": "UNKNOWN",
+      "delay_min": 0,
+      "status": "LANDED"
+     },
+     {
+      "cause_class": "UNKNOWN",
+      "delay_min": 0,
+      "status": "LANDED"
+     },
+     {
+      "cause_class": "UNKNOWN",
+      "delay_min": 0,
+      "status": "LANDED"
+     },
+     {
+      "cause_class": "UNKNOWN",
+      "delay_min": 0,
+      "status": "LANDED"
+     },
+     {
+      "cause_class": "UNKNOWN",
+      "delay_min": 0,
+      "status": "LANDED"
+     }
+    ],
+    "bucket": "LT_2H",
+    "cause_class": "UNKNOWN",
+    "cause_label": "not stated",
+    "delay_min": 0,
+    "reason": "FlightStats showed BA173 on 31-Oct-2026 as Arrived, with scheduled arrival 15:25 EDT and actual arrival 15:19 EDT.",
+    "route": {
+     "airline": "BA",
+     "airline_country": "GB",
+     "airline_name": "British Airways",
+     "dest": "JFK",
+     "dest_country": "US",
+     "dest_lat": 40639800,
+     "dest_lon": -73778900,
+     "origin": "LHR",
+     "origin_country": "GB",
+     "origin_lat": 51470600,
+     "origin_lon": -461940
+    },
+    "sources": [
+     {
+      "name": "adsbdb",
+      "ok": true
+     },
+     {
+      "name": "flightstats",
+      "ok": true
+     },
+     {
+      "name": "evidence:respondent",
+      "ok": true
+     }
+    ],
+    "status": "LANDED"
+   },
+   "ruling": {
+    "amount": 0,
+    "band": "long",
+    "bucket": "LT_2H",
+    "cause_class": "UNKNOWN",
+    "currency": "",
+    "delay_min": 0,
+    "distance_km": 5540,
+    "explanation": "Arrived less than 3 hours late.",
+    "flags": [],
+    "outcome": "NOT_OWED_UNDER_3H",
+    "regime": "UK261",
+    "rule_set": "UK261 (more than 3 hours)",
+    "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)"
+   },
+   "status": "assessed",
+   "tier": 3,
+   "updated_at": "2026-11-01T14:27:24.957394Z"
+  }
+ ],
+ "config": {
+  "delay_threshold_min": 180,
+  "long_km": 3500,
+  "next_claim": 5,
+  "next_pool": 2,
+  "owner": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+  "paused": false,
+  "relayer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+  "route_source": "https://api.adsbdb.com/v0/callsign/{flight}",
+  "rules": {
+   "EU261": {
+    "currency": "EUR",
+    "long": 600,
+    "long_3_4h": 300,
+    "medium": 400,
+    "short": 250
+   },
+   "UK261": {
+    "currency": "GBP",
+    "long": 520,
+    "long_3_4h": 260,
+    "medium": 350,
+    "short": 220
+   }
+  },
+  "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+  "short_km": 1500,
+  "status_sources": [
+   "flightstats"
+  ],
+  "tier_analysts": {
+   "1": 1,
+   "2": 3,
+   "3": 5
+  }
+ },
+ "finishedAt": "2026-11-01T14:29:01.301Z"
+}
