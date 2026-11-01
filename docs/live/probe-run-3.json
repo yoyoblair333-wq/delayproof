@@ -1,0 +1,62 @@
+{
+ "network": "studionet",
+ "startedAt": "2026-11-01T14:11:21.315Z",
+ "deployer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+ "address": "0x11639B6EAD6A312a91C538903b7322c0D3383990",
+ "deployTx": null,
+ "probes": [
+  {
+   "url": "https://www.flightaware.com/live/cancelled/yesterday/BAW",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:11:21.316Z",
+   "tx": "0x6931ac226cd44f2d4b00ee83419e0941da930e7a3f6a0b889f7fa211e9f6c82b",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.flightaware.com/live/cancelled/yesterday/BAW | text | {\"ok\": true, \"status\": 0, \"length\": 1535, \"head\": \"Join FlightAware\\nLogin\\n09:11AM EST\\n\\u0627\\u0644\\u0639\\u0631\\u0628\\u064a\\u0629\\n\\u010ce\\u0161tina\\nDeutsch\\nEnglish (Australia)\\nEnglish (Canada)\\nEnglish (UK)\\nEnglish (USA)\\nEspa\\u00f1ol (Espa\\u00f1a)\\nEspa\\u00f1ol\\nSuomi\\nFran\\u00e7ais (Canada)\\nFran\\u00e7ais (France)\\n\\u05e2\\u05b4\\u05d1\\u05b0\\u05e8\\u05b4\\u05d9\\u05ea\\n\\u0939\\u093f\\u0928\\u094d\\u0926\\u0940\\nHrvatski\\nItaliano\\n\\u65e5\\u672c\\u8a9e\\n\\ud55c\\uad6d\\uc5b4\\nPolski\\nPortugu\\u00eas (Brasil)\\nPortugu\\u00eas (Portugal)\\n\\u0420\\u0443\\u0441\\u0441\\u043a\\u0438\\u0439\\nT\\u00fcrk\\u00e7e\\n\\u4e2d\\u6587(\\u7b80\\u4f53)\\n\\u4e2d\\u6587(\\u9999\\u6e2f)\\n\\u4e2d\\u6587(\\u53f0\\u7063)\\n\\nAll\\nAll\\nRoute\\nAirline flight\\nPrivate flight (tail #)\\nAirport\\n\\nForgot the flight number?\\nSign Up\\nProducts\\nIndustries\\nADS-B\\nFlight Tracking\\nCommunity\\nCompany\\nFlightAware.com live flight delay and cancellation statistics for yesterday at\\n\\nThursdayFridayYesterdayTodayTomorrowTuesday\\nFilter all stats by airport: Go\\nTotal delays yesterday at : 0\\nTotal delays within, into, or out of the United States yesterday at : 0\\nTotal cancellations yesterday at : 0\\nTotal cancellations within, into, or out of the United States yesterday at : 0\\nSee all delays.\\nSee the MiseryMap for a live visualization of flight delays.\\n\\nBY AIRLINE BY ORIGIN AIRPORT BY DESTINATION AIRPORT\\n\\nFlightAware provides accurate real-time, historical and predictive flight insights to all segments of the aviation industry.\\n\\nProducts & Services\\nAeroAPI\\nFlightAware Firehose\\nFlightAware Foresight\\nRapid Reports\\nCustom Reports\\nFlightAware Aviator\\nPremium Subscriptions\\nFlightAware Global\\nFlightAware FBO Toolbox\\nFlightAware TV\\u2120\\nGlobalBeacon\\nCompany\\nAbout\\nCareers\\nHistory\\nAdvertise With Us\\nNewsroom\\nBlog\\nWebinars\\nCommunity\\nPhotos\\nSquawks\\nDiscussions\\nHost an ADS-B Site\\nSupport\\nContact Us\\nFAQs\\nEnglish (USA)\\n2026 FlightAware\\nTerms of Use\\nPrivacy\\nCookie Settings\"}"
+  },
+  {
+   "url": "https://www.flightaware.com/live/cancelled/yesterday/EZY",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:11:41.879Z",
+   "tx": "0x65e15fcb9f80d4172291df511443534038fe20ce2db5e106933c67654100d9f1",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.flightaware.com/live/cancelled/yesterday/EZY | text | {\"ok\": true, \"status\": 0, \"length\": 1535, \"head\": \"Join FlightAware\\nLogin\\n09:11AM EST\\n\\u0627\\u0644\\u0639\\u0631\\u0628\\u064a\\u0629\\n\\u010ce\\u0161tina\\nDeutsch\\nEnglish (Australia)\\nEnglish (Canada)\\nEnglish (UK)\\nEnglish (USA)\\nEspa\\u00f1ol (Espa\\u00f1a)\\nEspa\\u00f1ol\\nSuomi\\nFran\\u00e7ais (Canada)\\nFran\\u00e7ais (France)\\n\\u05e2\\u05b4\\u05d1\\u05b0\\u05e8\\u05b4\\u05d9\\u05ea\\n\\u0939\\u093f\\u0928\\u094d\\u0926\\u0940\\nHrvatski\\nItaliano\\n\\u65e5\\u672c\\u8a9e\\n\\ud55c\\uad6d\\uc5b4\\nPolski\\nPortugu\\u00eas (Brasil)\\nPortugu\\u00eas (Portugal)\\n\\u0420\\u0443\\u0441\\u0441\\u043a\\u0438\\u0439\\nT\\u00fcrk\\u00e7e\\n\\u4e2d\\u6587(\\u7b80\\u4f53)\\n\\u4e2d\\u6587(\\u9999\\u6e2f)\\n\\u4e2d\\u6587(\\u53f0\\u7063)\\n\\nAll\\nAll\\nRoute\\nAirline flight\\nPrivate flight (tail #)\\nAirport\\n\\nForgot the flight number?\\nSign Up\\nProducts\\nIndustries\\nADS-B\\nFlight Tracking\\nCommunity\\nCompany\\nFlightAware.com live flight delay and cancellation statistics for yesterday at\\n\\nThursdayFridayYesterdayTodayTomorrowTuesday\\nFilter all stats by airport: Go\\nTotal delays yesterday at : 0\\nTotal delays within, into, or out of the United States yesterday at : 0\\nTotal cancellations yesterday at : 0\\nTotal cancellations within, into, or out of the United States yesterday at : 0\\nSee all delays.\\nSee the MiseryMap for a live visualization of flight delays.\\n\\nBY AIRLINE BY ORIGIN AIRPORT BY DESTINATION AIRPORT\\n\\nFlightAware provides accurate real-time, historical and predictive flight insights to all segments of the aviation industry.\\n\\nProducts & Services\\nAeroAPI\\nFlightAware Firehose\\nFlightAware Foresight\\nRapid Reports\\nCustom Reports\\nFlightAware Aviator\\nPremium Subscriptions\\nFlightAware Global\\nFlightAware FBO Toolbox\\nFlightAware TV\\u2120\\nGlobalBeacon\\nCompany\\nAbout\\nCareers\\nHistory\\nAdvertise With Us\\nNewsroom\\nBlog\\nWebinars\\nCommunity\\nPhotos\\nSquawks\\nDiscussions\\nHost an ADS-B Site\\nSupport\\nContact Us\\nFAQs\\nEnglish (USA)\\n2026 FlightAware\\nTerms of Use\\nPrivacy\\nCookie Settings\"}"
+  },
+  {
+   "url": "https://www.flightaware.com/live/cancelled/yesterday/RYR",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:11:57.873Z",
+   "tx": "0x19636619b2b3548355aee2729ac696402b214c4924f35439fa8ab4f186278be1",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.flightaware.com/live/cancelled/yesterday/RYR | text | {\"ok\": true, \"status\": 0, \"length\": 1535, \"head\": \"Join FlightAware\\nLogin\\n09:11AM EST\\n\\u0627\\u0644\\u0639\\u0631\\u0628\\u064a\\u0629\\n\\u010ce\\u0161tina\\nDeutsch\\nEnglish (Australia)\\nEnglish (Canada)\\nEnglish (UK)\\nEnglish (USA)\\nEspa\\u00f1ol (Espa\\u00f1a)\\nEspa\\u00f1ol\\nSuomi\\nFran\\u00e7ais (Canada)\\nFran\\u00e7ais (France)\\n\\u05e2\\u05b4\\u05d1\\u05b0\\u05e8\\u05b4\\u05d9\\u05ea\\n\\u0939\\u093f\\u0928\\u094d\\u0926\\u0940\\nHrvatski\\nItaliano\\n\\u65e5\\u672c\\u8a9e\\n\\ud55c\\uad6d\\uc5b4\\nPolski\\nPortugu\\u00eas (Brasil)\\nPortugu\\u00eas (Portugal)\\n\\u0420\\u0443\\u0441\\u0441\\u043a\\u0438\\u0439\\nT\\u00fcrk\\u00e7e\\n\\u4e2d\\u6587(\\u7b80\\u4f53)\\n\\u4e2d\\u6587(\\u9999\\u6e2f)\\n\\u4e2d\\u6587(\\u53f0\\u7063)\\n\\nAll\\nAll\\nRoute\\nAirline flight\\nPrivate flight (tail #)\\nAirport\\n\\nForgot the flight number?\\nSign Up\\nProducts\\nIndustries\\nADS-B\\nFlight Tracking\\nCommunity\\nCompany\\nFlightAware.com live flight delay and cancellation statistics for yesterday at\\n\\nThursdayFridayYesterdayTodayTomorrowTuesday\\nFilter all stats by airport: Go\\nTotal delays yesterday at : 0\\nTotal delays within, into, or out of the United States yesterday at : 0\\nTotal cancellations yesterday at : 0\\nTotal cancellations within, into, or out of the United States yesterday at : 0\\nSee all delays.\\nSee the MiseryMap for a live visualization of flight delays.\\n\\nBY AIRLINE BY ORIGIN AIRPORT BY DESTINATION AIRPORT\\n\\nFlightAware provides accurate real-time, historical and predictive flight insights to all segments of the aviation industry.\\n\\nProducts & Services\\nAeroAPI\\nFlightAware Firehose\\nFlightAware Foresight\\nRapid Reports\\nCustom Reports\\nFlightAware Aviator\\nPremium Subscriptions\\nFlightAware Global\\nFlightAware FBO Toolbox\\nFlightAware TV\\u2120\\nGlobalBeacon\\nCompany\\nAbout\\nCareers\\nHistory\\nAdvertise With Us\\nNewsroom\\nBlog\\nWebinars\\nCommunity\\nPhotos\\nSquawks\\nDiscussions\\nHost an ADS-B Site\\nSupport\\nContact Us\\nFAQs\\nEnglish (USA)\\n2026 FlightAware\\nTerms of Use\\nPrivacy\\nCookie Settings\"}"
+  },
+  {
+   "url": "https://www.flightaware.com/live/flight/BAW117/history",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:12:09.535Z",
+   "tx": "0x81e3c543039adbc9c3236d317cee6196f01da3d97951e709f0f1c6c0ebcdc4c0",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.flightaware.com/live/flight/BAW117/history | text | {\"ok\": true, \"status\": 0, \"length\": 2840, \"head\": \"Join FlightAware\\nLogin\\n09:12AM EST\\n\\u0627\\u0644\\u0639\\u0631\\u0628\\u064a\\u0629\\n\\u010ce\\u0161tina\\nDeutsch\\nEnglish (Australia)\\nEnglish (Canada)\\nEnglish (UK)\\nEnglish (USA)\\nEspa\\u00f1ol (Espa\\u00f1a)\\nEspa\\u00f1ol\\nSuomi\\nFran\\u00e7ais (Canada)\\nFran\\u00e7ais (France)\\n\\u05e2\\u05b4\\u05d1\\u05b0\\u05e8\\u05b4\\u05d9\\u05ea\\n\\u0939\\u093f\\u0928\\u094d\\u0926\\u0940\\nHrvatski\\nItaliano\\n\\u65e5\\u672c\\u8a9e\\n\\ud55c\\uad6d\\uc5b4\\nPolski\\nPortugu\\u00eas (Brasil)\\nPortugu\\u00eas (Portugal)\\n\\u0420\\u0443\\u0441\\u0441\\u043a\\u0438\\u0439\\nT\\u00fcrk\\u00e7e\\n\\u4e2d\\u6587(\\u7b80\\u4f53)\\n\\u4e2d\\u6587(\\u9999\\u6e2f)\\n\\u4e2d\\u6587(\\u53f0\\u7063)\\n\\nAll\\nAll\\nRoute\\nAirline flight\\nPrivate flight (tail #)\\nAirport\\nSign Up\\nProducts\\nIndustries\\nADS-B\\nFlight Tracking\\nCommunity\\nCompany\\nBAW117 Flight Activity History\\n\\nLive \\u2708 BAW117 Flight Status\\nACTIVITY LOG\\nWant a full history search for BAW117 dating back to 1998? Buy now. Get it within one hour.\\nDate Aircraft Origin Destination Departure Arrival Duration\\n02-Nov-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:30AM GMT 11:10AM EST Scheduled\\n01-Nov-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:45AM GMT 10:43AM EST En Route\\n31-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:46AM GMT 11:51AM EDT 7:04\\n30-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:38AM GMT 11:46AM EDT 7:08\\n29-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:37AM GMT 11:35AM EDT 6:57\\n28-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:52AM GMT 12:05PM EDT 7:13\\n27-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 09:12AM GMT 12:18PM EDT 7:06\\n26-Oct-2026 B77W Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 11:26AM GMT 02:31PM EDT 7:04\\n25-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:42AM GMT 11:56AM EDT 7:14\\n24-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:33AM BST 10:57AM EDT 7:24\\n23-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:46AM BST 10:56AM EDT 7:10\\n22-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:43AM BST 11:18AM EDT 7:34\\n21-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:44AM BST 10:55AM EDT 7:10\\n20-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:37AM BST 10:58AM EDT 7:20\\n19-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:47AM BST 11:03AM EDT 7:16\\n18-Oct-2026 B772 Heathrow (LHR / EGLL) John F Kennedy Intl (KJFK) 08:47AM BST 11:13AM EDT 7:25\\nBasic users (becoming a basic user is free and easy!) view 3 months history. Join\\n\\nFlightAware provides accurate real-time, historical and predictive flight insights to all segments of the aviation industry.\\n\\nProducts & Services\\nAeroAPI\\nFlightAware Firehose\\nFlightAware Foresight\\nRapid Reports\\nCustom Reports\\nFlightAware Aviator\\nPremium Subscriptions\\nFlightAware Global\\nFlightAware FBO Toolbox\\nFlightAware TV\\u2120\\nGlobalBeacon\\nCompany\\nAbout\\nCareers\\nHistory\\nAdvertise With Us\\nNewsroom\\nBlog\\nWebinars\\nCommunity\\nPhotos\\nSquawks\\nDiscussions\\nHost an ADS-B Site\\nSupport\\nContact Us\\nFAQs\\nEnglish (USA)\\n2026 FlightAware\\nTerms of Use\\nPrivacy\\nCookie Settings\"}"
+  }
+ ],
+ "finishedAt": "2026-11-01T14:12:29.845Z"
+}

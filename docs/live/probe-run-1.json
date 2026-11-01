@@ -1,0 +1,114 @@
+{
+ "network": "studionet",
+ "startedAt": "2026-11-01T14:02:44.485Z",
+ "deployer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+ "address": "0xe69AD1b6C9E6b2430bD57076301DA6ca5CcdE33d",
+ "deployTx": "0xb900cc11281ca0b2e602458bbcedc1bf82da1a86842d844f5a9122df60237239",
+ "probes": [
+  {
+   "url": "https://example.com",
+   "mode": "get",
+   "sentAt": "2026-11-01T14:02:49.969Z",
+   "tx": "0xe09afc965ad583fbb26676a0edf0bc2f8149d157c5f82cdaf0c6b6c5239fbfac",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://example.com | get | {\"ok\": true, \"status\": 200, \"length\": 577, \"head\": \"<!doctype html><html lang=en><head><meta charset=utf-8><link rel=icon href=data:,><meta name=viewport content=\\\"width=device-width,initial-scale=1\\\"><title>Example Domain</title><style>html{color-scheme:light dark;background:light-dark(#eee,#222)}body{font:16px/1.6 system-ui,sans-serif;max-width:26em;margin:auto;padding:25vh 2em 2em;text-align:center}</style></head><body><p>This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.</p><script src=/s.js></script></body></html>\\n\"}"
+  },
+  {
+   "url": "https://api.adsbdb.com/v0/callsign/BAW117",
+   "mode": "get",
+   "sentAt": "2026-11-01T14:03:01.387Z",
+   "tx": "0x3df9c1da7ea2f60c75c37414c5126b6bed16e08addf340fe2983cea89215e3a9",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://api.adsbdb.com/v0/callsign/BAW117 | get | {\"ok\": true, \"status\": 200, \"length\": 681, \"head\": \"{\\\"response\\\":{\\\"flightroute\\\":{\\\"callsign\\\":\\\"BAW117\\\",\\\"callsign_icao\\\":\\\"BAW117\\\",\\\"callsign_iata\\\":\\\"BA117\\\",\\\"airline\\\":{\\\"name\\\":\\\"British Airways\\\",\\\"icao\\\":\\\"BAW\\\",\\\"iata\\\":\\\"BA\\\",\\\"country\\\":\\\"United Kingdom\\\",\\\"country_iso\\\":\\\"GB\\\",\\\"callsign\\\":\\\"SPEEDBIRD\\\"},\\\"origin\\\":{\\\"country_iso_name\\\":\\\"GB\\\",\\\"country_name\\\":\\\"United Kingdom\\\",\\\"elevation\\\":83,\\\"iata_code\\\":\\\"LHR\\\",\\\"icao_code\\\":\\\"EGLL\\\",\\\"latitude\\\":51.4706,\\\"longitude\\\":-0.46194,\\\"municipality\\\":\\\"London\\\",\\\"name\\\":\\\"London Heathrow Airport\\\"},\\\"destination\\\":{\\\"country_iso_name\\\":\\\"US\\\",\\\"country_name\\\":\\\"United States\\\",\\\"elevation\\\":13,\\\"iata_code\\\":\\\"JFK\\\",\\\"icao_code\\\":\\\"KJFK\\\",\\\"latitude\\\":40.6398,\\\"longitude\\\":-73\"}"
+  },
+  {
+   "url": "https://www.flightaware.com/live/flight/BAW117",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:03:12.939Z",
+   "tx": "0x85dbf814d4839f135f7134ea7a749af60352a087eb1ef88427b519cb5999cc70",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.flightaware.com/live/flight/BAW117 | text | {\"ok\": true, \"status\": 0, \"length\": 4341, \"head\": \"Join FlightAware\\nLogin\\n09:03AM EST\\n\\u0627\\u0644\\u0639\\u0631\\u0628\\u064a\\u0629\\n\\u010ce\\u0161tina\\nDeutsch\\nEnglish (Australia)\\nEnglish (Canada)\\nEnglish (UK)\\nEnglish (USA)\\nEspa\\u00f1ol (Espa\\u00f1a)\\nEspa\\u00f1ol\\nSuomi\\nFran\\u00e7ais (Canada)\\nFran\\u00e7ais (France)\\n\\u05e2\\u05b4\\u05d1\\u05b0\\u05e8\\u05b4\\u05d9\\u05ea\\n\\u0939\\u093f\\u0928\\u094d\\u0926\\u0940\\nHrvatski\\nItaliano\\n\\u65e5\\u672c\\u8a9e\\n\\ud55c\\uad6d\\uc5b4\\nPolski\\nPortugu\\u00eas (Brasil)\\nPortugu\\u00eas (Portugal)\\n\\u0420\\u0443\\u0441\\u0441\\u043a\\u0438\\u0439\\nT\\u00fcrk\\u00e7e\\n\\u4e2d\\u6587(\\u7b80\\u4f53)\\n\\u4e2d\\u6587(\\u9999\\u6e2f)\\n\\u4e2d\\u6587(\\u53f0\\u7063)\\n\\nAll\\nAll\\nRoute\\nAirline flight\\nPrivate flight (tail #)\\nAirport\\nSign Up\\nProducts\\nIndustries\\nADS-B\\nFlight Tracking\\nCommunity\\nCompany\\nBritish Airways 117\\nBAW117 / BA117\\nUpgrade to see tail number and ATC callsign\\nEN ROUTE AND ON TIME\\nArriving in 2 hours\\nLHR\\nLONDON, UNITED KINGDOM\\nJFK\\nNEW \"}"
+  },
+  {
+   "url": "https://www.flightstats.com/v2/flight-tracker/BA/117",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:03:29.113Z",
+   "tx": "0x3ab3e6c41e2623ea7f2b9700ad4e25e9a815b6172a76c6e6261892d567ed26f2",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.flightstats.com/v2/flight-tracker/BA/117 | text | {\"ok\": true, \"status\": 0, \"length\": 1708, \"head\": \"Follow us on\\nCREATE ACCOUNT\\nLogin\\nFlights\\nAirports\\nOn-Time Performance\\nCirium\\nResources\\nMy FlightStats\\nTrack a Flight\\nSEARCH\\nADVANCED SEARCH\\n(BA) British Airways 117 Flight Tracker\\nFlight Status\\nBA 117\\nBritish Airways\\nLHR\\nLondon\\nJFK\\nNew York\\nDeparted\\nOn time\\nLondon, EN, GB\\nLondon Heathrow Airport\\nFlight Departure Times\\n01-Nov-2026\\nScheduled\\n08:20 GMT\\nActual\\n08:22 GMT\\nTerminal\\n5\\nGate\\nC61\\nNew York, NY, US\\nNew York John F. Kennedy International Airport\\nFlight Arrival Times\\n01-Nov-2026\\nScheduled\\n11:20 EST\\nEstimated\\n11:01 EST\\nTerminal\\n8\\nGate\\nN/A\\nVIEW FLIGHT DETAILS\\nSET UP FLIGHT ALERTS\\nON-TIME PERF\"}"
+  },
+  {
+   "url": "https://www.airportia.com/flights/ba117/",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:03:44.899Z",
+   "tx": "0x8cf0bbc6f5c48322c7846d1411c9ca0b52077a248e4868b3ce3b8c9a00646fb6",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.airportia.com/flights/ba117/ | text | {\"ok\": false, \"status\": -1, \"length\": 0, \"head\": \"ERR {'causes': ['WEBPAGE_LOAD_FAILED'], 'ctx': {'body': 'Sorry, you have been blocked\\\\nYou are unable to access airportia.com\\\\nWhy have I been blocked?\\\\n\\\\nThis website is using a security service to protect itself from online attacks. The action you just performed triggered the security solution. Th\"}"
+  },
+  {
+   "url": "https://www.radarbox.com/data/flights/BA117",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:03:56.119Z",
+   "tx": "0xcf36924926fb9dbb6bea0a4706b947942b444f8134571235573ec4bd2cbf5913",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.radarbox.com/data/flights/BA117 | text | {\"ok\": false, \"status\": -1, \"length\": 0, \"head\": \"ERR {'causes': ['WEBPAGE_LOAD_FAILED'], 'ctx': {'body': '', 'status': 403, 'url': 'https://www.radarbox.com/data/flights/BA117'}}\"}"
+  },
+  {
+   "url": "https://opensky-network.org/api/flights/departure?airport=EGLL&begin=1793404800&end=1793408400",
+   "mode": "get",
+   "sentAt": "2026-11-01T14:04:07.611Z",
+   "tx": "0xd190058ffe9031299e2bc6fbec12022145c0a91c6472c7ef92bde11227468eaa",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://opensky-network.org/api/flights/departure?airport=EGLL&begin=1793404800&end=1793408400 | get | {\"ok\": false, \"status\": -1, \"length\": 0, \"head\": \"ERR {'causes': ['SENDING_REQUEST'], 'ctx': {'rust_error': 'error sending request for url (https://opensky-network.org/api/flights/departure?airport=EGLL&begin=1793404800&end=1793408400): client error (Connect): tcp connect error: Operation timed out (os error 110): Operation timed out (os error 110)\"}"
+  },
+  {
+   "url": "https://en.wikipedia.org/wiki/Heathrow_Airport",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:08:48.341Z",
+   "tx": "0xe7e3aa04e9f0ed19e6304484e2bf17ffa6e84a157119d8286d35a08d13669a32",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://en.wikipedia.org/wiki/Heathrow_Airport | text | {\"ok\": true, \"status\": 0, \"length\": 133825, \"head\": \"Jump to content\\nMain menu\\nSearch\\nDonate\\nCreate account\\nLog in\\nToggle the table of contents\\nHeathrow Airport\\n88 languages\\nArticle\\nTalk\\nRead\\nView source\\nView history\\nTools\\nCoordinates: 51\\u00b028\\u203239\\u2033N 000\\u00b027\\u203241\\u2033W\\nFrom Wikipedia, the free encyclopedia\\n\\\"Heathrow\\\" and \\\"LHR\\\" redirect here. For other uses, see Heathrow (disambiguation) and LHR (disambiguation).\\nLondon Heathrow Airport\\n\\nIATA: LHRICAO: EGLLWMO: 03772\\n\\nSummary\\nAirport type Public\\nOwner/Operator Heathrow Airport Holdings\\nServes London\\nLocation Hillingdon, London, England\\nOpened 25 March 1946; 80 years ago\\nHub for\\nBritish Airways\\nVirgin Atlant\"}"
+  }
+ ],
+ "finishedAt": "2026-11-01T14:09:04.463Z"
+}

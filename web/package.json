@@ -1,0 +1,14 @@
+{
+  "name": "delayproof-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "DelayProof web app: opens and follows flight-delay claims on the GenLayer studionet contract, signed by a per-browser testnet burner.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test --test-concurrency=1 test/offline.test.mjs",
+    "test:live": "node test/live.test.mjs"
+  },
+  "dependencies": { "genlayer-js": "1.1.8" },
+  "devDependencies": { "esbuild": "0.25.11", "playwright": "1.63.0" }
+}

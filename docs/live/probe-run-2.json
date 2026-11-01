@@ -1,0 +1,62 @@
+{
+ "network": "studionet",
+ "startedAt": "2026-11-01T14:09:24.147Z",
+ "deployer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+ "address": "0x11639B6EAD6A312a91C538903b7322c0D3383990",
+ "deployTx": "0x5ba53ad19e988c1c1f0ce064f2826f67ce688a0a8977970edeb89a46b707b6c8",
+ "probes": [
+  {
+   "url": "https://www.flightstats.com/v2/flight-tracker/BA/117?year=2026&month=10&date=30",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:09:33.971Z",
+   "tx": "0xbf1a6ed6e8d723be2430b24b8615d8380ad75ca61ce2d6b672c71d3b38f78585",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.flightstats.com/v2/flight-tracker/BA/117?year=2026&month=10&date=30 | text | {\"ok\": true, \"status\": 0, \"length\": 1679, \"head\": \"Follow us on\\nCREATE ACCOUNT\\nLogin\\nFlights\\nAirports\\nOn-Time Performance\\nCirium\\nResources\\nMy FlightStats\\nTrack a Flight\\nSEARCH\\nADVANCED SEARCH\\n(BA) British Airways 117 Flight Tracker\\nFlight Status\\nBA 117\\nBritish Airways\\nLHR\\nLondon\\nJFK\\nNew York\\nArrived\\nOn time\\nLondon, EN, GB\\nLondon Heathrow Airport\\nFlight Departure Times\\n30-Oct-2026\\nScheduled\\n08:20 GMT\\nActual\\n08:16 GMT\\nTerminal\\n5\\nGate\\nC63\\nNew York, NY, US\\nNew York John F. Kennedy International Airport\\nFlight Arrival Times\\n30-Oct-2026\\nScheduled\\n12:20 EDT\\nActual\\n12:02 EDT\\nTerminal\\n8\\nGate\\nN/A\\nVIEW FLIGHT DETAILS\\nON-TIME PERFORMANCE\\nAIRPORT DELAYS\\nLHR AIRPORT CONDITIONS\\nJFK AIRPORT CONDITIONS\\nREFRESH DATA\\nFlight Tracker\\nPOSITIONAL TRACKING HAS ENDED\\n\\nThe flight has landed\\n\\nLeaflet | Map licensing\\nLabels\\nUS Weather\\nALTITUDE0 ft\\nLANDED\\nFlight Time\\nTotal\\n7h 46m\\nElapsed\\n7h 46m\\nRemaining\\n0m\\nFlight Distance\\nTotal\\n0\\nFlown\\n0\\nRemaining\\n0\\nAdditional Details\\nThis Flight Also Marketed As\\nCodeshare Airline\\nAmerican Airlines\\nAlaska Airlines\\nFinnair\\nAer Lingus\\nIberia\\nFlight Number\\n(AA) 6930\\n(AS) 5255\\n(AY) 5517\\n(EI) 8817\\n(IB) 3545\\nAircraft Equipment\\nCode\\n772\\nDescription\\nBoeing 777-200 / 200ER\\nPast and Upcoming Flights\\nFor flights prior to the results below, please use our Historical Flight Status feature.\\n29-Oct\\n30-Oct\\n31-Oct\\n01-Nov\\n02-Nov\\n03-Nov\\n04-Nov\\nFlights for Friday, 30-Oct-2026\\nOne Flight This Day\\nYou are currently viewing the only flight for this day\\nMobile Applications for the Active Traveler\\nOver 10 million people have downloaded our FlightStats mobile apps!\\nTRY IT OUT TODAY!\\nCookie Settings\\nCookie Policy\\nPrivacy Policy\\nTerms of Use\\nSecurity\\nSitemap\\nCopyright\\n\\u00a9 2026 LNRS Data Services\\nContact Us\\nVersion v8.1.2-nxt\"}"
+  },
+  {
+   "url": "https://www.flightaware.com/live/flight/BA117",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:09:49.767Z",
+   "tx": "0xe623fadb0217f8bda36334a4243b42f66f6b075db8d079d5a31fc657cd72ef16",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.flightaware.com/live/flight/BA117 | text | {\"ok\": true, \"status\": 0, \"length\": 1834, \"head\": \"Join FlightAware\\nLogin\\n09:09AM EST\\n\\u0627\\u0644\\u0639\\u0631\\u0628\\u064a\\u0629\\n\\u010ce\\u0161tina\\nDeutsch\\nEnglish (Australia)\\nEnglish (Canada)\\nEnglish (UK)\\nEnglish (USA)\\nEspa\\u00f1ol (Espa\\u00f1a)\\nEspa\\u00f1ol\\nSuomi\\nFran\\u00e7ais (Canada)\\nFran\\u00e7ais (France)\\n\\u05e2\\u05b4\\u05d1\\u05b0\\u05e8\\u05b4\\u05d9\\u05ea\\n\\u0939\\u093f\\u0928\\u094d\\u0926\\u0940\\nHrvatski\\nItaliano\\n\\u65e5\\u672c\\u8a9e\\n\\ud55c\\uad6d\\uc5b4\\nPolski\\nPortugu\\u00eas (Brasil)\\nPortugu\\u00eas (Portugal)\\n\\u0420\\u0443\\u0441\\u0441\\u043a\\u0438\\u0439\\nT\\u00fcrk\\u00e7e\\n\\u4e2d\\u6587(\\u7b80\\u4f53)\\n\\u4e2d\\u6587(\\u9999\\u6e2f)\\n\\u4e2d\\u6587(\\u53f0\\u7063)\\n\\nAll\\nAll\\nRoute\\nAirline flight\\nPrivate flight (tail #)\\nAirport\\nSign Up\\nProducts\\nIndustries\\nADS-B\\nFlight Tracking\\nCommunity\\nCompany\\nupload photo\\nBA117\\nBA117 flight schedule\\nView track log\\n\\nSet Up Unlimited Flight Alerts & More\\n\\nCheck out premium account features for aviation professionals and enthusiasts.\\n\\nDiscover FlightAware Premium\\nFeatures\\n\\nPosition-Only Flight\\n\\nNo Flights In The Last 14 Days\\nBasic users (becoming a basic user is free and easy!) view 3 months history.\\nJoin FlightAware\\nView more flight history\\nPurchase entire flight history for BA117\\nfirst seen near\\nCARDIGAN, UNITED KINGDOM\\nlast seen near\\nBIRR, IRELAND\\nTUESDAY 11-NOV-2014\\n09:04AM GMT\\nTUESDAY 11-NOV-2014\\n09:21AM GMT\\nestimated arrival time\\n17m total travel time\\nGet Alerts\\nFlight Times\\nTakeoff\\n09:04AM GMT\\nScheduled --\\nLanding\\n09:21AM GMT\\nScheduled --\\nAircraft Details\\nupdated a few seconds ago\\nAircraft Information\\nFlight Data\\nDistance\\nActual: 154 mi\\n\\nReport inaccuracies on this page\\nFlightAware provides accurate real-time, historical and predictive flight insights to all segments of the aviation industry.\\n\\nProducts & Services\\nAeroAPI\\nFlightAware Firehose\\nFlightAware Foresight\\nRapid Reports\\nCustom Reports\\nFlightAware Aviator\\nPremium Subscriptions\\nFlightAware Global\\nFlightAware FBO Toolbox\\nFlightAware TV\\u2120\\nGlobalBeacon\\nCompany\\nAbout\\nCareers\\nHistory\\nAdvertise With Us\\nNewsroom\\nBlog\\nWebinars\\nCommunity\\nPhotos\\nSquawks\\nDiscussions\\nHost an ADS-B Site\\nSupport\\nContact Us\\nFAQs\\nEnglish (USA)\\n2026 FlightAware\\nTerms of Use\\nPrivacy\\nCookie Settings\"}"
+  },
+  {
+   "url": "https://www.flightaware.com/live/cancelled/yesterday",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:10:05.747Z",
+   "tx": "0xcd3ffb4c0c6b3e3f37eb744d062abf61d9c01150efd9fa8469e473174be8f5e6",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.flightaware.com/live/cancelled/yesterday | text | {\"ok\": true, \"status\": 0, \"length\": 1529, \"head\": \"Join FlightAware\\nLogin\\n09:10AM EST\\n\\u0627\\u0644\\u0639\\u0631\\u0628\\u064a\\u0629\\n\\u010ce\\u0161tina\\nDeutsch\\nEnglish (Australia)\\nEnglish (Canada)\\nEnglish (UK)\\nEnglish (USA)\\nEspa\\u00f1ol (Espa\\u00f1a)\\nEspa\\u00f1ol\\nSuomi\\nFran\\u00e7ais (Canada)\\nFran\\u00e7ais (France)\\n\\u05e2\\u05b4\\u05d1\\u05b0\\u05e8\\u05b4\\u05d9\\u05ea\\n\\u0939\\u093f\\u0928\\u094d\\u0926\\u0940\\nHrvatski\\nItaliano\\n\\u65e5\\u672c\\u8a9e\\n\\ud55c\\uad6d\\uc5b4\\nPolski\\nPortugu\\u00eas (Brasil)\\nPortugu\\u00eas (Portugal)\\n\\u0420\\u0443\\u0441\\u0441\\u043a\\u0438\\u0439\\nT\\u00fcrk\\u00e7e\\n\\u4e2d\\u6587(\\u7b80\\u4f53)\\n\\u4e2d\\u6587(\\u9999\\u6e2f)\\n\\u4e2d\\u6587(\\u53f0\\u7063)\\n\\nAll\\nAll\\nRoute\\nAirline flight\\nPrivate flight (tail #)\\nAirport\\n\\nForgot the flight number?\\nSign Up\\nProducts\\nIndustries\\nADS-B\\nFlight Tracking\\nCommunity\\nCompany\\nFlightAware.com live flight delay and cancellation statistics for yesterday\\n\\nThursdayFridayYesterdayTodayTomorrowTuesday\\nFilter all stats by airport: Go\\nTotal delays yesterday: 16,269\\nTotal delays within, into, or out of the United States yesterday: 3,302\\nTotal cancellations yesterday: 705\\nTotal cancellations within, into, or out of the United States yesterday: 117\\nSee all delays.\\nSee the MiseryMap for a live visualization of flight delays.\\n\\nBY AIRLINE BY ORIGIN AIRPORT BY DESTINATION AIRPORT\\n\\nFlightAware provides accurate real-time, historical and predictive flight insights to all segments of the aviation industry.\\n\\nProducts & Services\\nAeroAPI\\nFlightAware Firehose\\nFlightAware Foresight\\nRapid Reports\\nCustom Reports\\nFlightAware Aviator\\nPremium Subscriptions\\nFlightAware Global\\nFlightAware FBO Toolbox\\nFlightAware TV\\u2120\\nGlobalBeacon\\nCompany\\nAbout\\nCareers\\nHistory\\nAdvertise With Us\\nNewsroom\\nBlog\\nWebinars\\nCommunity\\nPhotos\\nSquawks\\nDiscussions\\nHost an ADS-B Site\\nSupport\\nContact Us\\nFAQs\\nEnglish (USA)\\n2026 FlightAware\\nTerms of Use\\nPrivacy\\nCookie Settings\"}"
+  },
+  {
+   "url": "https://www.flightstats.com/v2/flight-tracker/departures/LHR/?year=2026&month=10&date=31&hour=12",
+   "mode": "text",
+   "sentAt": "2026-11-01T14:10:21.664Z",
+   "tx": "0x17c97b46c7ba343d37c0571ae70ab3c61b46f77d469fc2ea88d9254d7de46f88",
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "exec": "SUCCESS",
+    "err": null
+   },
+   "stored": "https://www.flightstats.com/v2/flight-tracker/departures/LHR/?year=2026&month=10&date=31&hour=12 | text | {\"ok\": true, \"status\": 0, \"length\": 2613, \"head\": \"Follow us on\\nCREATE ACCOUNT\\nLogin\\nFlights\\nAirports\\nOn-Time Performance\\nCirium\\nResources\\nMy FlightStats\\n(LHR) London Heathrow Airport Departures\\n31-Oct-2026\\nLHR Departure Filters\\nDeparture Airport\\nX\\nArrival Airport\\nAirline (optional)\\nDate\\n29-Oct-2026\\n30-Oct-2026\\n31-Oct-2026\\n01-Nov-2026\\n02-Nov-2026\\n03-Nov-2026\\n04-Nov-2026\\nTime\\n00:00-06:00\\n06:00-12:00\\n12:00-18:00\\n18:00-00:00\\nREFINE SEARCH\\nShow Codeshares?\\nShow\\nHide\\n\\u00ab\\n\\u2190\\n1\\n2\\n3\\n\\u2192\\n\\u00bb\\nFlight\\nDeparture Time\\nArrival Time\\nDestination\\nBA 874\\n09:55\\n15:10\\nOTP\\nBritish Airways\\nBucharest\\nAA 6707\\n09:55\\n15:10\\nOTP\\nAmerican Airlines / Operated by British Airways 874\\nBucharest\\nJL 7829\\n09:55\\n15:10\\nOTP\\nJAL / Operated by British Airways 874\\nBucharest\\nBA 932\\n10:55\\n13:20\\nDUS\\nBritish Airways\\nDusseldorf\\nAA 7169\\n10:55\\n13:20\\nDUS\\nAmerican Airlines / Operated by British Airways 932\\nDusseldorf\\nB6 6332\\n10:55\\n13:20\\nDUS\\nJetBlue / Operated by British Airways 932\\nDusseldorf\\nCX 7147\\n10:55\\n13:20\\nDUS\\nCathay Pacific / Operated by British Airways 932\\nDusseldorf\\nQR 9685\\n10:55\\n13:20\\nDUS\\nQatar Airways / Operated by British Airways 932\\nDusseldorf\\nBA 143\\n11:10\\n01:15\\nDEL\\nBritish Airways\\nDelhi\\nAA 6661\\n11:10\\n01:15\\nDEL\\nAmerican Airlines / Operated by British Airways 143\\nDelhi\\nKL 1006\\n11:15\\n13:35\\nAMS\\nKLM / Operated by KLM Cityhopper on behalf of KLM\\nAmsterdam\\n6E 3201\\n11:15\\n13:35\\nAMS\\nIndiGo / Operated by KLM Cityhopper on behalf of KLM 1006\\nAmsterdam\\nDL 9608\\n11:15\\n13:35\\nAMS\\nDelta Air Lines / Operated by KLM Cityhopper on behalf of KLM 1006\\nAmsterdam\\nKQ 1018\\n11:15\\n13:35\\nAMS\\nKenya Airways / Operated by KLM Cityhopper on behalf of KLM 1006\\nAmsterdam\\nMF 9639\\n11:15\\n13:35\\nAMS\\nXiamen Airlines / Operated by KLM Cityhopper on behalf of KLM 1006\\nAmsterdam\\nMU 4410\\n11:15\\n13:35\\nAMS\\nChina Eastern Airlines / Operated by KLM Cityhopper on behalf of KLM 1006\\nAmsterdam\\nVS 7049\\n11:15\\n13:35\\nAMS\\nVirgin Atlantic / Operated by KLM Cityhopper on behalf of KLM 1006\\nAmsterdam\\nBA 436\\n11:20\\n13:45\\nAMS\\nBritish Airways\\nAmsterdam\\nAA 6782\\n11:20\\n13:45\\nAMS\\nAmerican Airlines / Operated by British Airways 436\\nAmsterdam\\nB6 6282\\n11:20\\n13:45\\nAMS\\nJetBlue / Operated by British Airways 436\\nAmsterdam\\nJL 6517\\n11:20\\n13:45\\nAMS\\nJAL / Operated by British Airways 436\\nAmsterdam\\nQR 9782\\n11:20\\n13:45\\nAMS\\nQatar Airways / Operated by British Airways 436\\nAmsterdam\\nBA 173\\n11:20\\n15:25\\nJFK\\nBritish Airways\\nNew York\\nAA 6934\\n11:20\\n15:25\\nJFK\\nAmerican Airlines / Operated by British Airways 173\\nNew York\\nAS 5257\\n11:20\\n15:25\\nJFK\\nAlaska Airlines / Operated by British Airways 173\\nNew York\\n\\u00ab\\n\\u2190\\n1\\n2\\n3\\n\\u2192\\n\\u00bb\\nCookie Settings\\nCookie Policy\\nPrivacy Policy\\nTerms of Use\\nSecurity\\nSitemap\\nCopyright\\n\\u00a9 2026 LNRS Data Services\\nContact Us\\nVersion v8.1.2-nxt\"}"
+  }
+ ],
+ "finishedAt": "2026-11-01T14:10:37.554Z"
+}

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DelayProof</title>
+<meta name="description" content="Was your flight late? Independent validators check the public flight record and agree on what you're owed under EU261/UK261.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Inter+Tight:wght@500;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="netbar" id="netbar">GenLayer testnet (studionet) · no real money · information, not legal advice</div>
+<header class="wrap top">
+  <a class="brand" href="./" aria-label="DelayProof home">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#111418"/><path d="M8 25l9-3 8-13 3 1-4 11 8-3 2 2-9 6-15 3z" fill="#FFB000"/><path d="M27 30l3 3 6-7" stroke="#3DDC84" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+    <span class="word">DELAY<b>PROOF</b></span>
+  </a>
+  <nav class="tabs" aria-label="Pages"><a href="review.html">For reviewers</a><a href="rig.html">Check the code</a></nav>
+</header>
+
+<main id="main" class="wrap">
+  <section class="hero">
+    <p class="kicker">Late flight? Airlines don't decide this one.</p>
+    <h1>Find out what you're owed, <span>proven</span>.</h1>
+    <p class="lede">Airlines owe up to €600 for a flight that lands 3+ hours late, and often say "extraordinary circumstances" to avoid paying. Here, independent GenLayer validators each fetch the public flight record themselves and must <b>agree</b> on what happened before a ruling exists. Nobody, including us, can quietly change it.</p>
+    <ol class="how">
+      <li><b>1</b> Enter your flight</li>
+      <li><b>2</b> Validators check the public record</li>
+      <li><b>3</b> Get a ruling + claim letter</li>
+    </ol>
+  </section>
+
+  <section class="board" aria-labelledby="check-h">
+    <h2 id="check-h" class="board-title">CHECK A FLIGHT</h2>
+    <form id="form" novalidate>
+      <div class="row">
+        <label>Flight <input id="flight" name="flight" autocomplete="off" placeholder="BA117" maxlength="9" required></label>
+        <label>Date <input id="date" name="date" type="date" required></label>
+      </div>
+      <label>What happened? <small>(optional, 280 characters)</small><textarea id="note" maxlength="280" rows="2" placeholder="Landed about 4 hours late, crew said it was a technical fault."></textarea></label>
+      <details class="ev"><summary>Add evidence links <small>(optional, up to 3)</small></summary>
+        <p class="hint">Public pages only, e.g. an airline notice or a news story about a strike. Validators read them as evidence, never as instructions.</p>
+        <input class="evurl" type="url" placeholder="https://…"><input class="evurl" type="url" placeholder="https://…"><input class="evurl" type="url" placeholder="https://…">
+      </details>
+      <label class="consent"><input type="checkbox" id="consent"> I understand this is a public testnet record (flight + date + note), and it is information, not legal advice.</label>
+      <p class="err" id="formerr" role="alert"></p>
+      <button class="cta" id="go" type="submit">Get my ruling</button>
+      <p class="hint">Your browser makes a free testnet key to sign. No wallet, no money.</p>
+    </form>
+  </section>
+
+  <section id="progress" class="rail" hidden aria-live="polite">
+    <h2 class="sr">Progress</h2>
+    <ol>
+      <li data-step="open">Claim recorded</li>
+      <li data-step="fetch">Validators fetching the flight record</li>
+      <li data-step="agree">Validators agreeing</li>
+      <li data-step="final">Ruling final</li>
+    </ol>
+    <p id="railnote" class="hint"></p>
+  </section>
+
+  <section id="result" hidden></section>
+
+  <section class="recent" aria-labelledby="recent-h">
+    <h2 id="recent-h">Recent rulings</h2>
+    <p class="hint" id="recentnote">Read live from the contract.</p>
+    <ul id="recent"></ul>
+  </section>
+
+  <section class="contract" aria-labelledby="contract-h">
+    <h2 id="contract-h">The contract</h2>
+    <dl id="contract"></dl>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p>DelayProof is an independent project on GenLayer, not affiliated with any airline or with GenLayer. Amounts follow EU261/UK261 as modelled in the open-source rules table. Testnet only. Information, not legal advice.</p>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>
