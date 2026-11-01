@@ -1,0 +1,1396 @@
+{
+ "network": "studionet",
+ "startedAt": "2026-11-01T16:49:36.940Z",
+ "deployer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+ "payer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+ "claimant": "0xd4Fb81aD0834892bB3240881e8fC2e53d36EB60e",
+ "challenge_minutes": 10,
+ "contract": "0x6F3dedC893C5769305912AA3fADd095E02FB1FBF",
+ "contract_file": "contracts/delay_proof.py",
+ "contract_code_sha256": "567cfec1688b26aa81d4bab793151b4a22ead3585333e879e521ed37c45bf673",
+ "steps": [
+  {
+   "label": "create_pool",
+   "fn": "create_pool",
+   "args": [
+    "Demo card-perk pool",
+    "ANY",
+    "1000000000000000",
+    "2",
+    "1",
+    false
+   ],
+   "value": "2000000000000000000",
+   "sentAt": "2026-11-01T16:50:16.603Z",
+   "as": "payer",
+   "tx": "0xf1b93c42f88e58235a81b4ea98a65e2bd92fb195ffe4c2823411900b86bfc13f",
+   "transitions": [
+    {
+     "at": "2026-11-01T16:50:17.276Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T16:50:22.634Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T16:50:28.050Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T16:50:55.058Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "open BA117 2026-10-31 (live data only, pool-linked)",
+   "fn": "open_claim",
+   "args": [
+    "BA117",
+    "2026-10-31",
+    "",
+    "",
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T16:50:59.706Z",
+   "as": "claimant",
+   "tx": "0xab7522ab3e8dc0050e767a7c47d36283ef02ae76311e307196fe2fc0993beb6e",
+   "transitions": [
+    {
+     "at": "2026-11-01T16:51:00.193Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T16:51:05.550Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "assess #1",
+   "fn": "assess",
+   "args": [
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T16:51:05.552Z",
+   "as": "claimant",
+   "tx": "0xfcdf4f94129bd60aa14a59197eb27b231b1adead0dfaf296c671e9893e5e7d52",
+   "transitions": [
+    {
+     "at": "2026-11-01T16:51:06.103Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T16:51:11.480Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T16:51:22.067Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T16:51:48.946Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T16:52:21.200Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "disagree": 2
+    },
+    "error": null
+   },
+   "claim_id": 1
+  },
+  {
+   "label": "approve #1 (payer consent)",
+   "fn": "approve_claim",
+   "args": [
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T16:52:21.202Z",
+   "as": "payer",
+   "tx": "0x578279004555a32dc6c36f451a678c0407885949dd30487bc457cee031528363",
+   "transitions": [
+    {
+     "at": "2026-11-01T16:52:21.905Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T16:52:27.279Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T16:52:33.427Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T16:53:02.046Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 4,
+     "idle": 1
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "guard: claimant finalize #1 inside challenge window",
+   "fn": "finalize",
+   "args": [
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T16:53:02.047Z",
+   "as": "claimant",
+   "tx": "0xad495b4302f89f01251dea788158a986ae7de69e75efed2640d0741e146e5d71",
+   "transitions": [
+    {
+     "at": "2026-11-01T16:53:02.661Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T16:53:08.743Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T16:53:14.444Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "idle": 2,
+     "agree": 3
+    },
+    "error": "[EXPECTED] challenge window open until 2026-11-01T17:01:05Z"
+   }
+  },
+  {
+   "label": "finalize #1 (claimant, after window)",
+   "fn": "finalize",
+   "args": [
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:01:35.101Z",
+   "as": "claimant",
+   "tx": "0x3809fe7d1ab7fab069a0507f86675ab3daf62f0ef33eb7643a5358f87492a51c",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:01:36.630Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:01:42.050Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 4,
+     "idle": 1
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "open LOG31 2026-10-29 (ICAO code + ATC closure evidence; appealed to 3 analysts)",
+   "fn": "open_claim",
+   "args": [
+    "LOG31",
+    "2026-10-29",
+    "",
+    "[\"https://www.airhelp.co.uk/flight-disruptions/loganair-kirkwall-air-traffic-control-cancellations-28102026/\"]",
+    "0"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:01:44.373Z",
+   "as": "claimant",
+   "tx": "0x4557960c7e24bde28d0921600c00bb88a81a4e719abc3f9b79d5c91bd65303c3",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:01:45.531Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:01:50.769Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "assess #2",
+   "fn": "assess",
+   "args": [
+    "2"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:01:50.778Z",
+   "as": "claimant",
+   "tx": "0x70d3df89184a06df5729830f9b6a6067e8f5fc9c9b0123f0d54c377a6015b95f",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:01:51.414Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:01:56.581Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T17:02:07.239Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T17:02:29.183Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T17:03:01.583Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   },
+   "claim_id": 2
+  },
+  {
+   "label": "appeal #2",
+   "fn": "appeal",
+   "args": [
+    "2"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:03:01.595Z",
+   "as": "claimant",
+   "tx": "0x025f4a8d68282986461b7fd315228d3545249c3ed543818684ed3e04f945a550",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:03:02.233Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:03:07.480Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T17:03:23.651Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T17:04:06.303Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T17:04:32.708Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "open SN3289 2026-10-21 (outside the status window; evidence must not set timing)",
+   "fn": "open_claim",
+   "args": [
+    "SN3289",
+    "2026-10-21",
+    "",
+    "[\"https://www.airhelp.co.uk/flight-disruptions/brussels-airlines-SN-3289-tel-aviv-flight-canceled-crew-illness-22102026/\"]",
+    "0"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:04:34.943Z",
+   "as": "claimant",
+   "tx": "0x530dec6830bf4945770244ff57f0070c9c438f415cf5cc2d7826c3f1e65a6b37",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:04:35.425Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:04:40.793Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T17:04:46.210Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "idle": 2,
+     "agree": 3
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "assess #3",
+   "fn": "assess",
+   "args": [
+    "3"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:04:46.212Z",
+   "as": "claimant",
+   "tx": "0xb1d6accf6b8db8737a7cd91d0bf8d55f0972e19a3021ad11fcfde8e2ee371ada",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:04:47.267Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:04:52.648Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T17:04:58.038Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T17:05:14.308Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T17:05:47.064Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "idle": 1,
+     "agree": 3,
+     "disagree": 1
+    },
+    "error": null
+   },
+   "claim_id": 3
+  },
+  {
+   "label": "open BA707 2026-10-19 (3h+ delay evidence, route database disagrees)",
+   "fn": "open_claim",
+   "args": [
+    "BA707",
+    "2026-10-19",
+    "",
+    "[\"https://www.airhelp.co.uk/flight-disruptions/british-airways-ba707-delay-gatwick-diversion-21102026/\"]",
+    "0"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:05:49.415Z",
+   "as": "claimant",
+   "tx": "0xcb3761770cf3add8f394e4628b667bceffc4a45d5e172b7041099ee786d8f4b5",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:05:50.467Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T17:05:55.760Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "assess #4",
+   "fn": "assess",
+   "args": [
+    "4"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:05:55.764Z",
+   "as": "claimant",
+   "tx": "0x8cf7cba6a1c022b9a54e2fbd1e6d1c9ea864ef5b3f73218aa4a1afd882ef525d",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:05:56.369Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:06:01.795Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T17:06:12.569Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T17:06:34.122Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T17:07:06.303Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "idle": 2,
+     "agree": 3
+    },
+    "error": null
+   },
+   "claim_id": 4
+  },
+  {
+   "label": "open ZZ9999 2026-10-31 (nonexistent flight)",
+   "fn": "open_claim",
+   "args": [
+    "ZZ9999",
+    "2026-10-31",
+    "",
+    "",
+    "0"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:07:08.546Z",
+   "as": "claimant",
+   "tx": "0x13e9c8bde91027b46b5cdb5a24d7842e6a3fcdf95d7de39e858e919f6747966a",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:07:09.171Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T17:07:14.366Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 4,
+     "idle": 1
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "assess #5",
+   "fn": "assess",
+   "args": [
+    "5"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:07:14.377Z",
+   "as": "claimant",
+   "tx": "0xc677f25e6d2c07cd053ef8e79b490d4c8bcf19b787d71b7112fcd1f405c22652",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:07:14.934Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:07:20.317Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T17:07:25.683Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T17:07:41.746Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T17:08:08.114Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   },
+   "claim_id": 5
+  },
+  {
+   "label": "guard: duplicate claim (same claimant, flight, date)",
+   "fn": "open_claim",
+   "args": [
+    "BA117",
+    "2026-10-31",
+    "",
+    "",
+    "0"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:08:09.210Z",
+   "as": "claimant",
+   "tx": "0x7be6dffdb249758a2fc7e71d8705227cd3facd4432395cc565324477a9bff4a5",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:08:09.765Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:08:14.986Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "idle": 2,
+     "agree": 3
+    },
+    "error": "[EXPECTED] you already have a claim for this flight and date"
+   }
+  },
+  {
+   "label": "guard: claimant fills respondent slot",
+   "fn": "add_evidence",
+   "args": [
+    "2",
+    "respondent",
+    "[\"https://www.example.com/fake-airline-notice\"]"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:08:14.992Z",
+   "as": "claimant",
+   "tx": "0xa7194ca8af0ff696af112deb4aa170ee1872a59aabb3d38cb18c20ffb1f33e31",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:08:15.588Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:08:20.814Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T17:08:26.018Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": "[EXPECTED] only the pool's payer or the airline's registered respondent can add respondent evidence"
+   }
+  },
+  {
+   "label": "guard: evidence URL is an IP literal",
+   "fn": "open_claim",
+   "args": [
+    "BA117",
+    "2026-10-30",
+    "",
+    "[\"https://169.254.169.254/latest/meta-data\"]",
+    "0"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:08:26.025Z",
+   "as": "claimant",
+   "tx": "0x971a75836dea5a574393c7e6f87d9c927d932c2841d718980f5110e348c07b56",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:08:26.630Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:08:31.996Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": "[EXPECTED] evidence URL must use a public domain name (no IP addresses, localhost or internal hosts)"
+   }
+  },
+  {
+   "label": "guard: email address in public note",
+   "fn": "open_claim",
+   "args": [
+    "BA117",
+    "2026-10-29",
+    "Contact jane.doe@example.com",
+    "",
+    "0"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:08:31.999Z",
+   "as": "claimant",
+   "tx": "0xa1610b421e1f79a5b7011788208fba480c13ed2b0fc559066190ea88d3db7958",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:08:32.522Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:08:37.757Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": "[EXPECTED] note is public: remove the email address"
+   }
+  },
+  {
+   "label": "guard: future date",
+   "fn": "open_claim",
+   "args": [
+    "BA117",
+    "2026-12-25",
+    "",
+    "",
+    "0"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:08:37.759Z",
+   "as": "claimant",
+   "tx": "0xf69ae806dccccecff99ac8ed18319483bb3083685a1c4a7084b78b66c057e68d",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:08:38.455Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:08:43.869Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": "[EXPECTED] date is in the future"
+   }
+  },
+  {
+   "label": "guard: payer reclaims pool before expiry",
+   "fn": "withdraw_pool",
+   "args": [
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:08:43.872Z",
+   "as": "payer",
+   "tx": "0x678792649cfa9525b702926ae3e5054822c30a78159df45508f6a14824f27bb4",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:08:44.296Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:08:49.489Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T17:08:54.709Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "agree": 4,
+     "idle": 1
+    },
+    "error": "[EXPECTED] pool is open until 2026-11-03T16:50:17Z"
+   }
+  },
+  {
+   "label": "guard: non-party (payer key, claim not in its pool) cannot appeal",
+   "fn": "appeal",
+   "args": [
+    "3"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T17:08:54.711Z",
+   "as": "payer",
+   "tx": "0xb44d1167629f100a3ca9126a1dc3ea846f8f5081e29ff222c05a4460fce5e6c8",
+   "transitions": [
+    {
+     "at": "2026-11-01T17:08:55.147Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T17:09:00.350Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": "[EXPECTED] only a party can appeal"
+   }
+  }
+ ],
+ "deploy": {
+  "tx": "0x0ebd7a739f8b77eca9cec186f5684d4b4b11daa2bc05bd4e4b605fd36e28394a",
+  "transitions": [
+   {
+    "at": "2026-11-01T16:49:38.124Z",
+    "status": "PENDING"
+   },
+   {
+    "at": "2026-11-01T16:49:43.558Z",
+    "status": "ACCEPTED"
+   },
+   {
+    "at": "2026-11-01T16:50:16.294Z",
+    "status": "FINALIZED"
+   }
+  ],
+  "final": {
+   "status": "FINALIZED",
+   "result": "MAJORITY_AGREE",
+   "execution": "SUCCESS",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "error": null
+  }
+ },
+ "stored_code_sha256": "567cfec1688b26aa81d4bab793151b4a22ead3585333e879e521ed37c45bf673",
+ "code_matches": true,
+ "balance_before_pool": "0xff011d2523cd803e8",
+ "pool": {
+  "active": true,
+  "balance": "2000000000000000000",
+  "claims_paid": 0,
+  "expires_at": "2026-11-03T16:50:17Z",
+  "id": 1,
+  "max_per_flight": 1,
+  "name": "Demo card-perk pool",
+  "owed_only": false,
+  "paid_out": 0,
+  "payer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+  "regime": "ANY",
+  "units_per_currency": 1000000000000000
+ },
+ "claims": [
+  {
+   "analysts": 1,
+   "approved": true,
+   "assessed_at": "2026-11-01T16:51:05.838833Z",
+   "challenge_ends": "2026-11-01T17:01:05Z",
+   "claimant": "0xd4Fb81aD0834892bB3240881e8fC2e53d36EB60e",
+   "created_at": "2026-11-01T16:50:59.984212Z",
+   "date": "2026-10-31",
+   "evidence": [],
+   "flight": "BA117",
+   "history": [],
+   "id": 1,
+   "note": "",
+   "paid": false,
+   "pool_id": 1,
+   "record": {
+    "analysts": [
+     {
+      "cause_class": "UNKNOWN",
+      "delay_min": 0,
+      "status": "LANDED"
+     }
+    ],
+    "bucket": "LT_2H",
+    "cause_class": "UNKNOWN",
+    "cause_label": "not stated",
+    "delay_min": 0,
+    "reason": "FlightStats shows 31-Oct-2026 arrival at JFK was scheduled 12:20 EDT and actual 11:56 EDT, so it landed early. | The FlightStats flight-status page shows BA117 arrived on time and does not state any cause; no evidence page with a cause was provided.",
+    "route": {
+     "airline": "BA",
+     "airline_country": "GB",
+     "airline_name": "British Airways",
+     "dest": "JFK",
+     "dest_country": "US",
+     "dest_lat": 40639800,
+     "dest_lon": -73778900,
+     "origin": "LHR",
+     "origin_country": "GB",
+     "origin_lat": 51470600,
+     "origin_lon": -461940
+    },
+    "seen_route": "LHR-JFK",
+    "sources": [
+     {
+      "name": "adsbdb",
+      "ok": true
+     },
+     {
+      "name": "flightstats",
+      "ok": true
+     }
+    ],
+    "status": "LANDED",
+    "timing_source": "flight-status page"
+   },
+   "ruling": {
+    "amount": 0,
+    "band": "long",
+    "bucket": "LT_2H",
+    "cause_class": "UNKNOWN",
+    "currency": "",
+    "delay_min": 0,
+    "distance_km": 5540,
+    "explanation": "Arrived less than 3 hours late.",
+    "flags": [],
+    "outcome": "NOT_OWED_UNDER_3H",
+    "regime": "UK261",
+    "rule_set": "UK261 (more than 3 hours)",
+    "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+    "timing_source": "flight-status page"
+   },
+   "status": "final",
+   "tier": 1,
+   "updated_at": "2026-11-01T17:01:36.178799Z"
+  },
+  {
+   "analysts": 3,
+   "approved": false,
+   "assessed_at": "2026-11-01T17:03:01.978823Z",
+   "challenge_ends": "2026-11-01T17:13:01Z",
+   "claimant": "0xd4Fb81aD0834892bB3240881e8fC2e53d36EB60e",
+   "created_at": "2026-11-01T17:01:45.113380Z",
+   "date": "2026-10-29",
+   "evidence": [
+    {
+     "side": "claimant",
+     "url": "https://www.airhelp.co.uk/flight-disruptions/loganair-kirkwall-air-traffic-control-cancellations-28102026/"
+    }
+   ],
+   "flight": "LOG31",
+   "history": [
+    {
+     "record": {
+      "analysts": [
+       {
+        "cause_class": "EXTRAORDINARY",
+        "delay_min": -1,
+        "status": "CANCELLED"
+       }
+      ],
+      "bucket": "NONE",
+      "cause_class": "EXTRAORDINARY",
+      "cause_label": "air traffic control closure",
+      "delay_min": -1,
+      "reason": "Flight LOG31 on 2026-10-29 was scheduled to depart KOI at 07:30 GMT and arrive ABZ at 08:20 GMT, but the page indicates 'Flight Cancelled' with no estimated times. | The EVIDENCE page states the cancellation was due to an air traffic control staffing issue and closure at Kirkwall Airport.",
+      "route": {
+       "airline": "LC",
+       "airline_country": "GB",
+       "airline_name": "Loganair",
+       "dest": "ABZ",
+       "dest_country": "GB",
+       "dest_lat": 57201900,
+       "dest_lon": -2197780,
+       "origin": "KOI",
+       "origin_country": "GB",
+       "origin_lat": 58957800,
+       "origin_lon": -2905000
+      },
+      "seen_route": "KOI-ABZ",
+      "sources": [
+       {
+        "name": "adsbdb",
+        "ok": true
+       },
+       {
+        "name": "flightstats",
+        "ok": true
+       },
+       {
+        "name": "evidence:claimant",
+        "ok": true
+       }
+      ],
+      "status": "CANCELLED",
+      "timing_source": "flight-status page"
+     },
+     "ruling": {
+      "amount": 0,
+      "band": "short",
+      "bucket": "NONE",
+      "cause_class": "EXTRAORDINARY",
+      "currency": "",
+      "delay_min": -1,
+      "distance_km": 200,
+      "explanation": "Cancelled; public evidence points to extraordinary circumstances, which the airline must still prove.",
+      "flags": [],
+      "outcome": "LIKELY_EXTRAORDINARY",
+      "regime": "UK261",
+      "rule_set": "UK261 (more than 3 hours)",
+      "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+      "timing_source": "flight-status page"
+     },
+     "tier": 1
+    }
+   ],
+   "id": 2,
+   "note": "",
+   "paid": false,
+   "pool_id": 0,
+   "record": {
+    "analysts": [
+     {
+      "cause_class": "EXTRAORDINARY",
+      "delay_min": -1,
+      "status": "CANCELLED"
+     },
+     {
+      "cause_class": "EXTRAORDINARY",
+      "delay_min": -1,
+      "status": "CANCELLED"
+     },
+     {
+      "cause_class": "EXTRAORDINARY",
+      "delay_min": -1,
+      "status": "CANCELLED"
+     }
+    ],
+    "bucket": "NONE",
+    "cause_class": "EXTRAORDINARY",
+    "cause_label": "ATC staffing closure at Kirkwall Airport",
+    "delay_min": -1,
+    "reason": "Flight LOG31 on 29-Oct-2026 was cancelled; scheduled departure 07:30 GMT, scheduled arrival 08:20 GMT, no actual times available. | Evidence page states Kirkwall ATC tower closed due to unexpected staffing issues, cancelling the morning Kirkwall–Aberdeen service on 29 October 2026.",
+    "route": {
+     "airline": "LC",
+     "airline_country": "GB",
+     "airline_name": "Loganair",
+     "dest": "ABZ",
+     "dest_country": "GB",
+     "dest_lat": 57201900,
+     "dest_lon": -2197780,
+     "origin": "KOI",
+     "origin_country": "GB",
+     "origin_lat": 58957800,
+     "origin_lon": -2905000
+    },
+    "seen_route": "KOI-ABZ",
+    "sources": [
+     {
+      "name": "adsbdb",
+      "ok": true
+     },
+     {
+      "name": "flightstats",
+      "ok": true
+     },
+     {
+      "name": "evidence:claimant",
+      "ok": true
+     }
+    ],
+    "status": "CANCELLED",
+    "timing_source": "flight-status page"
+   },
+   "ruling": {
+    "amount": 0,
+    "band": "short",
+    "bucket": "NONE",
+    "cause_class": "EXTRAORDINARY",
+    "currency": "",
+    "delay_min": -1,
+    "distance_km": 200,
+    "explanation": "Cancelled; public evidence points to extraordinary circumstances, which the airline must still prove.",
+    "flags": [],
+    "outcome": "LIKELY_EXTRAORDINARY",
+    "regime": "UK261",
+    "rule_set": "UK261 (more than 3 hours)",
+    "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+    "timing_source": "flight-status page"
+   },
+   "status": "assessed",
+   "tier": 2,
+   "updated_at": "2026-11-01T17:03:01.978823Z"
+  },
+  {
+   "analysts": 1,
+   "approved": false,
+   "assessed_at": "2026-11-01T17:04:46.778869Z",
+   "challenge_ends": "2026-11-01T17:14:46Z",
+   "claimant": "0xd4Fb81aD0834892bB3240881e8fC2e53d36EB60e",
+   "created_at": "2026-11-01T17:04:35.222376Z",
+   "date": "2026-10-21",
+   "evidence": [
+    {
+     "side": "claimant",
+     "url": "https://www.airhelp.co.uk/flight-disruptions/brussels-airlines-SN-3289-tel-aviv-flight-canceled-crew-illness-22102026/"
+    }
+   ],
+   "flight": "SN3289",
+   "history": [],
+   "id": 3,
+   "note": "",
+   "paid": false,
+   "pool_id": 0,
+   "record": {
+    "analysts": [
+     {
+      "cause_class": "CONTROLLABLE",
+      "delay_min": -1,
+      "status": "UNKNOWN"
+     }
+    ],
+    "bucket": "NONE",
+    "cause_class": "CONTROLLABLE",
+    "cause_label": "crew member illness",
+    "delay_min": -1,
+    "reason": "The page explicitly states 'DATE IS OUT OF RANGE' for 2026-10-21; only data for 2026-11-01 is shown, not the requested date. | AirHelp evidence page states Brussels Airlines cancelled SN3289 on 21 Oct 2026 due to a crew member falling ill during pre-flight preparations.",
+    "route": {
+     "airline": "SN",
+     "airline_country": "BE",
+     "airline_name": "Brussels Airlines",
+     "dest": "TLV",
+     "dest_country": "IL",
+     "dest_lat": 32011400,
+     "dest_lon": 34886700,
+     "origin": "BRU",
+     "origin_country": "BE",
+     "origin_lat": 50901400,
+     "origin_lon": 4484440
+    },
+    "seen_route": "-",
+    "sources": [
+     {
+      "name": "adsbdb",
+      "ok": true
+     },
+     {
+      "name": "flightstats",
+      "ok": true
+     },
+     {
+      "name": "evidence:claimant",
+      "ok": true
+     }
+    ],
+    "status": "UNKNOWN",
+    "timing_source": "flight-status page"
+   },
+   "ruling": {
+    "amount": 0,
+    "band": "",
+    "bucket": "NONE",
+    "cause_class": "CONTROLLABLE",
+    "currency": "",
+    "delay_min": -1,
+    "distance_km": 3251,
+    "explanation": "The flight-status source did not show enough to decide (for example, the date is outside its window).",
+    "flags": [],
+    "outcome": "INSUFFICIENT_DATA",
+    "regime": "EU261",
+    "rule_set": "EU261 + CJEU case law (3 hours or more, door-open)",
+    "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+    "timing_source": "flight-status page"
+   },
+   "status": "assessed",
+   "tier": 1,
+   "updated_at": "2026-11-01T17:04:46.778869Z"
+  },
+  {
+   "analysts": 1,
+   "approved": false,
+   "assessed_at": "2026-11-01T17:05:56.084295Z",
+   "challenge_ends": "2026-11-01T17:15:56Z",
+   "claimant": "0xd4Fb81aD0834892bB3240881e8fC2e53d36EB60e",
+   "created_at": "2026-11-01T17:05:49.808804Z",
+   "date": "2026-10-19",
+   "evidence": [
+    {
+     "side": "claimant",
+     "url": "https://www.airhelp.co.uk/flight-disruptions/british-airways-ba707-delay-gatwick-diversion-21102026/"
+    }
+   ],
+   "flight": "BA707",
+   "history": [],
+   "id": 4,
+   "note": "",
+   "paid": false,
+   "pool_id": 0,
+   "record": {
+    "analysts": [
+     {
+      "cause_class": "CONTROLLABLE",
+      "delay_min": -1,
+      "status": "UNKNOWN"
+     }
+    ],
+    "bucket": "NONE",
+    "cause_class": "CONTROLLABLE",
+    "cause_label": "technical fault",
+    "delay_min": -1,
+    "reason": "Page states 'DATE IS OUT OF RANGE' and 'Flight Status Not Available' with no times shown. | Airhelp evidence page stated a technical problem delayed departure by over 3 hours before diversion.",
+    "route": {
+     "airline": "BA",
+     "airline_country": "GB",
+     "airline_name": "British Airways",
+     "dest": "LHR",
+     "dest_country": "GB",
+     "dest_lat": 51470600,
+     "dest_lon": -461940,
+     "origin": "ZRH",
+     "origin_country": "CH",
+     "origin_lat": 47458060,
+     "origin_lon": 8548060
+    },
+    "seen_route": "-",
+    "sources": [
+     {
+      "name": "adsbdb",
+      "ok": true
+     },
+     {
+      "name": "flightstats",
+      "ok": true
+     },
+     {
+      "name": "evidence:claimant",
+      "ok": true
+     }
+    ],
+    "status": "UNKNOWN",
+    "timing_source": "flight-status page"
+   },
+   "ruling": {
+    "amount": 0,
+    "band": "",
+    "bucket": "NONE",
+    "cause_class": "CONTROLLABLE",
+    "currency": "",
+    "delay_min": -1,
+    "distance_km": 788,
+    "explanation": "The flight-status source did not show enough to decide (for example, the date is outside its window).",
+    "flags": [],
+    "outcome": "INSUFFICIENT_DATA",
+    "regime": "EU261",
+    "rule_set": "EU261 + CJEU case law (3 hours or more, door-open)",
+    "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+    "timing_source": "flight-status page"
+   },
+   "status": "assessed",
+   "tier": 1,
+   "updated_at": "2026-11-01T17:05:56.084295Z"
+  },
+  {
+   "analysts": 1,
+   "approved": false,
+   "assessed_at": "2026-11-01T17:07:14.716927Z",
+   "challenge_ends": "2026-11-01T17:17:14Z",
+   "claimant": "0xd4Fb81aD0834892bB3240881e8fC2e53d36EB60e",
+   "created_at": "2026-11-01T17:07:08.828119Z",
+   "date": "2026-10-31",
+   "evidence": [],
+   "flight": "ZZ9999",
+   "history": [],
+   "id": 5,
+   "note": "",
+   "paid": false,
+   "pool_id": 0,
+   "record": {
+    "analysts": [
+     {
+      "cause_class": "UNKNOWN",
+      "delay_min": -1,
+      "status": "NOT_FOUND"
+     }
+    ],
+    "bucket": "NONE",
+    "cause_class": "UNKNOWN",
+    "cause_label": "not stated",
+    "delay_min": -1,
+    "reason": "The page states the flight could not be located, providing no scheduled or actual times. | The flight-status page (SOURCE-bbec1e1e84b1a086) reports the flight could not be located and gives no cause.",
+    "route": {},
+    "seen_route": "-",
+    "sources": [
+     {
+      "name": "adsbdb",
+      "ok": false
+     },
+     {
+      "name": "flightstats",
+      "ok": true
+     }
+    ],
+    "status": "NOT_FOUND",
+    "timing_source": "flight-status page"
+   },
+   "ruling": {
+    "amount": 0,
+    "band": "",
+    "bucket": "NONE",
+    "cause_class": "UNKNOWN",
+    "currency": "",
+    "delay_min": -1,
+    "distance_km": -1,
+    "explanation": "No flight-status record of this flight on this date was found.",
+    "flags": [],
+    "outcome": "FLIGHT_NOT_FOUND",
+    "regime": "",
+    "rule_set": "",
+    "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+    "timing_source": "flight-status page"
+   },
+   "status": "assessed",
+   "tier": 1,
+   "updated_at": "2026-11-01T17:07:14.716927Z"
+  }
+ ],
+ "config": {
+  "challenge_minutes": 10,
+  "delay_threshold_min": 180,
+  "delay_tolerance_min": 15,
+  "long_km": 3500,
+  "next_claim": 6,
+  "next_pool": 2,
+  "owner": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+  "paused": false,
+  "route_source": "https://api.adsbdb.com/v0/callsign/{flight}",
+  "rules": {
+   "EU261": {
+    "currency": "EUR",
+    "long": 600,
+    "long_3_4h": 300,
+    "medium": 400,
+    "short": 250
+   },
+   "UK261": {
+    "currency": "GBP",
+    "long": 520,
+    "long_3_4h": 260,
+    "medium": 350,
+    "short": 220
+   }
+  },
+  "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+  "short_km": 1500,
+  "status_sources": [
+   "flightstats"
+  ],
+  "tier_analysts": {
+   "1": 1,
+   "2": 3,
+   "3": 5
+  }
+ },
+ "finishedAt": "2026-11-01T17:09:01.436Z"
+}

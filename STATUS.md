@@ -83,3 +83,26 @@
   one with an exact arrival on a route adsbdb maps correctly.
 - Landing page: form is flight + date; note, evidence and payout moved under "More options"; jargon removed;
   "What happens after a ruling" and a labelled sample proof card added (Gemini review, accepted points).
+
+## 2026-11-01 ~17:15 UTC — polish round 1 (security + quality reviews)
+- **Contract v2** fixes every P0/P1 in docs/SECURITY-R1.md: payer consent (`approve_claim`) and a per-flight
+  cap per pool; one claim per flight+date+claimant; a challenge window before the claimant can finalize;
+  respondent evidence only from the linked payer or a registered airline address; relayer removed, owner can
+  only pause / register respondents / transfer ownership; timing passes see only the flight-status page,
+  evidence only informs the cause; nonce fences; validators compare the full computed ruling and minutes
+  within ±15; strict record shape and size caps; https public-domain evidence URLs only, 1.5 MB cap; pool
+  expiry + `withdraw_pool`; pause on every write; ties → UNKNOWN; dead note guard replaced by PII checks.
+  The 6 PoCs are regression tests that now fail to exploit. 161 direct-mode tests.
+- **New deployment** `0x6F3dedC893C5769305912AA3fADd095E02FB1FBF` (deploy tx `0x0ebd7a73…394a`, stored code =
+  source, sha256 `567cfec1…f673`, 10-minute window for this throwaway run). Live: BA117 NOT_OWED (landed early),
+  pool approval + in-window finalize reverted + finalize after window; LOG31 LIKELY_EXTRAORDINARY upheld on a
+  3-analyst appeal; SN3289 and BA707 INSUFFICIENT_DATA (evidence can no longer set times); ZZ9999
+  FLIGHT_NOT_FOUND; 7 guards reverted with the expected reasons. `0xAC6b99E9…a31f` is superseded.
+- **Web**: polls to FINALIZED, shared links show the deciding tx + votes with the ruling first, sample preview
+  fixed, CTA above the fold on phones, party-only Appeal/Finalize, honest proof cards (no "On time" for
+  diverted/unknown, rejected routes hidden, currency per regime, FLIGHT_NOT_FOUND separate, cancellation
+  maximum shown), lazy genlayer-js (app.js 428 KB → 44 KB), no source maps, CSP, 24 px targets. 21 web tests.
+- **Copy**: no "pays automatically", "permanent", "nobody can edit", "no airline gets a vote", "either side can
+  appeal"; "validators hosted by GenLayer"; the letter names the deciding sources and says "may be owed";
+  fees 25–50% (AirHelp 35% + 15%). BA707's date re-checked against its page: 2026-10-19 is right.
+- Still open: a live OWED ruling; P2-5/6/7/8/11/13 (listed in SECURITY-R1).
