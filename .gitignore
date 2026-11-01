@@ -7,3 +7,6 @@ __pycache__/
 !.env.example
 artifacts/
 marketing/
+
+# Design-soak working files (59 MB; some still carry wording flagged in brand/soak/DO-NOT-SHIP.md). Kept local, not published.
+brand/soak/
