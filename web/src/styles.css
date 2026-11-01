@@ -105,3 +105,11 @@ code { font-family: var(--dp-font-mono); font-size: .85em; overflow-wrap: anywhe
 .board .dp-rail .dp-rail__step.is-fail .dp-rail__title { color: var(--dp-board-text); }
 .paidwarn { background: #B42318; color: #fff; font-family: var(--dp-font-mono); font-weight: 600; letter-spacing: .04em; padding: 8px 12px; border-radius: 10px; margin: 8px 0; }
 .cardsvg { display: flex; justify-content: center; width: 100%; }
+
+.more{margin:4px 0 12px}
+.more > summary{cursor:pointer;font-weight:600;padding:6px 0}
+.more fieldset.ev{border:0;padding:0;margin:8px 0}
+.samplepreview{max-width:520px}
+.samplepreview svg{width:100%;height:auto;display:block}
+.after__list{padding-left:20px}
+.after__list li{margin:6px 0}

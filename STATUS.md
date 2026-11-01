@@ -69,3 +69,17 @@
 - Tests: web offline 17/17 (was 9) incl. every sample state, PNG export, no-write-on-sample, axe WCAG 2.1 AA
   at 375px light+dark on 8 pages/states. verify.sh: VERIFY: PASS. Screens: docs/screens/ (40 PNGs).
 - Still open: a live OWED ruling (none in FlightStats' free window yet).
+
+## 2026-11-01 ~11:30 PT — round 3
+- Contract accepts ICAO airline codes (LOG31, EZY807) as well as IATA. Analysts now also report the
+  airports they see; if those disagree with adsbdb the ruling is INSUFFICIENT_DATA (`route_conflict`).
+- **New deployment** `0xAC6b99E93afa612E50F2E687F8088B5a4289a31f` (stored code = source, sha256 `cbc40d83…6f36`);
+  the earlier `0x76b28bDC…4BC45` stays documented in LIVE_EVIDENCE as superseded.
+- Live: LOG31 29-Oct (ICAO code + Kirkwall air traffic control closure page) → **LIKELY_EXTRAORDINARY**;
+  SN3289 21-Oct (crew-illness page, outside FlightStats' window) → **POSSIBLY_OWED_CANCELLATION €400**;
+  BA707 19-Oct (3h+ technical-fault page) → INSUFFICIENT_DATA, route_conflict (adsbdb says ZRH-LHR, the flight was LCA-LHR);
+  BA117 → NOT_OWED; ZZ9999 → FLIGHT_NOT_FOUND; 4 guards reverted; withdraw on BA707 refused.
+- **Still no live OWED**: no 3h+ delay on a covered route found in FlightStats' window, and no public page naming
+  one with an exact arrival on a route adsbdb maps correctly.
+- Landing page: form is flight + date; note, evidence and payout moved under "More options"; jargon removed;
+  "What happens after a ruling" and a labelled sample proof card added (Gemini review, accepted points).

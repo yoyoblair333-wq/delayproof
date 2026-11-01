@@ -30,7 +30,7 @@ Airlines are not bound by a DelayProof ruling.**
 ## How it works
 
 1. `open_claim(flight, date, note, evidence, pool_id)` checks inputs deterministically
-   (flight code shape, real date, not in the future, under 6 years old, no
+   (flight code shape: IATA `BA117` or ICAO `LOG31`, real date, not in the future, under 6 years old, no
    instruction-like text in the note, at most 3 https evidence links).
 2. `assess(claim_id)` runs one non-deterministic block. The leader fetches:
    - the route from adsbdb (airports, countries, coordinates, operating airline),
@@ -38,8 +38,13 @@ Airlines are not bound by a DelayProof ruling.**
    - any evidence pages either side attached,
 
    then runs 1 analyst pass (3 or 5 on appeal) that must return a bounded JSON verdict
-   (status enum, delay minutes, cause class). Every validator repeats all of it and
-   agrees only if the route airports, status, delay bucket and cause class match.
+   (status enum, delay minutes, cause class, and the departure and scheduled arrival
+   airports it saw). This is where the AI judgement happens: reading unstructured pages,
+   deciding whether a stated cause counts as "extraordinary circumstances", and weighing
+   evidence pages from either side. Every validator repeats all of it and agrees only if
+   the route, status, delay bucket, cause class and seen airports match. If the airports
+   on the pages disagree with the route database, the ruling is INSUFFICIENT_DATA
+   (`route_conflict`) instead of a wrong amount.
 3. `compute_ruling` (deterministic, outside consensus) applies
    [research/RULES.md](research/RULES.md): coverage (EU261 / UK261 by departure airport,
    arrival airport and carrier), great-circle distance band, the 3-hour threshold

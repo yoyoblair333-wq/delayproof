@@ -155,13 +155,13 @@ function renderResult(claim, { txs = {}, votes = [], sample = false } = {}) {
       <p class="dp-verdict__eyebrow">${sample ? "Sample · " : ""}${esc(k.eyebrow.charAt(0) + k.eyebrow.slice(1).toLowerCase())}</p>
       <h2 class="dp-verdict__title" id="v-title">${esc(state === "pending" ? d.headline : unless ? "Owed, unless the airline proves extraordinary circumstances" : k.title)}</h2>
       ${amount ? `<p class="dp-verdict__amount"><span class="dp-sr-only">${esc(amount)}</span>${[...amount].map((ch, i) => `<span class="tile" style="animation-delay:${i * 90}ms" aria-hidden="true">${esc(ch)}</span>`).join("")}</p><p class="dp-verdict__per">per passenger · claim #${claim.id} · ${esc(tierName(claim.tier))}</p>` : `<p class="dp-verdict__per">Claim #${claim.id} · ${esc(tierName(claim.tier))}</p>`}
-      ${state === "paid" ? `<p class="paidwarn" role="note">TEST · NOT A REAL PAYMENT. Paid in test GEN from test pool #${esc(claim.pool_id)}.</p>` : ""}
+      ${state === "paid" ? `<p class="paidwarn" role="note">TEST MODE · NOT A REAL PAYMENT. Paid by the demo payer.</p>` : ""}
       <p class="dp-verdict__body">${esc(verdictBody(claim, state, votes))}</p>
       <div class="dp-verdict__actions">
         <a class="dp-btn dp-btn--primary" href="#proof">${icon("verified-seal")} Get my proof card</a>
         ${letter ? `<a class="dp-btn" href="#letter">${icon("letter")} Claim letter</a>` : ""}
         ${canAppeal ? `<button class="dp-btn" id="appeal" type="button">${icon("appeal")} Appeal to ${claim.tier === 1 ? 3 : 5} analysts</button>` : ""}
-        ${canWithdraw ? `<button class="dp-btn" id="withdraw" type="button">${icon("payout")} Collect from test pool</button>` : ""}
+        ${canWithdraw ? `<button class="dp-btn" id="withdraw" type="button">${icon("payout")} Collect test payout</button>` : ""}
       </div>
       <div class="dp-verdict__foot">
         ${votes.length ? `<div class="dp-validators"><div class="dp-dots" aria-hidden="true">${votes.map((v) => `<i class="dp-dot ${v === "agree" ? "is-agree" : v === "disagree" ? "is-disagree" : ""}"></i>`).join("")}</div><span class="dp-validators__label">Validators: ${esc(tallyText(votes))}${claim.status === "final" ? " · final" : " · open to appeal"}</span></div>` : ""}
@@ -202,7 +202,7 @@ function renderResult(claim, { txs = {}, votes = [], sample = false } = {}) {
 
     ${canEvidence || canFinalize ? `<section class="dp-card" aria-labelledby="more-h"><h2 class="dp-h3" id="more-h">Next steps</h2>
       ${canEvidence ? `<form id="evform" class="dp-stack"><label class="dp-label" for="evadd">Add a public evidence link (e.g. your airline's delay notice or a news story)</label><input class="dp-input" id="evadd" type="url" placeholder="https://…"><button class="dp-btn" type="submit">Add evidence</button><p class="dp-hint">Then appeal, so a bigger panel reads it.</p></form>` : ""}
-      ${canFinalize ? `<p class="dp-hint">Happy with the ruling? Making it final closes appeals${Number(claim.pool_id) > 0 ? " and lets you collect from the test pool if it's owed" : ""}.</p><button class="dp-btn" id="finalize" type="button">Make this ruling final</button>` : ""}
+      ${canFinalize ? `<p class="dp-hint">Happy with the ruling? Making it final closes appeals${Number(claim.pool_id) > 0 ? " and lets you collect the test payout if it's owed" : ""}.</p><button class="dp-btn" id="finalize" type="button">Make this ruling final</button>` : ""}
     </section>` : ""}
 
     ${letter ? `<details class="dp-card letter" id="letter"><summary>Your claim letter</summary><label class="dp-sr-only" for="lettertext">Claim letter</label><textarea class="dp-textarea" id="lettertext" rows="16">${esc(letter)}</textarea><button class="dp-btn" id="copyletter" type="button">${icon("letter")} Copy letter</button></details>` : ""}
@@ -224,7 +224,7 @@ function renderResult(claim, { txs = {}, votes = [], sample = false } = {}) {
   $("copyletter")?.addEventListener("click", () => copy($("lettertext").value, "copyletter"));
   $("appeal")?.addEventListener("click", () => runWrite("appeal", [BigInt(claim.id)], `Appeal to ${claim.tier === 1 ? 3 : 5} analysts`, claim.id, true));
   $("finalize")?.addEventListener("click", () => runWrite("finalize", [BigInt(claim.id)], "Making the ruling final", claim.id, false));
-  $("withdraw")?.addEventListener("click", () => runWrite("withdraw_payout", [BigInt(claim.id)], "Collecting from the test pool", claim.id, false));
+  $("withdraw")?.addEventListener("click", () => runWrite("withdraw_payout", [BigInt(claim.id)], "Collecting the test payout", claim.id, false));
   $("evform")?.addEventListener("submit", (e) => {
     e.preventDefault();
     const u = $("evadd").value.trim();
@@ -284,9 +284,13 @@ async function submit(ev) {
   $("formerr").textContent = "";
   const evidence = [...document.querySelectorAll(".evurl")].map((i) => i.value.trim()).filter(Boolean);
   const check = checkInputs({ flight: $("flight").value, date: $("date").value, note: $("note").value.trim(), evidence });
-  if (!$("consent").checked) check.errors.push("Please tick the box to confirm this is a public testnet record.");
+  if (!$("consent").checked) check.errors.push("Please tick the box to confirm your flight, date and note will be public.");
   if (check.errors.length) { $("formerr").textContent = check.errors.join(" "); return; }
-  if (SAMPLE_MODE) { $("formerr").textContent = "This is a sample page. Open the home page to check a real flight."; return; }
+  {
+  const box = $("samplepreview");
+  if (box && SAMPLES.owed) box.innerHTML = proofCardSVG(SAMPLES.owed, { votes: SAMPLE_VOTES, sample: true });
+}
+if (SAMPLE_MODE) { $("formerr").textContent = "This is a sample page. Open the home page to check a real flight."; return; }
   if (!LIVE) { $("formerr").textContent = "This build is not connected to a deployed contract yet."; return; }
   $("go").disabled = true;
   $("boardflight").textContent = `${check.flight} · ${$("date").value}`;
@@ -330,7 +334,7 @@ async function runWrite(fn, args, label, id, decides) {
 }
 
 // ------------------------------------------------------------------ wallet, recent, contract
-const CHIP = { owed: ["owed", "Owed"], halved: ["owed", "Owed (halved)"], "appeal-upheld": ["appeal", "Won on appeal"], paid: ["owed", "Paid (test pool)"], review: ["review", "Closer look"], "not-owed": ["plain", "Not owed"], pending: ["review", "Not assessed"] };
+const CHIP = { owed: ["owed", "Owed"], halved: ["owed", "Owed (halved)"], "appeal-upheld": ["appeal", "Won on appeal"], paid: ["owed", "Paid (test mode)"], review: ["review", "Closer look"], "not-owed": ["plain", "Not owed"], pending: ["review", "Not assessed"] };
 function renderWallet() {
   const trips = tripsNewestFirst(wallet);
   const t = totals(wallet);

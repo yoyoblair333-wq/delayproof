@@ -38,7 +38,7 @@ the SDK's own calldata encoder.
 
 ## Limits, stated plainly
 
-1. **History window.** FlightStats' free tracker shows a few days around today. Older
+1. **History window.** FlightStats' free tracker covers 3 days before and after today (it answers "DATE IS OUT OF RANGE" otherwise). Older
    flights need evidence pages attached by the claimant or the airline, or a licensed
    historical feed.
 2. **Licensing.** This is a testnet demo. FlightStats' terms for automated access were
@@ -53,6 +53,12 @@ the SDK's own calldata encoder.
 4. **Cause.** Public pages rarely state why a flight was late. With no stated cause the
    ruling is "owed unless the airline proves extraordinary circumstances", which is the
    legal default (burden on the airline).
-5. **One times source.** Validators each fetch the source independently, which defends
+5. **Route database by flight number.** adsbdb looks routes up by callsign, and some airlines
+   (British Airways among them) use callsigns that don't match the ticketed flight number.
+   BA707 maps to ZRH-LHR in adsbdb, while the reported flight was LCA-LHR. The analysts now
+   also report the airports they see on the flight-status or evidence pages; if those
+   disagree with adsbdb, the ruling is INSUFFICIENT_DATA (flag `route_conflict`) rather than a
+   wrong distance and amount. Live example: claim #4 in docs/LIVE_EVIDENCE.md.
+6. **One times source.** Validators each fetch the source independently, which defends
    against a lying leader but not against the source itself being wrong. Evidence pages
    from both sides are the second channel; a licensed second feed is the real fix.

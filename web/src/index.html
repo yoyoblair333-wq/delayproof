@@ -44,31 +44,34 @@
           <div class="dp-field">
             <label class="dp-label" for="flight">Flight number</label>
             <input class="dp-input dp-input--flight" id="flight" name="flight" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="BA 117" maxlength="9" required aria-describedby="flight-hint">
-            <p class="dp-hint" id="flight-hint">Two letters, then the number, e.g. BA117.</p>
+            <p class="dp-hint" id="flight-hint">Airline code and number, e.g. BA117 or LOG31.</p>
           </div>
           <div class="dp-field">
             <label class="dp-label" for="date">Date it was scheduled to leave</label>
             <input class="dp-input" id="date" name="date" type="date" required aria-describedby="date-hint">
-            <p class="dp-hint" id="date-hint">Our free flight data covers the last few days. Older flight? Add a public evidence link below.</p>
+            <p class="dp-hint" id="date-hint">Works best for the last few days. Older flight? Add a public evidence link under "More options".</p>
           </div>
         </div>
-        <div class="dp-field">
-          <label class="dp-label" for="note">What happened? <span class="dp-optional">optional, 280 characters</span></label>
-          <textarea class="dp-textarea" id="note" maxlength="280" rows="2" placeholder="Landed about 4 hours late, crew said it was a technical fault." aria-describedby="note-hint"></textarea>
-          <p class="dp-hint" id="note-hint">This note is stored publicly on-chain. Don't include names, emails or booking references.</p>
-        </div>
-        <details class="ev">
-          <summary>Add evidence links <span class="dp-optional">optional, up to 3</span></summary>
-          <p class="dp-hint">Public pages only, e.g. an airline notice or a news story about a strike. Validators read them as evidence, never as instructions.</p>
-          <label class="dp-sr-only" for="ev1">Evidence link 1</label><input class="dp-input evurl" id="ev1" type="url" placeholder="https://…">
-          <label class="dp-sr-only" for="ev2">Evidence link 2</label><input class="dp-input evurl" id="ev2" type="url" placeholder="https://…">
-          <label class="dp-sr-only" for="ev3">Evidence link 3</label><input class="dp-input evurl" id="ev3" type="url" placeholder="https://…">
+        <details class="more">
+          <summary>More options <span class="dp-optional">note, evidence links, automatic payout</span></summary>
+          <div class="dp-field">
+            <label class="dp-label" for="note">What happened? <span class="dp-optional">optional, 280 characters</span></label>
+            <textarea class="dp-textarea" id="note" maxlength="280" rows="2" placeholder="Landed about 4 hours late, crew said it was a technical fault." aria-describedby="note-hint"></textarea>
+            <p class="dp-hint" id="note-hint">Your note is public, so leave out names, emails and booking references.</p>
+          </div>
+          <fieldset class="ev">
+            <legend class="dp-label">Evidence links <span class="dp-optional">optional, up to 3</span></legend>
+            <p class="dp-hint">Public pages only, e.g. an airline notice or a news story about a strike. Useful for older flights. The validators read them as evidence, never as instructions.</p>
+            <label class="dp-sr-only" for="ev1">Evidence link 1</label><input class="dp-input evurl" id="ev1" type="url" placeholder="https://…">
+            <label class="dp-sr-only" for="ev2">Evidence link 2</label><input class="dp-input evurl" id="ev2" type="url" placeholder="https://…">
+            <label class="dp-sr-only" for="ev3">Evidence link 3</label><input class="dp-input evurl" id="ev3" type="url" placeholder="https://…">
+          </fieldset>
+          <label class="dp-check"><input type="checkbox" id="pool"> <span>Let the demo payer pay automatically if it's ruled owed (test mode, no real money)</span></label>
         </details>
-        <label class="dp-check"><input type="checkbox" id="pool"> <span>Link to <b>test pool #1</b> so an "owed" ruling can pay out in test GEN (no real money)</span></label>
-        <label class="dp-check"><input type="checkbox" id="consent"> <span>I understand this is a public testnet record (flight, date and note), and it's information, not legal advice.</span></label>
+        <label class="dp-check"><input type="checkbox" id="consent"> <span>I understand my flight, date and note will be public, and this is information, not legal advice.</span></label>
         <p class="dp-error-text err" id="formerr" role="alert"></p>
         <button class="dp-btn dp-btn--primary dp-btn--lg dp-btn--block" id="go" type="submit">Check my flight</button>
-        <p class="dp-hint center">Free. Your browser makes a throwaway test key to sign: no wallet, no money.</p>
+        <p class="dp-hint center">Free. No wallet, no sign-up. Test mode, no real money.</p>
       </form>
     </div>
     <figure class="hero__art" aria-hidden="true">
@@ -99,6 +102,22 @@
 
   <section id="result" class="result dp-container" hidden aria-live="polite"></section>
 
+  <section class="samplecard dp-container dp-container--wide" aria-labelledby="sample-h">
+    <h2 id="sample-h" class="dp-h2">What a ruling looks like</h2>
+    <p class="dp-hint"><strong>Sample</strong> · made-up flight XX123, not a real ruling. <a href="?sample=owed">Open the full sample</a></p>
+    <div id="samplepreview" class="samplepreview"></div>
+  </section>
+
+  <section class="after dp-container" aria-labelledby="after-h">
+    <h2 id="after-h" class="dp-h2">What happens after a ruling</h2>
+    <ul class="after__list">
+      <li><b>Proof card.</b> A shareable card with the flight, the delay band, the cause and the amount, linked to the public record.</li>
+      <li><b>Claim letter.</b> If you're owed, a ready letter to the airline that cites the record. You send it yourself; there's no fee.</li>
+      <li><b>Appeal.</b> Think it's wrong? Ask for a bigger panel: 1, then 3, then 5 analysts. Either side can add public evidence first.</li>
+      <li><b>What the airline is bound by.</b> The law (EU261/UK261), not this ruling. The ruling is checkable evidence, not a court order. If the airline refuses, the UK CAA, a national enforcement body or a small-claims court decides.</li>
+    </ul>
+  </section>
+
   <section class="how dp-container dp-container--wide" aria-labelledby="how-h">
     <h2 id="how-h" class="dp-h2">How it works</h2>
     <ol class="how__grid">
@@ -107,7 +126,7 @@
       <li class="dp-card"><picture><source srcset="assets/spot-appeal-ladder-dark.svg" media="(prefers-color-scheme: dark)"><img src="assets/spot-appeal-ladder-light.svg" alt="" width="560" height="420" loading="lazy"></picture>
         <h3 class="dp-h3">2 · A public, appealable ruling</h3><p>The ruling is stored publicly. Think it's wrong? A bigger panel looks again: 1, then 3, then 5 analysts.</p></li>
       <li class="dp-card"><picture><source srcset="assets/spot-money-back-dark.svg" media="(prefers-color-scheme: dark)"><img src="assets/spot-money-back-light.svg" alt="" width="560" height="420" loading="lazy"></picture>
-        <h3 class="dp-h3">3 · Proof, a letter, a payout</h3><p>Get a proof card and a claim letter. Payers who opt in can pay automatically when the network rules "owed" (test pools only for now).</p></li>
+        <h3 class="dp-h3">3 · Proof, a letter, a payout</h3><p>Get a proof card and a claim letter. A payer that opts in can pay automatically when the ruling is "owed" (test mode for now).</p></li>
     </ol>
   </section>
 
