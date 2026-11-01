@@ -95,7 +95,8 @@ STATUS_OPEN = "open"
 STATUS_ASSESSED = "assessed"
 STATUS_FINAL = "final"
 
-FLIGHT_RE = re.compile(r"([A-Z0-9]{2})([0-9]{1,4})([A-Z]?)")
+# 3-letter ICAO airline code (LOG31, EZY8077) or 2-character IATA code (BA117, U28077).
+FLIGHT_RE = re.compile(r"([A-Z]{3}|[A-Z0-9]{2})([0-9]{1,4})([A-Z]?)")
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 URL_RE = re.compile(r"https://[A-Za-z0-9.-]+(?:/[A-Za-z0-9._~%!$&'()*+,;=:@/?#-]*)?")
 MAX_URL_CHARS = 300
@@ -199,7 +200,7 @@ def _parse_flight(raw: str) -> tuple:
     f = raw.strip().upper().replace(" ", "")
     m = FLIGHT_RE.fullmatch(f)
     if m is None or not any(c.isalpha() for c in m.group(1)):
-        _fail("flight must look like BA117 (2-character airline code + number)")
+        _fail("flight must look like BA117 or LOG31 (airline code + number)")
         raise  # unreachable
     number = str(int(m.group(2))) + m.group(3)
     return m.group(1) + number, m.group(1), number
@@ -334,6 +335,12 @@ def compute_ruling(record: dict, claim_date: datetime, now: datetime) -> dict:
         return out(OUTCOME_TOO_EARLY, "The flight has not arrived yet; open the claim after it lands.")
     if status == "UNKNOWN":
         return out(OUTCOME_UNKNOWN, "The public sources did not show enough to decide.")
+    seen = str(record.get("seen_route", "-")).split("-")
+    if route and len(seen) == 2 and seen[0] and seen[1] and (seen[0], seen[1]) != (route.get("origin"), route.get("dest")):
+        r = out(OUTCOME_UNKNOWN, f"The route database lists {route.get('origin')}-{route.get('dest')} but the flight records show "
+                f"{seen[0]}-{seen[1]}, so coverage and distance can't be trusted.")
+        r["flags"] = flags + ["route_conflict"]
+        return r
     if not regime:
         return out(OUTCOME_NOT_COVERED, "Neither EU261 nor UK261 covers this route and airline (US law has no cash delay compensation).")
     if km < 0:
@@ -416,6 +423,8 @@ Return ONLY a JSON object with exactly these keys:
 "arrival_delay_min": integer minutes the actual arrival was later than scheduled arrival (0 if early or on time; -1 if unknown or cancelled),
 "cause_class": one of {list(CAUSES)}. CONTROLLABLE: technical faults (even unexpected part failures), crew shortage or sickness, strikes by the airline's own staff, late inbound aircraft for airline reasons. EXTRAORDINARY only with a stated cause like an air traffic control or airport-staff strike, ATC restrictions on this flight, bird strike, volcanic ash, a disruptive passenger, airport closure, or severe weather that a source ties to this flight. UNKNOWN if no source states a cause (the most common case),
 "cause_label": a few words naming the cause or "not stated",
+"origin_iata": the 3-letter IATA code of the scheduled departure airport as shown in the flight-status or evidence pages ("" if not shown),
+"dest_iata": the 3-letter IATA code of the SCHEDULED arrival airport (not a diversion airport) as shown in those pages ("" if not shown),
 "reason": one sentence (max 200 characters) citing which source showed the times."""
 
 
@@ -450,7 +459,14 @@ def _parse_analyst(raw) -> dict:
         "cause_class": cause,
         "cause_label": str(raw.get("cause_label", "not stated"))[:MAX_LABEL_CHARS],
         "reason": str(raw.get("reason", ""))[:MAX_REASON_CHARS],
+        "seen_origin": _iata(raw.get("origin_iata", "")),
+        "seen_dest": _iata(raw.get("dest_iata", "")),
     }
+
+
+def _iata(v) -> str:
+    v = str(v or "").strip().upper()
+    return v if re.fullmatch(r"[A-Z]{3}", v) else ""
 
 
 def _majority(values: list) -> str:
@@ -472,7 +488,11 @@ def aggregate(analysts: list, route: dict, sources: list) -> dict:
     delay = delays[len(delays) // 2] if delays else -1
     cause = _majority([a["cause_class"] for a in same]) if same else "UNKNOWN"
     pick = next((a for a in same if a["cause_class"] == cause), same[0] if same else analysts[0])
+    seen = _majority([a.get("seen_origin", "") + "-" + a.get("seen_dest", "") for a in same]) if same else "-"
+    if seen == "UNKNOWN":
+        seen = "-"
     return {
+        "seen_route": seen,
         "route": route,
         "status": status,
         "delay_min": delay,
@@ -498,7 +518,8 @@ def records_agree(leader: dict, mine: dict) -> bool:
                 mr.get("origin_country"), mr.get("dest_country"), mr.get("airline_country")):
             return False
     return (leader["status"] == mine["status"] and leader["bucket"] == mine["bucket"]
-            and leader["cause_class"] == mine["cause_class"])
+            and leader["cause_class"] == mine["cause_class"]
+            and leader.get("seen_route", "-") == mine.get("seen_route", "-"))
 
 
 def record_shape_ok(p) -> bool:

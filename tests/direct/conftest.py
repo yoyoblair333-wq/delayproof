@@ -72,6 +72,7 @@ def mock_sources(vm, flight, status_text="Flight Arrival Times Scheduled 11:20 A
     vm.mock_web(r"flightaware\.com", {"method": "GET", "status": 200, "body": status_text})
 
 
-def analyst(status="LANDED", delay=250, cause="CONTROLLABLE", label="technical fault", reason="FlightStats shows a 15:30 actual arrival."):
+def analyst(status="LANDED", delay=250, cause="CONTROLLABLE", label="technical fault", reason="FlightStats shows a 15:30 actual arrival.",
+            origin="", dest=""):
     return json.dumps({"status": status, "arrival_delay_min": delay, "cause_class": cause,
-                       "cause_label": label, "reason": reason})
+                       "cause_label": label, "reason": reason, "origin_iata": origin, "dest_iata": dest})

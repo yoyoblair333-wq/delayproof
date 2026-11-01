@@ -41,10 +41,21 @@ class TestOpenClaim:
         assert c["flight"] == "BA117" and c["status"] == "open" and c["tier"] == 0
         assert c["note"] == "Landed four hours late." and c["ruling"] is None
 
+    @pytest.mark.parametrize("raw,norm", [("LOG31", "LOG31"), ("ezy 0807", "EZY807"), ("U28077", "U28077"), ("BAW117", "BAW117")])
+    def test_icao_and_iata_codes(self, dp, raw, norm):
+        assert dp.get_claim(dp.open_claim(raw, "2026-10-30"))["flight"] == norm
+
+    def test_icao_flightstats_url(self, direct_vm, dp):
+        direct_vm.mock_web(r"api\.adsbdb\.com/v0/callsign/LOG31$", {"method": "GET", "status": 200, "body": conftest.route_body("BA117")})
+        direct_vm.mock_web(r"flightstats\.com/v2/flight-tracker/LOG/31\?year=2026&month=10&date=29$", {"method": "GET", "status": 200, "body": "Cancelled"})
+        direct_vm.mock_llm(PROMPT_RE, analyst(status="CANCELLED", delay=-1, cause="EXTRAORDINARY", label="ATC closure"))
+        cid = dp.open_claim("LOG31", "2026-10-29")
+        assert dp.assess(cid)["outcome"] == "LIKELY_EXTRAORDINARY"
+
     def test_flight_number_normalised(self, dp):
         assert dp.get_claim(dp.open_claim("LH0419", "2026-10-30"))["flight"] == "LH419"
 
-    @pytest.mark.parametrize("bad", ["", "B", "117", "BAX117", "BA", "BA12345", "11117", "BA-117"])
+    @pytest.mark.parametrize("bad", ["", "B", "117", "BAXX117", "BA", "BA12345", "11117", "BA-117", "1AB117"])
     def test_bad_flight(self, direct_vm, dp, bad):
         with direct_vm.expect_revert("[EXPECTED]"):
             dp.open_claim(bad, "2026-10-30")
@@ -217,6 +228,27 @@ class TestRulings:
         record = dp.get_claim(cid)["record"]
         calldata.encode(record)
         assert all(isinstance(record["route"][k], int) for k in ("origin_lat", "origin_lon", "dest_lat", "dest_lon"))
+
+    def test_seen_route_matching_database_is_fine(self, direct_vm, dp):
+        cid, r = open_and_assess(direct_vm, dp, origin="LHR", dest="JFK")
+        assert r["outcome"] == "OWED" and dp.get_claim(cid)["record"]["seen_route"] == "LHR-JFK"
+
+    def test_route_conflict_is_insufficient_data(self, direct_vm, dp):
+        # adsbdb maps some flight numbers to the wrong route (BA707 -> ZRH-LHR, while the flight was LCA-LHR)
+        _, r = open_and_assess(direct_vm, dp, origin="LCA", dest="LHR")
+        assert r["outcome"] == "INSUFFICIENT_DATA" and "route_conflict" in r["flags"] and "LCA-LHR" in r["explanation"]
+
+    def test_validator_rejects_different_seen_route(self, direct_vm, dp):
+        open_and_assess(direct_vm, dp, origin="LHR", dest="JFK")
+        direct_vm.clear_mocks()
+        mock_sources(direct_vm, "BA117")
+        direct_vm.mock_llm(PROMPT_RE, analyst(origin="LHR", dest="EWR"))
+        assert direct_vm.run_validator() is False
+
+    @pytest.mark.parametrize("bad", ["LONDON", "lh", "12A", None])
+    def test_junk_iata_ignored(self, direct_vm, dp, bad):
+        cid, r = open_and_assess(direct_vm, dp, origin=bad, dest="JFK")
+        assert r["outcome"] == "OWED" and dp.get_claim(cid)["record"]["seen_route"] == "-JFK"
 
     def test_rules_version_recorded(self, direct_vm, dp):
         _, r = open_and_assess(direct_vm, dp)

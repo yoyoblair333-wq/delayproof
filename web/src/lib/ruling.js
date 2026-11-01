@@ -142,8 +142,8 @@ export function voteSummary(tx) {
 export function checkInputs({ flight, date, note = "", evidence = [] }, today = new Date()) {
   const errors = [];
   const f = String(flight ?? "").trim().toUpperCase().replace(/\s+/g, "");
-  const m = /^([A-Z0-9]{2})([0-9]{1,4})([A-Z]?)$/.exec(f);
-  if (!m || !/[A-Z]/.test(m[1])) errors.push("Flight should look like BA117.");
+  const m = /^([A-Z]{3}|[A-Z0-9]{2})([0-9]{1,4})([A-Z]?)$/.exec(f);
+  if (!m || !/[A-Z]/.test(m[1])) errors.push("Flight should look like BA117 or LOG31.");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) errors.push("Pick the date the flight was scheduled to leave.");
   else if (date > today.toISOString().slice(0, 10)) errors.push("That date is in the future.");
   if (note.length > 280) errors.push("Keep the note under 280 characters.");
