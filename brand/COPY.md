@@ -12,7 +12,7 @@ Copy notes:
 
 ### Hero
 **Eyebrow:** FOR ANYONE WHO'S STARED AT A DEPARTURE BOARD
-**H1:** Your flight was late. Find out if you're owed up to €600.
+**H1:** Your flight was late. Find out if you're owed €250 to €600 (£220 to £520 in the UK).
 **Sub:** Enter your flight and date. An independent network checks what really happened and rules on whether EU or UK law says you're owed money. It takes about a minute and is free.
 **Form:** [ Flight number, e.g. XX 123 ] [ Date ] → **Check my flight**
 **Under the button:** No sign-up to check. Information, not legal advice.
@@ -69,7 +69,7 @@ No. Our ruling isn't legally binding on airlines. It's a checked record of the f
 "Extraordinary circumstances" like severe weather, air-traffic-control restrictions or security threats can cancel the right to compensation. Technical faults and the airline's own staff strikes usually don't. The validators look for the reported cause, and if it's unclear the ruling says "needs a closer look" instead of guessing.
 
 **7. Can I appeal a ruling?**
-Yes. During the appeal window (shown on your ruling) you can add evidence, like a delay confirmation email or a photo of the board, and a larger group of validators re-examines the case. The original ruling and the appeal both stay on the public record.
+Yes. During the appeal window (shown on your ruling) you can add a public evidence link (for example the airline's delay notice or a news report), and a larger panel re-examines the case: 1, then 3, then 5 analysts per validator. The original ruling and the appeal both stay on the public record.
 
 **8. What do "opt-in payers" mean, and is my data public?**
 Some insurers, card programs and groups can choose to pay automatically when the network rules "owed". In test mode these are test pools with no real money. Your ruling is public, but it shows the flight, date and outcome, not your name, email or booking reference, unless you choose to add them.
@@ -98,13 +98,13 @@ Some insurers, card programs and groups can choose to pay automatically when the
 | **Ruling: owed** | **You're owed {{AMOUNT}}** | The network ruled {{AGREE}} that your {{DISTANCE}} flight arrived {{DELAY}} late with no extraordinary circumstance found. That's {{AMOUNT}} per passenger under {{RULE}}. | **Get my proof card** / Send to airline |
 | Ruling: owed, reduced | **You're owed {{AMOUNT}}** | You were rerouted and got there within {{X}} hours of plan, so the amount is halved under the rules. | **Get my proof card** |
 | **Ruling: not owed** | Not owed this time | The network found {{REASON, e.g. "the delay was caused by an air-traffic-control restriction, which counts as an extraordinary circumstance"}}. We know that stings. | **Appeal with more evidence** / Check another flight |
-| **Ruling: needs a closer look** | This one needs a closer look | The flight record doesn't clearly show {{WHAT}}. Rather than guess, we've flagged it. Adding your delay email or a photo of the board often settles it. | **Add evidence** |
+| **Ruling: needs a closer look** | This one needs a closer look | The flight record doesn't clearly show {{WHAT}}. Rather than guess, we've flagged it. Adding a public link (like the airline's delay notice) and appealing often settles it. | **Add evidence** |
 | Proof card ready | Your proof is ready | Share it, save it, or send it straight to the airline. Anyone can check it at the link. | **Share** / Save image / Copy link |
 | Send to airline | Your claim, ready to send | We've filled in the facts and the rule. Review it, add your booking reference, and send it from your own email. | **Open in email** / Copy text |
 | Appeal: start | Think we got it wrong? | Tell us what we missed and add any proof. A larger group of validators will look again. Appeals close {{APPEAL_UNTIL}}. | **Start appeal** |
 | Appeal: submitted | Appeal in | A bigger panel is re-checking your case. Both rulings stay on the public record. | (status) |
-| Appeal: upheld | The appeal changed the ruling | The larger panel ruled {{OUTCOME}}. Your proof card has been updated. | **See new proof card** |
-| Appeal: not upheld | The original ruling stands | The larger panel looked again and agreed with the first ruling: {{REASON}}. | **Check another flight** |
+| Appeal: ruling changed | The appeal changed the ruling | The larger panel ruled {{OUTCOME}}. Your proof card has been updated. | **See new proof card** |
+| Appeal: ruling stands | The original ruling stands | The larger panel looked again and agreed with the first ruling: {{REASON}}. | **Check another flight** |
 | Appeal window closed | This ruling is final on DelayProof | The appeal window ended {{DATE}}. You can still take your case to the airline or the enforcement body. | Send to airline |
 | Payout: pool available | {{PAYER}} pays out on rulings like this | You can opt in to receive {{AMOUNT}} automatically. (Test mode: a test payout, not real money.) | **Opt in** / No thanks |
 | Payout: no pool | No automatic payer for this one | You can still claim directly from the airline with your proof. | **Send to airline** |

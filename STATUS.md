@@ -47,3 +47,25 @@
 - Not shown live: an OWED payout (no 3h+ delayed flight found within FlightStats' free window during the
   run). The payout path is covered by direct-mode tests (pool lifecycle, double-pay, regime, balance).
 - Fixed: mobile stamp overlap on the proof card; final rail step now ticks done.
+
+## 2026-11-01 ~09:30 PT — design integration
+- Web app moved onto the design system: `web/src/design/tokens.css` + `components.css` (copied from
+  brand/soak/10-system, the source of truth), brand logo, icon sprite, spot illustrations and the
+  owed-by-distance graphic in `web/src/assets/`. Fonts: Schibsted Grotesk / Inter / IBM Plex Mono.
+- New result UI driven only by the real claim (`get_claim`) and the deciding tx: verdict banner per state
+  (owed, owed-unless, halved, changed on appeal, test payout, closer look, not owed), boarding-pass ticket that
+  separates the **agreed delay band** from the gate minutes the record shows, real validator tally
+  (e.g. "agree 3, idle 2"), flip-tile amount with screen-reader text and a reduced-motion fade.
+- Proof card generated client-side from the real ruling (`lib/card.js`), saved/shared as a 1080x1350 PNG;
+  payouts carry an un-croppable "TEST · NOT A REAL PAYMENT" band; legal line 28px.
+- Real writes wired in the UI: open_claim (optional link to test pool #1), assess, appeal (1→3→5),
+  add_evidence (claimant https link), finalize, withdraw_payout.
+- Trip Wallet + stamps in localStorage (`lib/wallet.js`): "ruled owed" totals, never a balance.
+- `?sample=<state>` previews use labelled made-up claims (`lib/samples.js`), never write, never enter the wallet.
+- REVIEW.md must-not-ship items fixed in the app and in COPY.md / LAUNCH.md / BRAND.md (amounts, hype,
+  5-of-5, photo/email evidence, upheld wording, 35%/30-second, "most never claim", single data source,
+  public-note privacy warning + email/booking-ref block, not-owed slate, BRAND tokens synced).
+  Rendered soak graphics still needing re-render are listed in brand/soak/DO-NOT-SHIP.md.
+- Tests: web offline 17/17 (was 9) incl. every sample state, PNG export, no-write-on-sample, axe WCAG 2.1 AA
+  at 375px light+dark on 8 pages/states. verify.sh: VERIFY: PASS. Screens: docs/screens/ (40 PNGs).
+- Still open: a live OWED ruling (none in FlightStats' free window yet).

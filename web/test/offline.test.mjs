@@ -8,6 +8,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe as describeClaim, claimLetter, checkInputs, money } from "../src/lib/ruling.js";
 import { canonical } from "../src/lib/digest.js";
+import { cardState, voteDots, hm } from "../src/lib/ruling.js";
+import { proofCardSVG } from "../src/lib/card.js";
+import { addTrip, emptyWallet, totals, tripsNewestFirst } from "../src/lib/wallet.js";
+import { SAMPLES } from "../src/lib/samples.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.join(here, "../dist");
@@ -73,6 +77,71 @@ test("canonical digest ignores line endings only", () => {
   assert.notEqual(canonical("a\nb"), canonical("a\nc"));
 });
 
+test("cardState maps every contract outcome to a designed state", () => {
+  const m = (outcome, extra = {}, c = {}) => cardState({ ...claim(outcome, extra), ...c });
+  assert.equal(m("OWED"), "owed");
+  assert.equal(m("OWED_UNLESS_EXTRAORDINARY"), "owed");
+  assert.equal(m("OWED", { band: "long", bucket: "H3_4" }), "halved");
+  assert.equal(m("OWED", {}, { paid: true }), "paid");
+  assert.equal(m("OWED", {}, { tier: 2, history: [{ tier: 1, ruling: { outcome: "BORDERLINE" } }] }), "appeal-upheld");
+  assert.equal(m("OWED", {}, { tier: 2, history: [{ tier: 1, ruling: { outcome: "OWED" } }] }), "owed");
+  for (const o of ["BORDERLINE", "POSSIBLY_OWED_CANCELLATION", "INSUFFICIENT_DATA", "TOO_EARLY"]) assert.equal(m(o), "review", o);
+  for (const o of ["NOT_OWED_UNDER_3H", "LIKELY_EXTRAORDINARY", "NOT_COVERED", "FLIGHT_NOT_FOUND"]) assert.equal(m(o), "not-owed", o);
+  assert.equal(cardState({ id: 1 }), "pending");
+});
+
+test("describe has plain headlines for every outcome the contract emits", () => {
+  for (const o of ["OWED", "OWED_UNLESS_EXTRAORDINARY", "POSSIBLY_OWED_CANCELLATION", "BORDERLINE", "NOT_OWED_UNDER_3H", "LIKELY_EXTRAORDINARY", "NOT_COVERED", "TOO_EARLY", "FLIGHT_NOT_FOUND", "INSUFFICIENT_DATA"]) {
+    assert.notEqual(describeClaim(claim(o)).headline, o, o);
+  }
+});
+
+test("vote dots and durations come from the real tx", () => {
+  assert.deepEqual(voteDots({ consensus_data: { votes: { a: "idle", b: "agree", c: "agree", d: "disagree" } } }), ["agree", "agree", "disagree", "idle"]);
+  assert.deepEqual(voteDots(null), []);
+  assert.equal(hm(227), "3h 47m");
+  assert.equal(hm(-1), "");
+});
+
+test("proof card: honest wording, real tallies, test watermark on payouts", () => {
+  const owed = proofCardSVG(claim("OWED"), { votes: ["agree", "agree", "agree", "idle", "idle"], contract: "0x76b28bDC23C86CFB9AE80b3f29643482Aed4BC45" });
+  assert.equal(owed.state, "owed");
+  assert.match(owed.svg, /agree 3, idle 2/);
+  assert.ok(owed.svg.includes(">£</text>"));
+  assert.match(owed.svg, /not legal advice/);
+  assert.match(owed.svg, /aren't/);
+  assert.doesNotMatch(owed.svg, /VERIFIED|of 5 validators|UPHELD|proven|court/i);
+  assert.match(owed.svg, /4h\+ late \(agreed\)/);
+  const paid = proofCardSVG({ ...claim("OWED"), paid: true, status: "final" });
+  assert.match(paid.svg, /TEST · NOT A REAL PAYMENT/);
+  const appeal = proofCardSVG({ ...claim("OWED"), tier: 2, history: [{ tier: 1, ruling: { outcome: "BORDERLINE" } }] });
+  assert.match(appeal.svg, /CHANGED ON APPEAL/);
+  assert.match(proofCardSVG(claim("OWED_UNLESS_EXTRAORDINARY")).svg, /unless the airline proves/);
+  assert.match(proofCardSVG(claim("NOT_OWED_UNDER_3H")).svg, /Not owed this time/);
+  assert.match(proofCardSVG(SAMPLES.owed, { sample: true }).svg, /SAMPLE/);
+  // every legal line is at least 28px on the 1080 card
+  for (const m of owed.svg.matchAll(/font-size="(\d+)"[^>]*>[^<]*(?:legal advice|legally bound)/g)) assert.ok(Number(m[1]) >= 28, m[0]);
+});
+
+test("trip wallet: only this browser's claims count, totals say ruled owed, stamps", () => {
+  let w = emptyWallet();
+  w = addTrip(w, claim("OWED"), { mine: true, now: new Date("2026-11-01T10:00:00Z") });
+  w = addTrip(w, { ...claim("OWED"), id: 8 }, { mine: false, now: new Date("2026-11-01T11:00:00Z") });
+  w = addTrip(w, { ...claim("NOT_OWED_UNDER_3H"), id: 9 }, { mine: true, now: new Date("2026-11-01T12:00:00Z") });
+  assert.equal(totals(w), "£520");
+  assert.deepEqual(tripsNewestFirst(w).map((t) => t.id), [9, 8, 7]);
+  assert.ok(w.stamps["first-check"] && w.stamps["first-owed"]);
+  assert.ok(!w.stamps["first-appeal"]);
+  assert.equal(addTrip(w, { ...claim("OWED"), id: 7 }, { mine: false }).trips[7].mine, true, "mine is sticky");
+});
+
+test("public note: blocks emails and booking references", () => {
+  const today = new Date("2026-11-01T12:00:00Z");
+  assert.ok(!checkInputs({ flight: "BA117", date: "2026-10-30", note: "reach me at jo@example.com" }, today).ok);
+  assert.ok(!checkInputs({ flight: "BA117", date: "2026-10-30", note: "booking ref K7X2QP" }, today).ok);
+  assert.ok(checkInputs({ flight: "BA117", date: "2026-10-30", note: "4 hours late on BA117, crew said tech fault" }, today).ok);
+});
+
 // ---- browser smoke (network to the RPC blocked) --------------------------
 async function serve() {
   const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".map": "application/json" };
@@ -112,5 +181,74 @@ test("pages render offline at phone width without errors", async (t) => {
       assert.ok((await page.textContent("h1")).length > 5);
     }
     assert.deepEqual(errors, []);
+  } finally { await browser.close(); server.close(); }
+});
+
+const STATES = ["owed", "halved", "review", "not-owed", "appeal-upheld", "paid"];
+test("every result state renders from labelled samples, never writes, and exports a PNG", async (t) => {
+  let chromium;
+  try { ({ chromium } = await import("playwright")); } catch { t.skip("playwright not installed"); return; }
+  const { server, url } = await serve();
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 375, height: 800 } });
+    const errors = [];
+    const rpc = [];
+    page.on("pageerror", (e) => errors.push(String(e)));
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+    await page.route(/studio\.genlayer\.com/, (r) => { rpc.push(r.request().postData() ?? ""); r.abort(); });
+    for (const st of STATES) {
+      await page.goto(`${url}?sample=${st}`);
+      await page.waitForSelector(`.dp-verdict[data-state="${st}"]`);
+      assert.equal(await page.isVisible("#samplebar"), true, `${st}: sample bar`);
+      assert.match(await page.textContent(".dp-verdict"), /not legal advice/, st);
+      assert.match(await page.textContent(".dp-verdict"), /Sample/, st);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= 375), true, `${st}: no horizontal scroll`);
+      assert.equal(await page.locator("#appeal, #finalize, #withdraw, #evform").count(), 0, `${st}: no write buttons on samples`);
+      const txt = await page.textContent("#result");
+      assert.doesNotMatch(txt, /verified by consensus|5 of 5|upheld|photo|proven/i, st);
+    }
+    // the amount is real text for screen readers, not only flip tiles
+    await page.goto(`${url}?sample=owed`);
+    assert.equal(await page.textContent(".dp-verdict__amount .dp-sr-only"), "€400");
+    const size = await page.evaluate(async () => (await window.__dpSvgToPngBlob(document.querySelector(".cardsvg").innerHTML)).size);
+    assert.ok(size > 20000, `PNG export size ${size}`);
+    // the checking board shows the rail and labelled sample dots
+    await page.goto(`${url}?sample=checking`);
+    assert.equal(await page.isVisible("#checking"), true);
+    assert.match(await page.textContent("#dots"), /agree 3/);
+    // submitting from a sample page is refused before any network write
+    await page.goto(`${url}?sample=owed`);
+    await page.fill("#flight", "BA117"); await page.fill("#date", "2026-10-30"); await page.check("#consent");
+    await page.click("#go");
+    assert.match(await page.textContent("#formerr"), /sample page/);
+    assert.ok(!rpc.some((b) => /eth_sendRawTransaction|gen_sendRawTransaction|sendRawTransaction/.test(b)), "no write was attempted");
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); server.close(); }
+});
+
+async function axeScan(page) {
+  await page.addScriptTag({ path: path.resolve(here, "../node_modules/axe-core/axe.min.js") });
+  const r = await page.evaluate(async () => window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } }));
+  return r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).slice(0, 3).join(" | ")}`);
+}
+
+test("WCAG 2.1 AA (axe) at 375px, light and dark", async (t) => {
+  let chromium;
+  try { ({ chromium } = await import("playwright")); } catch { t.skip("playwright not installed"); return; }
+  const { server, url } = await serve();
+  const browser = await chromium.launch();
+  try {
+    for (const colorScheme of ["light", "dark"]) {
+      const ctx = await browser.newContext({ viewport: { width: 375, height: 800 }, colorScheme, reducedMotion: "reduce" });
+      const page = await ctx.newPage();
+      await page.route(/studio\.genlayer\.com|fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+      for (const target of ["", "?sample=owed", "?sample=review", "?sample=not-owed", "?sample=paid", "?sample=checking", "review.html", "rig.html"]) {
+        await page.goto(url + target);
+        await page.waitForTimeout(250);
+        assert.deepEqual(await axeScan(page), [], `${colorScheme} ${target || "home"}`);
+      }
+      await ctx.close();
+    }
   } finally { await browser.close(); server.close(); }
 });

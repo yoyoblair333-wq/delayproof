@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="t d">
+  <title id="t">DelayProof mark</title>
+  <desc id="d">A boarding-pass stub with side notches; a check mark whose long stroke climbs like a take-off path, ending in a beacon dot.</desc>
+  <defs>
+    <mask id="stub">
+      <rect width="512" height="512" fill="#fff"/>
+      <!-- boarding-pass notches -->
+      <circle cx="40" cy="256" r="34" fill="#000"/>
+      <circle cx="472" cy="256" r="34" fill="#000"/>
+    </mask>
+  </defs>
+  <!-- stub -->
+  <rect x="40" y="96" width="432" height="320" rx="64" fill="#F2A93B" mask="url(#stub)"/>
+  <!-- check / take-off path -->
+  <path d="M150 262 L222 328 L356 188" fill="none" stroke="#0F1B2D" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- beacon -->
+  <circle cx="398" cy="146" r="24" fill="#0F1B2D"/>
+</svg>

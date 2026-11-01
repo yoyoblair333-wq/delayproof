@@ -4,83 +4,159 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DelayProof</title>
-<meta name="description" content="Was your flight late? Independent validators check the public flight record and agree on what you're owed under EU261/UK261.">
+<meta name="description" content="Was your flight late? Independent validators check the real flight record and agree on what you're owed under EU261/UK261. Free, public, appealable.">
+<meta name="color-scheme" content="light dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Inter+Tight:wght@500;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Schibsted+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="design/tokens.css">
+<link rel="stylesheet" href="design/components.css">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="dp-root">
 <a class="skip" href="#main">Skip to content</a>
-<div class="netbar" id="netbar">GenLayer testnet (studionet) · no real money · information, not legal advice</div>
-<header class="wrap top">
+<div class="dp-testbar" role="status"><strong>Test mode</strong> Rulings are real checks on GenLayer's test network, but no real money moves yet.</div>
+<div id="samplebar" class="samplebar" hidden role="status"><strong>Sample</strong> This page is showing a made-up example so you can see the design. Nothing here was checked or stored. <a href="./">Check a real flight</a></div>
+
+<header class="top dp-container dp-container--wide">
   <a class="brand" href="./" aria-label="DelayProof home">
-    <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#111418"/><path d="M8 25l9-3 8-13 3 1-4 11 8-3 2 2-9 6-15 3z" fill="#FFB000"/><path d="M27 30l3 3 6-7" stroke="#3DDC84" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
-    <span class="word">DELAY<b>PROOF</b></span>
+    <img src="assets/logo.svg" alt="" width="36" height="36">
+    <span class="word dp-display">DelayProof</span>
   </a>
-  <nav class="tabs" aria-label="Pages"><a href="review.html">For reviewers</a><a href="rig.html">Check the code</a></nav>
+  <nav class="tabs" aria-label="Pages">
+    <a href="#wallet-h">My trips</a>
+    <a href="review.html">For reviewers</a>
+    <a href="rig.html">Check the code</a>
+  </nav>
 </header>
 
-<main id="main" class="wrap">
-  <section class="hero">
-    <p class="kicker">Late flight? Airlines don't decide this one.</p>
-    <h1>Find out what you're owed, <span>proven</span>.</h1>
-    <p class="lede">Airlines owe up to €600 for a flight that lands 3+ hours late, and often say "extraordinary circumstances" to avoid paying. Here, independent GenLayer validators each fetch the public flight record themselves and must <b>agree</b> on what happened before a ruling exists. Nobody, including us, can quietly change it.</p>
-    <ol class="how">
-      <li><b>1</b> Enter your flight</li>
-      <li><b>2</b> Validators check the public record</li>
-      <li><b>3</b> Get a ruling + claim letter</li>
-    </ol>
+<main id="main">
+  <section class="hero dp-container dp-container--wide" aria-labelledby="hero-h">
+    <div class="hero__copy">
+      <p class="kicker">Late flight? Check what the rules say.</p>
+      <h1 id="hero-h" class="dp-display">Your flight was late. Find out if you're owed <span class="hl">€250 to €600</span>.</h1>
+      <p class="lede">What counts is how late you <b>arrived</b>: 3 hours or more, on a flight covered by EU or UK rules. The amount depends on distance (£220 to £520 in the UK). Enter your flight and date: independent validators each pull the public flight record and must <b>agree</b> before a ruling exists. Free, public, and you can appeal.</p>
+
+      <form id="form" class="dp-card dp-card--raised checker" novalidate aria-labelledby="check-h">
+        <h2 id="check-h" class="dp-label-caps">Check a flight</h2>
+        <div class="dp-form-row">
+          <div class="dp-field">
+            <label class="dp-label" for="flight">Flight number</label>
+            <input class="dp-input dp-input--flight" id="flight" name="flight" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="BA 117" maxlength="9" required aria-describedby="flight-hint">
+            <p class="dp-hint" id="flight-hint">Two letters, then the number, e.g. BA117.</p>
+          </div>
+          <div class="dp-field">
+            <label class="dp-label" for="date">Date it was scheduled to leave</label>
+            <input class="dp-input" id="date" name="date" type="date" required aria-describedby="date-hint">
+            <p class="dp-hint" id="date-hint">Our free flight data covers the last few days. Older flight? Add a public evidence link below.</p>
+          </div>
+        </div>
+        <div class="dp-field">
+          <label class="dp-label" for="note">What happened? <span class="dp-optional">optional, 280 characters</span></label>
+          <textarea class="dp-textarea" id="note" maxlength="280" rows="2" placeholder="Landed about 4 hours late, crew said it was a technical fault." aria-describedby="note-hint"></textarea>
+          <p class="dp-hint" id="note-hint">This note is stored publicly on-chain. Don't include names, emails or booking references.</p>
+        </div>
+        <details class="ev">
+          <summary>Add evidence links <span class="dp-optional">optional, up to 3</span></summary>
+          <p class="dp-hint">Public pages only, e.g. an airline notice or a news story about a strike. Validators read them as evidence, never as instructions.</p>
+          <label class="dp-sr-only" for="ev1">Evidence link 1</label><input class="dp-input evurl" id="ev1" type="url" placeholder="https://…">
+          <label class="dp-sr-only" for="ev2">Evidence link 2</label><input class="dp-input evurl" id="ev2" type="url" placeholder="https://…">
+          <label class="dp-sr-only" for="ev3">Evidence link 3</label><input class="dp-input evurl" id="ev3" type="url" placeholder="https://…">
+        </details>
+        <label class="dp-check"><input type="checkbox" id="pool"> <span>Link to <b>test pool #1</b> so an "owed" ruling can pay out in test GEN (no real money)</span></label>
+        <label class="dp-check"><input type="checkbox" id="consent"> <span>I understand this is a public testnet record (flight, date and note), and it's information, not legal advice.</span></label>
+        <p class="dp-error-text err" id="formerr" role="alert"></p>
+        <button class="dp-btn dp-btn--primary dp-btn--lg dp-btn--block" id="go" type="submit">Check my flight</button>
+        <p class="dp-hint center">Free. Your browser makes a throwaway test key to sign: no wallet, no money.</p>
+      </form>
+    </div>
+    <figure class="hero__art" aria-hidden="true">
+      <picture>
+        <source srcset="assets/spot-validators-agree-dark.svg" media="(prefers-color-scheme: dark)">
+        <img src="assets/spot-validators-agree-light.svg" alt="" width="560" height="420">
+      </picture>
+    </figure>
   </section>
 
-  <section class="board" aria-labelledby="check-h">
-    <h2 id="check-h" class="board-title">CHECK A FLIGHT</h2>
-    <form id="form" novalidate>
-      <div class="row">
-        <label>Flight <input id="flight" name="flight" autocomplete="off" placeholder="BA117" maxlength="9" required></label>
-        <label>Date <input id="date" name="date" type="date" required></label>
+  <section id="checking" class="checking dp-container" hidden aria-labelledby="checking-h">
+    <div class="board">
+      <h2 id="checking-h" class="dp-label-caps board__title">The network is checking</h2>
+      <p class="board__flight dp-mono" id="boardflight"></p>
+      <div class="validators" aria-hidden="true">
+        <span class="vnode"></span><span class="vnode"></span><span class="vnode"></span><span class="vnode"></span><span class="vnode"></span>
       </div>
-      <label>What happened? <small>(optional, 280 characters)</small><textarea id="note" maxlength="280" rows="2" placeholder="Landed about 4 hours late, crew said it was a technical fault."></textarea></label>
-      <details class="ev"><summary>Add evidence links <small>(optional, up to 3)</small></summary>
-        <p class="hint">Public pages only, e.g. an airline notice or a news story about a strike. Validators read them as evidence, never as instructions.</p>
-        <input class="evurl" type="url" placeholder="https://…"><input class="evurl" type="url" placeholder="https://…"><input class="evurl" type="url" placeholder="https://…">
-      </details>
-      <label class="consent"><input type="checkbox" id="consent"> I understand this is a public testnet record (flight + date + note), and it is information, not legal advice.</label>
-      <p class="err" id="formerr" role="alert"></p>
-      <button class="cta" id="go" type="submit">Get my ruling</button>
-      <p class="hint">Your browser makes a free testnet key to sign. No wallet, no money.</p>
-    </form>
+      <ol class="dp-rail rail" id="rail" aria-live="polite">
+        <li class="dp-rail__step" data-step="open"><span class="dp-rail__node">1</span><div><p class="dp-rail__title">Claim recorded</p><p class="dp-rail__meta" data-meta></p></div></li>
+        <li class="dp-rail__step" data-step="fetch"><span class="dp-rail__node">2</span><div><p class="dp-rail__title">Validators pulling the flight record</p><p class="dp-rail__meta" data-meta></p></div></li>
+        <li class="dp-rail__step" data-step="agree"><span class="dp-rail__node">3</span><div><p class="dp-rail__title">Validators agreeing</p><p class="dp-rail__meta" data-meta></p>
+          <div class="dp-validators" id="dots" hidden><div class="dp-dots" aria-hidden="true"></div><span class="dp-validators__label"></span></div></div></li>
+        <li class="dp-rail__step" data-step="final"><span class="dp-rail__node">4</span><div><p class="dp-rail__title">Ruling final</p><p class="dp-rail__meta" data-meta></p></div></li>
+      </ol>
+      <p class="board__quip" id="quip"></p>
+    </div>
   </section>
 
-  <section id="progress" class="rail" hidden aria-live="polite">
-    <h2 class="sr">Progress</h2>
-    <ol>
-      <li data-step="open">Claim recorded</li>
-      <li data-step="fetch">Validators fetching the flight record</li>
-      <li data-step="agree">Validators agreeing</li>
-      <li data-step="final">Ruling final</li>
+  <section id="result" class="result dp-container" hidden aria-live="polite"></section>
+
+  <section class="how dp-container dp-container--wide" aria-labelledby="how-h">
+    <h2 id="how-h" class="dp-h2">How it works</h2>
+    <ol class="how__grid">
+      <li class="dp-card"><picture><source srcset="assets/spot-validators-agree-dark.svg" media="(prefers-color-scheme: dark)"><img src="assets/spot-validators-agree-light.svg" alt="" width="560" height="420" loading="lazy"></picture>
+        <h3 class="dp-h3">1 · Independent checks</h3><p>Several validators each pull the public flight record themselves and agree on the arrival-delay band and the cause. If they can't tell, the case is flagged for a closer look.</p></li>
+      <li class="dp-card"><picture><source srcset="assets/spot-appeal-ladder-dark.svg" media="(prefers-color-scheme: dark)"><img src="assets/spot-appeal-ladder-light.svg" alt="" width="560" height="420" loading="lazy"></picture>
+        <h3 class="dp-h3">2 · A public, appealable ruling</h3><p>The ruling is stored publicly. Think it's wrong? A bigger panel looks again: 1, then 3, then 5 analysts.</p></li>
+      <li class="dp-card"><picture><source srcset="assets/spot-money-back-dark.svg" media="(prefers-color-scheme: dark)"><img src="assets/spot-money-back-light.svg" alt="" width="560" height="420" loading="lazy"></picture>
+        <h3 class="dp-h3">3 · Proof, a letter, a payout</h3><p>Get a proof card and a claim letter. Payers who opt in can pay automatically when the network rules "owed" (test pools only for now).</p></li>
     </ol>
-    <p id="railnote" class="hint"></p>
   </section>
 
-  <section id="result" hidden></section>
-
-  <section class="recent" aria-labelledby="recent-h">
-    <h2 id="recent-h">Recent rulings</h2>
-    <p class="hint" id="recentnote">Read live from the contract.</p>
-    <ul id="recent"></ul>
+  <section class="bands dp-container dp-container--wide" aria-labelledby="bands-h">
+    <div class="bands__copy">
+      <h2 id="bands-h" class="dp-h2">How much could you be owed?</h2>
+      <p>For a flight that lands 3 hours or more late, EU and UK rules set the amount by distance: <b>€250 / £220</b> up to 1,500 km, <b>€400 / £350</b> up to 3,500 km, and <b>€600 / £520</b> beyond that. A long-haul flight that is 3 to 4 hours late pays half (€300 / £260).</p>
+      <p class="dp-hint">Not owed for "extraordinary circumstances" like severe weather or an air-traffic-control strike. Technical faults and the airline's own staff strikes usually don't count as extraordinary. Sources: Reg. (EC) 261/2004 Art. 7; UK CAA.</p>
+    </div>
+    <img class="bands__art" src="assets/owed-by-distance.svg" alt="Amounts by distance: up to 1,500 km €250 (UK £220); 1,500 to 3,500 km €400 (UK £350); over 3,500 km €600 (UK £520)." width="1080" height="1350" loading="lazy">
   </section>
 
-  <section class="contract" aria-labelledby="contract-h">
-    <h2 id="contract-h">The contract</h2>
-    <dl id="contract"></dl>
+  <section class="chatbot dp-container" aria-labelledby="chatbot-h">
+    <h2 id="chatbot-h" class="dp-h2">Why not just ask a chatbot for a letter?</h2>
+    <ul class="chatbot__list">
+      <li><b>Facts, not guesses.</b> A chatbot guesses how late you were. Here, independent validators fetch the real record and must agree.</li>
+      <li><b>A shared record.</b> The ruling is public and timestamped, so it's not "the passenger's AI said so".</li>
+      <li><b>It can pay by itself.</b> Payers who opt in can pay automatically when the network rules "owed". A letter can't.</li>
+      <li><b>You can appeal.</b> A bigger panel re-checks if you think the ruling is wrong.</li>
+    </ul>
+    <p class="dp-hint">Honest limit: airlines aren't legally bound by a DelayProof ruling. It's strong, checkable evidence, not a court order.</p>
+  </section>
+
+  <section class="wallet dp-container" aria-labelledby="wallet-h">
+    <h2 id="wallet-h" class="dp-h2">My trips</h2>
+    <p class="dp-hint">Kept only in this browser. Totals say "ruled owed", never money you've received.</p>
+    <p class="wallet__total" id="wallettotal"></p>
+    <ul class="wallet__list" id="wallet"></ul>
+    <h3 class="dp-h3">Stamps</h3>
+    <ul class="stamps" id="stamps"></ul>
+  </section>
+
+  <section class="recent dp-container" aria-labelledby="recent-h">
+    <h2 id="recent-h" class="dp-h2">Recent rulings</h2>
+    <p class="dp-hint" id="recentnote">Read live from the contract.</p>
+    <ul class="recent__list" id="recent"></ul>
+  </section>
+
+  <section class="contract dp-container" aria-labelledby="contract-h">
+    <h2 id="contract-h" class="dp-h2">The contract</h2>
+    <dl id="contract" class="dp-facts"></dl>
   </section>
 </main>
 
-<footer class="wrap foot">
-  <p>DelayProof is an independent project on GenLayer, not affiliated with any airline or with GenLayer. Amounts follow EU261/UK261 as modelled in the open-source rules table. Testnet only. Information, not legal advice.</p>
+<footer class="foot dp-container">
+  <p>DelayProof is an independent project on GenLayer, not affiliated with any airline or with GenLayer. Amounts follow EU261/UK261 as modelled in the open-source rules table. Test network only.</p>
+  <p class="dp-honesty">Information, not legal advice. Airlines aren't legally bound by these rulings.</p>
 </footer>
+<div class="dp-toast-region" id="toasts" aria-live="polite"></div>
 <script type="module" src="app.js"></script>
 </body>
 </html>

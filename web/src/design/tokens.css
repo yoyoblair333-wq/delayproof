@@ -1,0 +1,257 @@
+/* =====================================================================
+   DelayProof design tokens  ·  v1.0  ·  drop into web/ and load FIRST
+   ---------------------------------------------------------------------
+   Concept: night departure board. Ink navy, boarding-pass paper,
+   departure-board amber. Status colours never borrow the brand amber,
+   so "owed" never reads as a warning.
+
+   Theming
+     - Light is the default.
+     - Dark follows the OS (prefers-color-scheme) unless the page forces
+       a theme with <html data-theme="light"> or <html data-theme="dark">.
+     - The two dark blocks below MUST stay identical. tools/contrast.py
+       fails the build if they drift.
+
+   Rules
+     - Text tokens are only ever placed on the backgrounds listed in
+       CONTRAST.md. Every listed pair is >= 4.5:1 (WCAG AA body text).
+     - Never set text in --dp-amber on a light surface; use --dp-amber-ink.
+     - --dp-board-* tokens are ALWAYS dark (proof card, owed verdict),
+       so a shared screenshot looks the same in either theme.
+   ===================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Brand (theme-independent) ---------------------------------- */
+  --dp-amber:          #F2A93B;  /* fill: mark, primary button, amount on board */
+  --dp-amber-hover:    #E39A2C;
+  --dp-amber-press:    #D18A1E;
+  --dp-on-amber:       #0F1B2D;  /* text/icons on amber fills */
+  --dp-ink:            #0F1B2D;
+  --dp-paper:          #F7F3EC;
+
+  /* ---- Surfaces --------------------------------------------------- */
+  --dp-bg:             #F7F3EC;  /* page: boarding-pass paper */
+  --dp-surface:        #FFFFFF;  /* cards, inputs, modal */
+  --dp-surface-2:      #EFE9DE;  /* sunken: code, table stripes, rail track */
+  --dp-surface-raised: #FFFFFF;  /* popovers, menus */
+  --dp-line:           #E4DDD0;  /* hairlines, card borders (decorative) */
+  --dp-line-strong:    #857B6C;  /* input borders, checkbox edges: >=3:1 non-text */
+  --dp-scrim:          rgba(15, 27, 45, 0.56);
+
+  /* ---- Text ------------------------------------------------------- */
+  --dp-text:           #0F1B2D;
+  --dp-muted:          #545F6F;  /* hints, captions; 4.5+ on bg, surface, surface-2 */
+  --dp-amber-ink:      #8F5400;  /* amber as TEXT on light (links-in-brand, "Proof") */
+  --dp-link:           #1F4FB8;
+
+  /* ---- Status: text colour, tint background, border ---------------- */
+  --dp-owed:           #11714A;
+  --dp-owed-bg:        #E3F2EA;
+  --dp-owed-line:      #9CCFB5;
+
+  --dp-not-owed:       #545F6F;
+  --dp-not-owed-bg:    #ECE8E0;
+  --dp-not-owed-line:  #C9C1B3;
+
+  --dp-review:         #2252BB;  /* "needs a closer look", pending */
+  --dp-review-bg:      #E6EDFB;
+  --dp-review-line:    #A9BFEF;
+
+  --dp-appeal:         #5638BD;  /* appeal open / under appeal */
+  --dp-appeal-bg:      #EEEAFB;
+  --dp-appeal-line:    #C3B6F2;
+
+  --dp-late:           #A93C08;  /* delay figures, errors */
+  --dp-late-bg:        #FBEADF;
+  --dp-late-line:      #EDB596;
+
+  --dp-test:           #8F5400;  /* test-mode banner text */
+  --dp-test-bg:        #FCEBCD;
+  --dp-test-line:      #EDC783;
+
+  /* ---- Inverse (toasts, tooltips) --------------------------------- */
+  --dp-inverse-bg:     #0F1B2D;
+  --dp-inverse-text:   #F3EFE6;
+  --dp-inverse-muted:  #A9B4C4;
+  --dp-inverse-owed:   #3CCB8A;
+  --dp-inverse-late:   #FF8A4C;
+  --dp-inverse-review: #8FB1FF;
+  --dp-inverse-accent: #F2A93B;
+
+  /* ---- Board: ALWAYS dark (proof card, owed verdict) --------------- */
+  --dp-board:          #0E1A2C;
+  --dp-board-2:        #18304F;
+  --dp-board-3:        #08101C;
+  --dp-board-text:     #F3EFE6;
+  --dp-board-muted:    #A3AEBF;
+  --dp-board-line:     #2A3B57;
+  --dp-board-owed:     #3CCB8A;
+  --dp-board-amber:    #F2A93B;
+  --dp-board-gradient: radial-gradient(120% 90% at 85% 0%, #18304F 0%, #0E1A2C 55%, #08101C 100%);
+
+  /* ---- Focus & effects -------------------------------------------- */
+  --dp-focus:          #8F5400;  /* ring colour; 3:1+ against bg and surface */
+  --dp-focus-ring:     0 0 0 2px var(--dp-bg), 0 0 0 4px var(--dp-focus);
+  --dp-skeleton:       #E9E2D5;
+  --dp-skeleton-hi:    #F6F1E8;
+  --dp-shadow-1:       0 1px 2px rgba(15, 27, 45, .06), 0 1px 1px rgba(15, 27, 45, .04);
+  --dp-shadow-2:       0 6px 18px -6px rgba(15, 27, 45, .16), 0 2px 4px rgba(15, 27, 45, .05);
+  --dp-shadow-3:       0 24px 48px -16px rgba(15, 27, 45, .30), 0 4px 10px rgba(15, 27, 45, .08);
+
+  /* ---- Type ------------------------------------------------------- */
+  --dp-font-display: "Schibsted Grotesk", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --dp-font-ui:      "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --dp-font-mono:    "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --dp-text-xs:   12px;
+  --dp-text-sm:   14px;
+  --dp-text-md:   16px;   /* body minimum on mobile */
+  --dp-text-lg:   20px;
+  --dp-text-xl:   28px;
+  --dp-text-2xl:  40px;
+  --dp-text-3xl:  64px;
+  --dp-text-amount: clamp(64px, 18vw, 96px);
+
+  --dp-leading-tight: 1.05;
+  --dp-leading-snug:  1.25;
+  --dp-leading-body:  1.5;
+  --dp-track-display: -0.03em;
+  --dp-track-label:   0.15em;
+
+  /* ---- Space (4px grid), radius, layout --------------------------- */
+  --dp-space-1: 4px;   --dp-space-2: 8px;   --dp-space-3: 12px;
+  --dp-space-4: 16px;  --dp-space-5: 20px;  --dp-space-6: 24px;
+  --dp-space-8: 32px;  --dp-space-10: 40px; --dp-space-12: 48px;
+  --dp-space-16: 64px;
+
+  --dp-radius-sm:   6px;
+  --dp-radius-md:  10px;
+  --dp-radius-lg:  16px;
+  --dp-radius-xl:  24px;
+  --dp-radius-pill: 999px;
+
+  --dp-gutter:      16px;   /* phone side gutter */
+  --dp-content:    720px;
+  --dp-wide:      1120px;
+  --dp-tap:         44px;   /* minimum touch target */
+
+  /* ---- Motion ----------------------------------------------------- */
+  --dp-ease-out:    cubic-bezier(.2, .8, .2, 1);
+  --dp-ease-stamp:  cubic-bezier(.3, 1.5, .5, 1);
+  --dp-dur-fast:    120ms;
+  --dp-dur-base:    200ms;
+  --dp-dur-slow:    360ms;
+  --dp-dur-dot:     250ms;   /* validator dots fill one by one */
+
+  /* ---- Layers ----------------------------------------------------- */
+  --dp-z-banner: 50;
+  --dp-z-modal:  100;
+  --dp-z-toast:  110;
+}
+
+/* ---- DARK (OS preference) ------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --dp-bg:             #0B1422;
+    --dp-surface:        #121D2F;
+    --dp-surface-2:      #0E1828;
+    --dp-surface-raised: #182540;
+    --dp-line:           #24324A;
+    --dp-line-strong:    #5F7190;
+    --dp-scrim:          rgba(3, 7, 14, 0.72);
+    --dp-text:           #F3EFE6;
+    --dp-muted:          #9AA6B8;
+    --dp-amber-ink:      #F2A93B;
+    --dp-link:           #8FB1FF;
+    --dp-owed:           #3CCB8A;
+    --dp-owed-bg:        #0E2A23;
+    --dp-owed-line:      #1F5C45;
+    --dp-not-owed:       #A3AEBF;
+    --dp-not-owed-bg:    #1A2436;
+    --dp-not-owed-line:  #33425C;
+    --dp-review:         #8FB1FF;
+    --dp-review-bg:      #13223F;
+    --dp-review-line:    #2C4A85;
+    --dp-appeal:         #B9A5FB;
+    --dp-appeal-bg:      #1F1A3D;
+    --dp-appeal-line:    #47397F;
+    --dp-late:           #FF8A4C;
+    --dp-late-bg:        #2E1A12;
+    --dp-late-line:      #6E3519;
+    --dp-test:           #F2A93B;
+    --dp-test-bg:        #2A2112;
+    --dp-test-line:      #5E4618;
+    --dp-inverse-bg:     #F3EFE6;
+    --dp-inverse-text:   #0F1B2D;
+    --dp-inverse-muted:  #4E5968;
+    --dp-inverse-owed:   #0E6B45;
+    --dp-inverse-late:   #A33A07;
+    --dp-inverse-review: #2252BB;
+    --dp-inverse-accent: #8A5100;
+    --dp-focus:          #F2A93B;
+    --dp-skeleton:       #18253A;
+    --dp-skeleton-hi:    #22324C;
+    --dp-shadow-1:       0 1px 2px rgba(0, 0, 0, .40);
+    --dp-shadow-2:       0 8px 20px -6px rgba(0, 0, 0, .55), 0 2px 4px rgba(0, 0, 0, .30);
+    --dp-shadow-3:       0 28px 56px -16px rgba(0, 0, 0, .70), 0 4px 12px rgba(0, 0, 0, .40);
+  }
+}
+
+/* ---- DARK (forced). Keep identical to the block above. -------------- */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --dp-bg:             #0B1422;
+    --dp-surface:        #121D2F;
+    --dp-surface-2:      #0E1828;
+    --dp-surface-raised: #182540;
+    --dp-line:           #24324A;
+    --dp-line-strong:    #5F7190;
+    --dp-scrim:          rgba(3, 7, 14, 0.72);
+    --dp-text:           #F3EFE6;
+    --dp-muted:          #9AA6B8;
+    --dp-amber-ink:      #F2A93B;
+    --dp-link:           #8FB1FF;
+    --dp-owed:           #3CCB8A;
+    --dp-owed-bg:        #0E2A23;
+    --dp-owed-line:      #1F5C45;
+    --dp-not-owed:       #A3AEBF;
+    --dp-not-owed-bg:    #1A2436;
+    --dp-not-owed-line:  #33425C;
+    --dp-review:         #8FB1FF;
+    --dp-review-bg:      #13223F;
+    --dp-review-line:    #2C4A85;
+    --dp-appeal:         #B9A5FB;
+    --dp-appeal-bg:      #1F1A3D;
+    --dp-appeal-line:    #47397F;
+    --dp-late:           #FF8A4C;
+    --dp-late-bg:        #2E1A12;
+    --dp-late-line:      #6E3519;
+    --dp-test:           #F2A93B;
+    --dp-test-bg:        #2A2112;
+    --dp-test-line:      #5E4618;
+    --dp-inverse-bg:     #F3EFE6;
+    --dp-inverse-text:   #0F1B2D;
+    --dp-inverse-muted:  #4E5968;
+    --dp-inverse-owed:   #0E6B45;
+    --dp-inverse-late:   #A33A07;
+    --dp-inverse-review: #2252BB;
+    --dp-inverse-accent: #8A5100;
+    --dp-focus:          #F2A93B;
+    --dp-skeleton:       #18253A;
+    --dp-skeleton-hi:    #22324C;
+    --dp-shadow-1:       0 1px 2px rgba(0, 0, 0, .40);
+    --dp-shadow-2:       0 8px 20px -6px rgba(0, 0, 0, .55), 0 2px 4px rgba(0, 0, 0, .30);
+    --dp-shadow-3:       0 28px 56px -16px rgba(0, 0, 0, .70), 0 4px 12px rgba(0, 0, 0, .40);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dp-dur-fast: 0ms;
+    --dp-dur-base: 0ms;
+    --dp-dur-slow: 0ms;
+    --dp-dur-dot:  0ms;
+  }
+}

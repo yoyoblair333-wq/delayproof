@@ -10,13 +10,13 @@ Every video ends with the same card: the proof card and "Check your flight: link
 
 ## 10 TikTok hooks (first 2 seconds)
 
-1. "If your flight landed 3 hours late in Europe, the airline might owe you €600, and they're not going to tell you."
+1. "If your flight from Europe landed 3+ hours late, you could be owed €250 to €600 depending on distance. Most airlines won't volunteer it."
 2. "I co-founded a company that got people paid for flight delays. Here's what airlines hope you never learn."
 3. "I used to tell you when you were owed an apology. Now I tell you when an airline owes you money."
 4. "It's 'the weather,' they said. Let's check if it was actually the weather."
 5. "Wheels down doesn't count. Here's the moment that decides if you get paid."
-6. "This is what €400 looks like when five judges agree on it." *(show the proof card)*
-7. "Don't pay a claims company 35% for something that takes 30 seconds to check."
+6. "This is what a €400 ruling looks like when independent validators agree on it." *(show the proof card)*
+7. "Check it free, claim it yourself, keep 100%."
 8. "POV: you're at the gate, it's hour three, and you're doing math." *(cut to the app)*
 9. "Your flight from London was delayed? Different rules, same money. Pounds edition."
 10. "I asked a chatbot if I was owed money for my flight. Then I checked the actual flight data. They didn't match."
@@ -26,15 +26,15 @@ Every video ends with the same card: the proof card and "Check your flight: link
 ## 5 short video scripts (30–45s each, vertical)
 
 ### Script 1: "The 3-hour rule" (education, 35s)
-- **0–2s** (face to camera, airport B-roll behind): "If your flight landed three hours late in Europe, someone might owe you up to €600."
+- **0–2s** (face to camera, airport B-roll behind): "If your flight from Europe landed three hours late, you could be owed €250 to €600, depending on how far you flew."
 - **2–10s**: "It's EU law. Any flight leaving the EU or UK, any airline, or into Europe on a European airline."
-- **10–20s** (text on screen: 1,500 km = €250 / 3,500 km = €400 / farther = €600): "The amount depends on distance. Short hop, €250. Medium, €400. Long-haul, €600."
+- **10–20s** (text on screen: up to 1,500 km = €250 / up to 3,500 km = €400 / farther = €600 at 4h+, €300 at 3–4h): "The amount depends on distance. Short hop, €250. Medium, €400. Long-haul, €600 if you were four hours or more late, €300 if it was three to four. In the UK it's £220 to £520."
 - **20–28s**: "Catch: if it was truly out of their control, like a storm or air traffic control, they don't owe you. A broken plane? That's on them."
 - **28–35s** (screen recording: type flight → ruling): "I built a free tool that checks the real flight data for you. Link in bio. Info, not legal advice."
 
 ### Script 2: "Founder story" (trust, 40s)
 - **0–3s**: "Years ago I co-founded a travel company that turned flight delays into compensation."
-- **3–12s**: "The thing I learned is that most people never claim. Not because they aren't owed. Because they aren't sure, and the airline isn't going to make it easy."
+- **3–12s**: "The thing I learned is that a lot of people never claim. Not because they aren't owed. Because they aren't sure, and the airline isn't going to make it easy."
 - **12–25s**: "So I built DelayProof. You type your flight and date. A network of independent checkers each pulls the real flight record, and they have to agree before anything's ruled."
 - **25–35s** (show proof card): "You get this: a public, checkable proof. Send it to the airline. Share it."
 - **35–40s**: "We're in test mode right now, so no money moves through us yet. Go check your last trip. Link in bio."
@@ -52,7 +52,7 @@ Every video ends with the same card: the proof card and "Check your flight: link
 - **30–40s**: "And no, the airline doesn't have to obey it. It's not a court. But facts plus the exact rule? That's what gets claims paid."
 
 ### Script 5: "Proof card reveal" (shareable, 25s)
-- **0–2s** (phone close-up, departure-board flip sound): "Five judges. One flight. Let's see."
+- **0–2s** (phone close-up, departure-board flip sound): "Independent validators. One flight. Let's see."
 - **2–12s** (screen: validator dots filling one by one): "Each one is checking on its own: scheduled 14:05, landed 17:52, 1,858 km."
 - **12–18s** (seal stamps in, €400 flips up): "Five out of five. €400."
 - **18–25s**: "Duet this with your worst delay and I'll run it live. Test mode, info not legal advice."
@@ -61,9 +61,9 @@ Every video ends with the same card: the proof card and "Check your flight: link
 
 ## X thread (8 posts)
 
-1/ Most people delayed 3+ hours on a European flight are owed €250–600 by law. Most never claim, because they aren't sure, and checking is a pain.
+1/ If your flight from Europe (or on an EU/UK airline) arrived 3+ hours late, EU/UK law may owe you €250–600 (£220–520), unless the airline proves extraordinary circumstances. Many people never claim, because they aren't sure, and checking is a pain.
 
-I built DelayProof to make "am I owed?" a 30-second, checkable answer. (thread)
+I built DelayProof to make "am I owed?" a free, checkable answer in about a minute. (thread)
 
 2/ You enter flight number + date. That's it.
 
@@ -77,7 +77,7 @@ A network of independent validators each fetches the real flight record (schedul
 
 A chatbot writes from what *you* tell it. This checks the record independently, puts it on a neutral public page, and lets you appeal.
 
-6/ The honest part: airlines aren't legally bound by our ruling. It's not a court, and it's information, not legal advice. What it is: verified facts + the exact rule. That's usually what gets claims paid.
+6/ The honest part: airlines aren't legally bound by our ruling. It's not a court, and it's information, not legal advice. What it is: the public flight record, checked by independent validators, plus the exact rule. That's usually what gets claims paid.
 
 7/ The new bit: insurers, card perks or travel groups can opt in to pay automatically when the network rules "owed". No forms. Under the hood it runs on GenLayer's intelligent contracts, but travelers never touch a wallet.
 
@@ -90,7 +90,7 @@ Background: I co-founded TrustaBit (airline-delay compensation vouchers). This i
 
 ## GenLayer Discord showcase post
 
-**DelayProof: a public court for flight-delay compensation (testnet)**
+**DelayProof: checkable flight-delay compensation rulings on GenLayer (testnet)**
 
 **What it is:** a consumer app where a passenger enters a flight + date and GenLayer validators decide whether they're owed EU261/UK261 compensation (€250–600). The ruling is public and appealable, and opt-in pools (insurers, card perks, travel groups) can pay automatically on "owed".
 
@@ -101,8 +101,8 @@ Background: I co-founded TrustaBit (airline-delay compensation vouchers). This i
 - Payout pools are contracts that release funds only on a final "owed" ruling for a matching flight.
 
 **Design choices worth feedback on:**
-1. Equivalence criteria: we compare the outcome + amount band + delay bucket (under 3h / 3–4h / 4h+) rather than exact minutes. Too loose? Too strict?
-2. Data sourcing: validators are prompted to use more than one public flight-status source and record which ones they used in the rationale.
+1. Equivalence criteria: validators agree on flight status, delay bucket (under 2h / 2–3h / 3–4h / 4h+) and cause class, not exact minutes; the amount then comes from a deterministic rules table. Too loose? Too strict?
+2. Data sourcing: today validators fetch one date-specific times source (FlightStats) plus adsbdb for the route, and record which sources loaded. A second licensed times source is the top roadmap item. Which feeds would stewards trust?
 3. "Needs a closer look" is a first-class result, so the contract never forces a yes/no it can't support.
 4. Privacy: the public record holds flight + date + outcome only; no names or booking refs on-chain.
 
@@ -123,10 +123,10 @@ Format: 16:9 master with a 9:16 safe area marked. Screen recordings use a phone 
 | # | Time | Visual | VO / on-screen text |
 |---|------|--------|---------------------|
 | 1 | 0:00–0:06 | Departure board flipping to DELAYED (generic board, no airline names). Cut to a tired traveler at a gate. | VO: "Three hours at the gate. Is anyone going to pay for that?" |
-| 2 | 0:06–0:14 | Title card: DelayProof logo lockup on ink. | VO: "In Europe and the UK, the law says maybe up to €600. Most people never find out." |
+| 2 | 0:06–0:14 | Title card: DelayProof logo lockup on ink. | VO: "In Europe it can be €250 to €600, in the UK £220 to £520, depending on distance. A lot of people never check." |
 | 3 | 0:14–0:24 | Phone: landing page → type "XX 123", pick date, tap **Check my flight**. | VO: "Flight number and date. That's all." Text: *No sign-up to check* |
 | 4 | 0:24–0:38 | "The network is checking": five validator dots fill one by one; small cards show "Sched. 14:05 / Actual 17:52 / 1,858 km". | VO: "Five independent validators each pull the real flight record on their own and apply the rules. They have to agree." |
-| 5 | 0:38–0:48 | Ruling screen: the €400 amount flips in; the seal stamps; "5 of 5 agreed". | VO: "The network ruled: owed. €400, and here's exactly why." |
+| 5 | 0:38–0:48 | Ruling screen: the €400 amount flips in; the real validator tally from the transaction (e.g. "agree 3, idle 2"). | VO: "The validators agreed: owed. €400, and here's exactly why." |
 | 6 | 0:48–0:56 | Tap **Get my proof card** → the full proof card; swipe to the share sheet. | VO: "You get a public, checkable proof. Share it, or send it straight to the airline." |
 | 7 | 0:56–1:06 | Split screen: a chatbot letter on the left, the DelayProof public ruling page with its evidence list on the right. | VO: "A chatbot writes what you tell it. This checks the record independently and keeps it on a neutral public page." |
 | 8 | 1:06–1:14 | Payout screen: "Test Travel Pool pays out on rulings like this" → **Opt in** → "Paid: €400 (test)". | VO: "And when an insurer or card perk opts in, it can pay automatically." Text: *Test mode, no real money* |

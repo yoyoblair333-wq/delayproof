@@ -3,7 +3,7 @@
 ## 1. Positioning in one breath
 Your flight was late. DelayProof checks the real flight record, has an independent network rule on whether you're owed EU/UK compensation, and gives you a public, shareable proof you can take to the airline or to anyone who has opted in to pay.
 
-**Promise:** the facts, checked by more than one judge, in plain English.
+**Promise:** the public flight record, checked by independent validators, in plain English.
 **What we never claim:** that we're a court, a law firm, or that the airline must obey the ruling.
 
 ## 2. Voice
@@ -34,7 +34,7 @@ Concept: **night departure board.** Deep ink navy, warm boarding-pass paper, dep
 :root {
   /* brand */
   --dp-amber:        #F2A93B;  /* brand fill: mark, big amount on dark, CTA fill (with ink text) */
-  --dp-amber-ink:    #9A5B00;  /* amber for TEXT on light (4.9:1 on paper) */
+  --dp-amber-ink:    #8F5400;  /* amber for TEXT on light; passes on surface-2 too (synced to soak/10-system/tokens.css) */
   --dp-ink:          #0F1B2D;  /* primary text on light; text on amber (8.6:1) */
 
   /* light surfaces */
@@ -42,14 +42,14 @@ Concept: **night departure board.** Deep ink navy, warm boarding-pass paper, dep
   --dp-surface:      #FFFFFF;
   --dp-line:         #E4DDD0;
   --dp-text:         #0F1B2D;  /* 15.6:1 */
-  --dp-muted:        #5B6676;  /* 5.3:1 */
+  --dp-muted:        #545F6F;  /* passes on status tints (synced to tokens.css) */
 
   /* status (light) */
-  --dp-owed:         #127A4F;  /* 4.8:1 */
-  --dp-not-owed:     #5B6676;
-  --dp-review:       #2557C7;  /* "needs a closer look" / pending, 5.8:1 */
-  --dp-appeal:       #5B3FC4;  /* appeal open / under appeal, 6.4:1 */
-  --dp-late:         #B4400A;  /* delay figures, errors, 5.2:1 */
+  --dp-owed:         #11714A;
+  --dp-not-owed:     #545F6F;
+  --dp-review:       #2252BB;  /* "needs a closer look" / pending */
+  --dp-appeal:       #5638BD;  /* appeal open / under appeal */
+  --dp-late:         #A93C08;  /* delay figures, errors */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -61,16 +61,16 @@ Concept: **night departure board.** Deep ink navy, warm boarding-pass paper, dep
     --dp-muted:     #9AA6B8;  /* 7.5:1 */
     --dp-amber-ink: #F2A93B;  /* amber is readable as text on dark (9.2:1) */
     --dp-owed:      #3CCB8A;  /* 8.9:1 */
-    --dp-not-owed:  #9AA6B8;
-    --dp-review:    #7FA6FF;
-    --dp-appeal:    #B39DFA;
+    --dp-not-owed:  #A3AEBF;
+    --dp-review:    #8FB1FF;
+    --dp-appeal:    #B9A5FB;
     --dp-late:      #FF8A4C;
   }
 }
 :root[data-theme="dark"] { /* same values as the dark block above */ }
 ```
 
-Contrast ratios were checked against the page background for each mode. Never set body text in `--dp-amber` on light backgrounds; use `--dp-amber-ink`.
+Source of truth for every token: `brand/soak/10-system/tokens.css` (also shipped as `web/src/design/tokens.css`); 138 contrast checks pass there (see `soak/10-system/CONTRAST.md`). This table is a summary; if it ever differs, tokens.css wins. Contrast ratios were checked against the page background for each mode. Never set body text in `--dp-amber` on light backgrounds; use `--dp-amber-ink`.
 
 **Proof card (always dark, so it looks the same everywhere it's shared):** radial gradient `#18304F → #0E1A2C → #08101C`, ticket panel in `--dp-bg` paper.
 
@@ -104,9 +104,9 @@ Scale (mobile): 12 / 14 / 16 / 20 / 28 / 40 / 64, with the amount on the result 
 
 1. Header: mark, wordmark, "PUBLIC RULING #ID"
 2. "THE NETWORK RULED" → "You're owed" → **€400** (270px) + "per passenger · under EU 261/2004"
-3. Consensus seal ("VERIFIED BY CONSENSUS · PUBLIC RECORD")
+3. Seal ("AGREED BY INDEPENDENT VALIDATORS · PUBLIC RECORD"); never "verified"
 4. Boarding-pass panel: route, flight, date, arrival delay, distance, scheduled vs actual, cause finding
-5. Validator dots: "5 of 5 independent validators agreed" + appeal window
+5. Validator dots: the real tally from the deciding transaction (e.g. "agree 3, idle 2") + appeal window
 6. Footer: verify URL, "Check the record yourself →", honesty line
 
 Template fields are listed in a comment at the top of the SVG (`{{AMOUNT}}`, `{{FLIGHT}}` and so on). The sample uses the placeholder flight code **XX 123** and the airport codes LIS/AMS; no airline names or marks appear.

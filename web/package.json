@@ -9,6 +9,12 @@
     "test": "node --test --test-concurrency=1 test/offline.test.mjs",
     "test:live": "node test/live.test.mjs"
   },
-  "dependencies": { "genlayer-js": "1.1.8" },
-  "devDependencies": { "esbuild": "0.25.11", "playwright": "1.63.0" }
+  "dependencies": {
+    "genlayer-js": "1.1.8"
+  },
+  "devDependencies": {
+    "axe-core": "^4.10.3",
+    "esbuild": "0.25.11",
+    "playwright": "1.63.0"
+  }
 }

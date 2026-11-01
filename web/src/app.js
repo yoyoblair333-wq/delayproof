@@ -1,20 +1,31 @@
-// DelayProof web app: opens a claim, asks the validators to assess it, follows
+// DelayProof web app. Opens a claim, asks the validators to assess it, follows
 // the transaction to finality and shows the agreed ruling, a proof card and a
 // claim letter. Every write is signed in this browser by a testnet burner key.
+// Everything shown in the live flow is read back from the contract or from the
+// transaction itself; ?sample=<state> previews use labelled made-up claims and
+// never write anything.
 import { createAccount, createClient, generatePrivateKey } from "genlayer-js";
 import { studionet } from "genlayer-js/chains";
 import * as C from "./config.js";
 import { classifyTx, voteSummary, revertReason } from "./lib/finality.js";
-import { describe, claimLetter, tierName, checkInputs, BUCKET_TEXT, CAUSE_TEXT } from "./lib/ruling.js";
+import { describe, claimLetter, tierName, checkInputs, cardState, hm, money, voteDots, PAYABLE, BUCKET_TEXT, CAUSE_TEXT } from "./lib/ruling.js";
+import { proofCardSVG, STATE_COPY } from "./lib/card.js";
+import { WALLET_KEY, STAMPS, emptyWallet, addTrip, stamp, totals, tripsNewestFirst } from "./lib/wallet.js";
+import { SAMPLES, SAMPLE_VOTES } from "./lib/samples.js";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const plain = (v) => JSON.parse(JSON.stringify(v, (_k, x) => (typeof x === "bigint" ? Number(x) : x instanceof Map ? Object.fromEntries(x) : x)));
+const icon = (name, label = "") => `<svg class="ic" width="20" height="20" ${label ? `role="img" aria-label="${esc(label)}"` : 'aria-hidden="true"'}><use href="assets/icons.svg#dp-${name}"/></svg>`;
 
 const reader = createClient({ chain: studionet });
 const LIVE = /^0x[0-9a-fA-F]{40}$/.test(C.CONTRACT_ADDRESS) && !/^0x0+$/.test(C.CONTRACT_ADDRESS);
+const params = new URLSearchParams(location.search);
+const SAMPLE = params.get("sample");
+const SAMPLE_MODE = SAMPLE !== null;
 
+// ------------------------------------------------------------------ storage (per browser, best effort)
 function store(key, value) {
   try {
     if (value === undefined) return JSON.parse(localStorage.getItem(key) ?? "null");
@@ -30,20 +41,58 @@ function signer() {
   account = createAccount(b.privateKey);
   return account;
 }
+const me = () => { try { return signer().address.toLowerCase(); } catch { return ""; } };
 const writer = () => createClient({ chain: studionet, account: signer() });
+let wallet = store(WALLET_KEY) ?? emptyWallet();
+function saveWallet() { store(WALLET_KEY, wallet); renderWallet(); }
 
 async function readClaim(id) { return plain(await reader.readContract({ address: C.CONTRACT_ADDRESS, functionName: "get_claim", args: [BigInt(id)] })); }
 
-// ------------------------------------------------------------------ status rail
+function toast(text, kind = "info") {
+  const t = document.createElement("div");
+  t.className = `dp-toast dp-toast--${kind}`;
+  t.setAttribute("role", kind === "error" ? "alert" : "status");
+  t.textContent = text;
+  $("toasts").append(t);
+  setTimeout(() => t.remove(), 5000);
+}
+
+function tallyText(votes) {
+  const c = {};
+  for (const v of votes) c[v] = (c[v] ?? 0) + 1;
+  return Object.entries(c).map(([k, n]) => `${k} ${n}`).join(", ");
+}
+
+// ------------------------------------------------------------------ checking board + status rail
 const STEPS = ["open", "fetch", "agree", "final"];
+const QUIPS = ["Faster than the baggage carousel.", "Each validator reads the record on its own.", "No airline gets a vote here.", "They have to agree, or it gets flagged instead of guessed."];
+let quipTimer = 0;
 function rail(step, note = "", failed = false) {
-  $("progress").hidden = false;
+  $("checking").hidden = false;
   const i = step === "done" ? STEPS.length : STEPS.indexOf(step);
-  for (const li of $("progress").querySelectorAll("li")) {
+  for (const li of $("rail").querySelectorAll("li")) {
     const j = STEPS.indexOf(li.dataset.step);
-    li.className = j < i ? "done" : j === i ? (failed ? "fail" : "now") : "";
+    li.classList.toggle("is-done", j < i);
+    li.classList.toggle("is-now", j === i && !failed);
+    li.classList.toggle("is-fail", j === i && failed);
+    if (li.querySelector(".dp-rail__node")) li.querySelector(".dp-rail__node").textContent = j < i ? "✓" : j === i && failed ? "!" : String(j + 1);
+    if (j === i && note) li.querySelector("[data-meta]").textContent = note;
   }
-  $("railnote").textContent = note;
+  const board = $("checking").querySelector(".board");
+  board.dataset.phase = failed ? "fail" : step === "done" ? "done" : step;
+  clearInterval(quipTimer);
+  if (!failed && (step === "fetch" || step === "agree")) {
+    let q = 0;
+    $("quip").textContent = QUIPS[0];
+    quipTimer = setInterval(() => { $("quip").textContent = QUIPS[++q % QUIPS.length]; }, 4500);
+  } else $("quip").textContent = failed ? "Nothing was lost: your claim is saved on-chain if it was recorded." : "";
+}
+function showDots(votes) {
+  if (!votes.length) return;
+  const d = $("dots");
+  d.hidden = false;
+  d.querySelector(".dp-dots").innerHTML = votes.map((v) => `<i class="dp-dot ${v === "agree" ? "is-agree" : v === "disagree" ? "is-disagree" : ""}"></i>`).join("");
+  d.querySelector(".dp-validators__label").textContent = `Validators: ${tallyText(votes)}`;
 }
 
 async function follow(hash, onState) {
@@ -61,43 +110,160 @@ async function follow(hash, onState) {
 }
 
 // ------------------------------------------------------------------ result view
-function renderResult(claim, txs = {}) {
-  const d = describe(claim);
+const VERDICT_CLASS = { owed: "owed", halved: "owed", "appeal-upheld": "owed", paid: "owed", review: "review", "not-owed": "not-owed", pending: "review" };
+function verdictBody(claim, state, votes) {
+  const r = claim.ruling ?? {};
   const rec = claim.record ?? {};
-  const sources = (rec.sources ?? []).map((s) => `<li class="${s.ok ? "ok" : "bad"}">${esc(s.name)}: ${s.ok ? "loaded" : "failed"}</li>`).join("");
-  const analysts = (rec.analysts ?? []).map((a, i) => `<li>Analyst ${i + 1}: ${esc(a.status)}${a.delay_min >= 0 ? `, ${a.delay_min} min` : ""}, ${esc(a.cause_class)}</li>`).join("");
+  const agree = votes.length ? `The validators reached agreement (${tallyText(votes)})` : "The validators reached agreement";
+  const band = BUCKET_TEXT[rec.bucket] ?? "late";
+  const gate = hm(rec.delay_min) ? ` The public record shows ${hm(rec.delay_min)} at the gate; the validators agreed on the band, not the exact minute.` : "";
+  if (state === "owed" || state === "halved" || state === "appeal-upheld" || state === "paid") {
+    const why = r.outcome === "OWED_UNLESS_EXTRAORDINARY" ? "no cause was published, so it's owed unless the airline proves extraordinary circumstances" : `the cause was ${CAUSE_TEXT[rec.cause_class] ?? "found"}`;
+    return `${agree}: your ${r.distance_km > 0 ? Number(r.distance_km).toLocaleString("en-GB") + " km " : ""}flight arrived ${band}, and ${why}. That's ${money(r.amount, r.currency)} per passenger under ${r.regime === "UK261" ? "UK 261" : "EU 261/2004"}.${state === "halved" ? " Long-haul and 3 to 4 hours late, so the rules halve it." : ""}${gate}`;
+  }
+  if (state === "review") return `${r.explanation ?? ""} Rather than guess, the validators flagged it. Adding a public link (for example the airline's delay notice) and appealing to a bigger panel often settles it.`;
+  if (state === "not-owed") return `${r.explanation ?? ""}${r.outcome === "LIKELY_EXTRAORDINARY" ? " We know that stings. You may still be owed meals or care on the day." : r.outcome === "NOT_OWED_UNDER_3H" ? " You may still be owed meals or care on the day." : ""}`;
+  return "The validators haven't ruled yet.";
+}
+
+let current = { claim: null, txs: {}, votes: [], sample: false };
+function renderResult(claim, { txs = {}, votes = [], sample = false } = {}) {
+  current = { claim, txs, votes, sample };
+  const state = cardState(claim);
+  const k = STATE_COPY[state];
+  const r = claim.ruling ?? {};
+  const unless = (state === "owed" || state === "halved") && r.outcome === "OWED_UNLESS_EXTRAORDINARY";
+  const rec = claim.record ?? {};
+  const route = rec.route ?? {};
+  const d = describe(claim);
+  const amount = PAYABLE.has(r.outcome) ? money(r.amount, r.currency) : "";
+  const mine = !sample && claim.claimant?.toLowerCase() === me();
+  const canAppeal = !sample && claim.status === "assessed" && claim.tier < 3;
+  const canFinalize = !sample && mine && claim.status === "assessed";
+  const canEvidence = !sample && mine && claim.status !== "final";
+  const canWithdraw = !sample && mine && claim.status === "final" && PAYABLE.has(r.outcome) && Number(claim.pool_id) > 0 && !claim.paid;
   const letter = claimLetter(claim, { contract: C.CONTRACT_ADDRESS, txHash: txs.assess, siteUrl: C.SITE_URL || location.href.split("?")[0] });
-  const canAppeal = claim.status === "assessed" && claim.tier < 3;
+  const card = proofCardSVG(claim, { votes, contract: LIVE ? C.CONTRACT_ADDRESS : "", sample });
+  const history = (claim.history ?? []).map((h) => `<li>${esc(tierName(h.tier))}: ${esc((describe({ ...claim, ruling: h.ruling, record: h.record })).headline)}</li>`).join("");
+  const sources = (rec.sources ?? []).map((s) => `<li class="dp-chip ${s.ok ? "dp-chip--owed" : "dp-chip--late"}">${esc(s.name)}: ${s.ok ? "loaded" : "failed"}</li>`).join("");
+  const analysts = (rec.analysts ?? []).map((a, i) => `<li>Analyst ${i + 1}: ${esc(a.status)}${a.delay_min >= 0 ? `, ${a.delay_min} min` : ""}, ${esc(CAUSE_TEXT[a.cause_class] ?? a.cause_class)}</li>`).join("");
+
   $("result").hidden = false;
   $("result").innerHTML = `
-    <article class="card tone-${d.tone}" id="proofcard" aria-labelledby="card-h">
-      <p class="card-kicker">DELAYPROOF RULING · CLAIM #${claim.id} · ${esc(tierName(claim.tier).toUpperCase())}</p>
-      <h2 id="card-h">${esc(d.headline)}</h2>
-      ${d.amount ? `<p class="amount">${esc(d.amount)}<small> per passenger</small></p>` : ""}
-      <ul class="facts">${d.lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
-      ${claim.ruling?.flags?.length ? `<p class="flag">Check: ${claim.ruling.flags.map(esc).join(", ")}</p>` : ""}
-      <p class="stamp">${claim.status === "final" ? "FINAL" : "AGREED BY VALIDATORS"}</p>
-      <p class="small">Airlines are not bound by this ruling. Information, not legal advice.</p>
+    <article class="dp-verdict dp-verdict--${VERDICT_CLASS[state]}${amount ? " reveal" : ""}" aria-labelledby="v-title" data-state="${state}">
+      ${state === "owed" || state === "halved" || state === "appeal-upheld" || state === "paid" ? `<div class="dp-verdict__seal" aria-hidden="true"><span><b>${state === "appeal-upheld" ? "Changed" : state === "paid" ? "Test" : "Agreed"}</b>${state === "appeal-upheld" ? "on appeal" : state === "paid" ? "payout" : "by validators"}</span></div>` : ""}
+      <p class="dp-verdict__eyebrow">${sample ? "Sample · " : ""}${esc(k.eyebrow.charAt(0) + k.eyebrow.slice(1).toLowerCase())}</p>
+      <h2 class="dp-verdict__title" id="v-title">${esc(state === "pending" ? d.headline : unless ? "Owed, unless the airline proves extraordinary circumstances" : k.title)}</h2>
+      ${amount ? `<p class="dp-verdict__amount"><span class="dp-sr-only">${esc(amount)}</span>${[...amount].map((ch, i) => `<span class="tile" style="animation-delay:${i * 90}ms" aria-hidden="true">${esc(ch)}</span>`).join("")}</p><p class="dp-verdict__per">per passenger · claim #${claim.id} · ${esc(tierName(claim.tier))}</p>` : `<p class="dp-verdict__per">Claim #${claim.id} · ${esc(tierName(claim.tier))}</p>`}
+      ${state === "paid" ? `<p class="paidwarn" role="note">TEST · NOT A REAL PAYMENT. Paid in test GEN from test pool #${esc(claim.pool_id)}.</p>` : ""}
+      <p class="dp-verdict__body">${esc(verdictBody(claim, state, votes))}</p>
+      <div class="dp-verdict__actions">
+        <a class="dp-btn dp-btn--primary" href="#proof">${icon("verified-seal")} Get my proof card</a>
+        ${letter ? `<a class="dp-btn" href="#letter">${icon("letter")} Claim letter</a>` : ""}
+        ${canAppeal ? `<button class="dp-btn" id="appeal" type="button">${icon("appeal")} Appeal to ${claim.tier === 1 ? 3 : 5} analysts</button>` : ""}
+        ${canWithdraw ? `<button class="dp-btn" id="withdraw" type="button">${icon("payout")} Collect from test pool</button>` : ""}
+      </div>
+      <div class="dp-verdict__foot">
+        ${votes.length ? `<div class="dp-validators"><div class="dp-dots" aria-hidden="true">${votes.map((v) => `<i class="dp-dot ${v === "agree" ? "is-agree" : v === "disagree" ? "is-disagree" : ""}"></i>`).join("")}</div><span class="dp-validators__label">Validators: ${esc(tallyText(votes))}${claim.status === "final" ? " · final" : " · open to appeal"}</span></div>` : ""}
+        <p class="dp-honesty">Information, not legal advice. Airlines aren't legally bound by this ruling.${sample ? " Sample: made-up flight, not a real ruling." : ""}</p>
+      </div>
     </article>
-    <details class="how-decided" open><summary>How this was decided</summary>
-      <p>Each GenLayer validator fetched these sources itself and ran ${claim.analysts} analyst pass${claim.analysts > 1 ? "es" : ""}. The ruling exists only because they agreed on the same flight status, delay band (${esc(BUCKET_TEXT[rec.bucket] ?? "n/a")}) and cause (${esc(CAUSE_TEXT[rec.cause_class] ?? "n/a")}).</p>
-      <ul class="src">${sources}</ul><ul class="src">${analysts}</ul>
-      ${rec.reason ? `<p class="quote">“${esc(rec.reason)}”</p>` : ""}
-      ${txs.assess ? `<p class="small">Assessment tx <code>${esc(txs.assess)}</code>${txs.votes ? ` · validators: ${esc(txs.votes)}` : ""}</p>` : ""}
-      <p class="small">Rules: ${esc(claim.ruling?.rule_set || "n/a")} · ${esc(claim.ruling?.rules_version)}</p>
-    </details>
-    <div class="actions">
-      ${canAppeal ? `<button class="btn2" id="appeal">Appeal to ${claim.tier === 1 ? "3" : "5"} analysts</button>` : ""}
-      <button class="btn2" id="share">Copy link to this ruling</button>
+
+    <div class="dp-ticket">
+      <div class="dp-ticket__main">
+        <div class="dp-cluster" style="justify-content:space-between">
+          <span class="dp-label-caps">Flight ${esc(claim.flight)} · ${esc(claim.date)}</span>
+          ${rec.status === "CANCELLED" ? `<span class="dp-chip dp-chip--late">Cancelled</span>` : hm(rec.delay_min) ? `<span class="dp-chip dp-chip--late">${esc(hm(rec.delay_min))} at the gate (record)</span>` : ""}
+        </div>
+        <div class="dp-route">
+          <div><span class="dp-route__code">${esc(route.origin || "···")}</span><span class="dp-route__city">${esc(route.origin_country || "")}</span></div>
+          <div class="dp-route__line" aria-hidden="true"></div>
+          <div><span class="dp-route__code">${esc(route.dest || "···")}</span><span class="dp-route__city">${esc(route.dest_country || "")}</span></div>
+        </div>
+        <dl class="dp-facts dp-facts--4">
+          <div><dt>Status</dt><dd>${esc((rec.status ?? "n/a").toLowerCase().replace("_", " "))}</dd></div>
+          <div><dt>Agreed delay</dt><dd class="dp-late-figure">${esc(BUCKET_TEXT[rec.bucket] ?? "n/a")}</dd></div>
+          <div><dt>Distance</dt><dd>${r.distance_km > 0 ? `${Number(r.distance_km).toLocaleString("en-GB")} km` : "n/a"}</dd></div>
+          <div><dt>Rule</dt><dd>${esc(r.regime || "n/a")}</dd></div>
+        </dl>
+      </div>
+      <div class="dp-ticket__stub"><dl class="dp-facts"><div><dt>Cause found</dt><dd>${esc(CAUSE_TEXT[rec.cause_class] ?? "n/a")}${rec.cause_label && rec.cause_label !== "not stated" ? ` (${esc(rec.cause_label)})` : ""}</dd></div><div><dt>Ruling</dt><dd class="dp-mono">#${esc(claim.id)} · ${esc(claim.status)}</dd></div></dl></div>
     </div>
-    ${letter ? `<details class="letter" open><summary>Your claim letter</summary><textarea id="lettertext" rows="16" aria-label="Claim letter">${esc(letter)}</textarea><button class="btn2" id="copyletter">Copy letter</button></details>` : ""}`;
-  $("share")?.addEventListener("click", () => copy(`${location.href.split("?")[0]}?claim=${claim.id}`, "share"));
+
+    <section class="dp-card cardwrap" id="proof" aria-labelledby="proof-h">
+      <h2 class="dp-h3" id="proof-h">Your proof card</h2>
+      <div class="cardsvg">${card.svg}</div>
+      <div class="actions">
+        <button class="dp-btn dp-btn--primary" id="dlcard" type="button">${icon("share")} Save as image</button>
+        <button class="dp-btn" id="share" type="button">Copy link to this ruling</button>
+      </div>
+      <p class="dp-hint">The card shows the flight, date and outcome. Never your name or booking reference.</p>
+    </section>
+
+    ${canEvidence || canFinalize ? `<section class="dp-card" aria-labelledby="more-h"><h2 class="dp-h3" id="more-h">Next steps</h2>
+      ${canEvidence ? `<form id="evform" class="dp-stack"><label class="dp-label" for="evadd">Add a public evidence link (e.g. your airline's delay notice or a news story)</label><input class="dp-input" id="evadd" type="url" placeholder="https://…"><button class="dp-btn" type="submit">Add evidence</button><p class="dp-hint">Then appeal, so a bigger panel reads it.</p></form>` : ""}
+      ${canFinalize ? `<p class="dp-hint">Happy with the ruling? Making it final closes appeals${Number(claim.pool_id) > 0 ? " and lets you collect from the test pool if it's owed" : ""}.</p><button class="dp-btn" id="finalize" type="button">Make this ruling final</button>` : ""}
+    </section>` : ""}
+
+    ${letter ? `<details class="dp-card letter" id="letter"><summary>Your claim letter</summary><label class="dp-sr-only" for="lettertext">Claim letter</label><textarea class="dp-textarea" id="lettertext" rows="16">${esc(letter)}</textarea><button class="dp-btn" id="copyletter" type="button">${icon("letter")} Copy letter</button></details>` : ""}
+
+    <details class="dp-card how-decided"><summary>How this was decided</summary>
+      <p>Each GenLayer validator fetched these sources itself and ran ${claim.analysts} analyst pass${claim.analysts > 1 ? "es" : ""}. The ruling exists only because they agreed on the same flight status, delay band (${esc(BUCKET_TEXT[rec.bucket] ?? "n/a")}) and cause (${esc(CAUSE_TEXT[rec.cause_class] ?? "n/a")}).</p>
+      <ul class="src">${sources}</ul><ul>${analysts}</ul>
+      ${history ? `<p>Earlier rulings on this claim:</p><ul>${history}</ul>` : ""}
+      ${rec.reason ? `<p class="quote">“${esc(rec.reason)}”</p>` : ""}
+      ${txs.assess ? `<p class="dp-hint">Deciding tx <code>${esc(txs.assess)}</code>${txs.votes ? ` · validators: ${esc(txs.votes)}` : ""}</p>` : ""}
+      <p class="dp-hint">Rules: ${esc(r.rule_set || "n/a")} · ${esc(r.rules_version || "")}</p>
+    </details>`;
+
+  $("share")?.addEventListener("click", () => {
+    copy(`${location.href.split("?")[0]}?claim=${claim.id}`, "share");
+    if (!sample) { stamp(wallet, "helped-friend"); saveWallet(); }
+  });
+  $("dlcard")?.addEventListener("click", () => savePng(card.svg, `delayproof-claim-${claim.id}.png`));
   $("copyletter")?.addEventListener("click", () => copy($("lettertext").value, "copyletter"));
-  $("appeal")?.addEventListener("click", () => runAppeal(claim));
+  $("appeal")?.addEventListener("click", () => runWrite("appeal", [BigInt(claim.id)], `Appeal to ${claim.tier === 1 ? 3 : 5} analysts`, claim.id, true));
+  $("finalize")?.addEventListener("click", () => runWrite("finalize", [BigInt(claim.id)], "Making the ruling final", claim.id, false));
+  $("withdraw")?.addEventListener("click", () => runWrite("withdraw_payout", [BigInt(claim.id)], "Collecting from the test pool", claim.id, false));
+  $("evform")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const u = $("evadd").value.trim();
+    const chk = checkInputs({ flight: claim.flight, date: claim.date, evidence: [u] });
+    if (!u || !chk.ok) { toast("Evidence must be a public https link.", "error"); return; }
+    runWrite("add_evidence", [BigInt(claim.id), "claimant", JSON.stringify([u])], "Adding evidence", claim.id, false);
+  });
+  if (!sample) { wallet = addTrip(wallet, claim, { mine }); saveWallet(); }
+  return state;
 }
+
 async function copy(text, id) {
-  try { await navigator.clipboard.writeText(text); $(id).textContent = "Copied"; } catch { $(id).textContent = "Copy failed: select and copy"; }
+  try { await navigator.clipboard.writeText(text); $(id).textContent = "Copied"; toast("Copied to your clipboard.", "success"); } catch { $(id).textContent = "Copy failed: select and copy"; }
 }
+
+/** Rasterise the proof-card SVG to a 1080x1350 PNG, then share or download it. */
+export async function svgToPngBlob(svg) {
+  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+  try {
+    const img = new Image();
+    img.decoding = "async";
+    await new Promise((ok, bad) => { img.onload = ok; img.onerror = bad; img.src = url; });
+    const cv = document.createElement("canvas");
+    cv.width = 1080; cv.height = 1350;
+    cv.getContext("2d").drawImage(img, 0, 0, 1080, 1350);
+    return await new Promise((ok) => cv.toBlob(ok, "image/png"));
+  } finally { URL.revokeObjectURL(url); }
+}
+async function savePng(svg, name) {
+  try {
+    const blob = await svgToPngBlob(svg);
+    const file = new File([blob], name, { type: "image/png" });
+    if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: "My DelayProof ruling" }); return; }
+    const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: name });
+    document.body.append(a); a.click(); a.remove();
+    toast("Proof card saved.", "success");
+  } catch { toast("Couldn't make the image in this browser. Take a screenshot of the card instead.", "error"); }
+}
+window.__dpSvgToPngBlob = svgToPngBlob;
 
 // ------------------------------------------------------------------ flows
 async function send(fn, args, step, label) {
@@ -106,8 +272,8 @@ async function send(fn, args, step, label) {
   const hash = await c.writeContract({ address: C.CONTRACT_ADDRESS, functionName: fn, args, value: 0n });
   rail(step === "open" ? "open" : "fetch", `${label}: sent (${hash.slice(0, 10)}…)`);
   const { c: cls, tx } = await follow(hash, (s) => {
-    if (step !== "open" && (s.chainStatus === "PROPOSING" || s.chainStatus === "PENDING")) rail("fetch", "Validators are fetching the flight record and reading it…");
-    if (["COMMITTING", "REVEALING"].includes(s.chainStatus)) rail("agree", "Validators are comparing what they found…");
+    if (step !== "open" && (s.chainStatus === "PROPOSING" || s.chainStatus === "PENDING")) rail("fetch", "Pulling the public flight record…");
+    if (["COMMITTING", "REVEALING"].includes(s.chainStatus)) rail("agree", "Comparing what each validator found…");
   });
   if (cls.execution === "ERROR" || cls.finality === "FINALIZED_ERROR") throw new Error(revertReason(tx) || `${label} was refused by the contract.`);
   return { hash, tx };
@@ -120,39 +286,60 @@ async function submit(ev) {
   const check = checkInputs({ flight: $("flight").value, date: $("date").value, note: $("note").value.trim(), evidence });
   if (!$("consent").checked) check.errors.push("Please tick the box to confirm this is a public testnet record.");
   if (check.errors.length) { $("formerr").textContent = check.errors.join(" "); return; }
+  if (SAMPLE_MODE) { $("formerr").textContent = "This is a sample page. Open the home page to check a real flight."; return; }
   if (!LIVE) { $("formerr").textContent = "This build is not connected to a deployed contract yet."; return; }
   $("go").disabled = true;
+  $("boardflight").textContent = `${check.flight} · ${$("date").value}`;
+  $("checking").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   try {
-    const before = Number(plain(await reader.readContract({ address: C.CONTRACT_ADDRESS, functionName: "get_config", args: [] })).next_claim);
-    await send("open_claim", [check.flight, $("date").value, $("note").value.trim(), evidence.length ? JSON.stringify(evidence) : "", 0n], "open", "Opening your claim");
-    // Find our claim id: the newest claim by this burner with this flight+date.
-    let id = before;
+    await send("open_claim", [check.flight, $("date").value, $("note").value.trim(), evidence.length ? JSON.stringify(evidence) : "", $("pool").checked ? 1n : 0n], "open", "Opening your claim");
+    let id = null;
     for (const c of plain(await reader.readContract({ address: C.CONTRACT_ADDRESS, functionName: "list_recent", args: [20n] }))) {
-      if (c.claimant?.toLowerCase() === signer().address.toLowerCase() && c.flight === check.flight && c.date === $("date").value && c.status === "open") { id = c.id; break; }
+      if (c.claimant?.toLowerCase() === me() && c.flight === check.flight && c.date === $("date").value && c.status === "open") { id = c.id; break; }
     }
+    if (id === null) throw new Error("Your claim was recorded, but it isn't in the recent list yet. Check Recent rulings in a minute.");
     history.replaceState(null, "", `?claim=${id}`);
     const { hash, tx } = await send("assess", [BigInt(id)], "fetch", "Asking the validators");
+    const votes = voteDots(tx);
+    showDots(votes);
     rail("final", "Agreed. Reading the ruling back from the contract…");
     const claim = await readClaim(id);
-    renderResult(claim, { assess: hash, votes: voteSummary(tx) });
-    rail("done", "Done: the ruling below is stored on-chain.");
+    rail("done", "Done: the ruling is stored on-chain.");
+    renderResult(claim, { txs: { assess: hash, votes: voteSummary(tx) }, votes });
+    $("result").scrollIntoView({ block: "start" });
     loadRecent();
   } catch (e) {
     rail("agree", String(e.message ?? e).slice(0, 240), true);
   } finally { $("go").disabled = false; }
 }
 
-async function runAppeal(claim) {
-  const btn = $("appeal");
-  btn.disabled = true;
+async function runWrite(fn, args, label, id, decides) {
+  for (const b of $("result").querySelectorAll("button")) b.disabled = true;
   try {
-    const { hash, tx } = await send("appeal", [BigInt(claim.id)], "fetch", `Appeal to ${claim.tier === 1 ? 3 : 5} analysts`);
-    renderResult(await readClaim(claim.id), { assess: hash, votes: voteSummary(tx) });
-    rail("done", "Appeal decided.");
+    const { hash, tx } = await send(fn, args, decides ? "fetch" : "final", label);
+    const votes = decides ? voteDots(tx) : current.votes;
+    if (decides) showDots(votes);
+    rail("done", `${label}: done.`);
+    renderResult(await readClaim(id), { txs: decides ? { assess: hash, votes: voteSummary(tx) } : current.txs, votes });
+    toast(`${label}: done.`, "success");
   } catch (e) {
-    rail("agree", String(e.message ?? e).slice(0, 240), true);
-    btn.disabled = false;
+    rail(decides ? "agree" : "final", String(e.message ?? e).slice(0, 240), true);
+    toast(String(e.message ?? e).slice(0, 160), "error");
+    for (const b of $("result").querySelectorAll("button")) b.disabled = false;
   }
+}
+
+// ------------------------------------------------------------------ wallet, recent, contract
+const CHIP = { owed: ["owed", "Owed"], halved: ["owed", "Owed (halved)"], "appeal-upheld": ["appeal", "Won on appeal"], paid: ["owed", "Paid (test pool)"], review: ["review", "Closer look"], "not-owed": ["plain", "Not owed"], pending: ["review", "Not assessed"] };
+function renderWallet() {
+  const trips = tripsNewestFirst(wallet);
+  const t = totals(wallet);
+  $("wallettotal").textContent = t ? `Ruled owed: ${t}` : "";
+  $("wallet").innerHTML = trips.length ? trips.map((tr) => {
+    const [cls, label] = CHIP[tr.state] ?? CHIP.pending;
+    return `<li><a class="trip" href="?claim=${tr.id}"><span><b>${esc(tr.flight)}</b> ${esc(tr.date)}${tr.mine ? "" : " · viewed"}</span><span class="dp-chip dp-chip--${cls}">${esc(label)}${tr.amount ? ` · ${esc(money(tr.amount, tr.currency))}` : ""}</span></a></li>`;
+  }).join("") : `<li class="dp-hint">No trips yet. Check a flight above and it'll appear here.</li>`;
+  $("stamps").innerHTML = STAMPS.map((s) => `<li class="stamp${wallet.stamps[s.id] ? " is-earned" : ""}"><b>${esc(s.label)}</b>${esc(wallet.stamps[s.id] ? "Earned" : s.hint)}</li>`).join("");
 }
 
 async function loadRecent() {
@@ -160,9 +347,9 @@ async function loadRecent() {
   try {
     const list = plain(await reader.readContract({ address: C.CONTRACT_ADDRESS, functionName: "list_recent", args: [10n] }));
     $("recent").innerHTML = list.map((c) => {
-      const d = describe(c);
-      return `<li><a href="?claim=${c.id}"><b>#${c.id} ${esc(c.flight)}</b> ${esc(c.date)} · <span class="tone-${d.tone}">${esc(c.ruling ? d.headline : "not assessed yet")}</span></a></li>`;
-    }).join("") || "<li>No claims yet.</li>";
+      const [cls, label] = CHIP[cardState(c)] ?? CHIP.pending;
+      return `<li><a href="?claim=${c.id}"><span><b>#${c.id} ${esc(c.flight)}</b> ${esc(c.date)}</span><span class="dp-chip dp-chip--${cls}">${esc(label)}</span></a></li>`;
+    }).join("") || `<li class="dp-hint">No claims yet.</li>`;
   } catch { $("recentnote").textContent = "Couldn't reach the network. Try again in a moment."; }
 }
 
@@ -174,12 +361,25 @@ async function loadContract() {
       rows.push(["Rules", cfg.rules_version], ["Analysts per tier", Object.values(cfg.tier_analysts).join(" → ")], ["Claims so far", String(cfg.next_claim - 1)]);
     } catch { rows.push(["Status", "network unreachable right now"]); }
   }
-  $("contract").innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+  $("contract").innerHTML = rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("");
 }
 
+// ------------------------------------------------------------------ boot
 $("form").addEventListener("submit", submit);
 $("date").max = new Date().toISOString().slice(0, 10);
-const q = new URLSearchParams(location.search).get("claim");
-if (q && /^\d+$/.test(q) && LIVE) readClaim(q).then((c) => renderResult(c)).catch(() => {});
+renderWallet();
+if (SAMPLE_MODE) {
+  $("samplebar").hidden = false;
+  if (SAMPLE === "checking") {
+    $("boardflight").textContent = "XX123 · 2026-10-12 (sample)";
+    rail("agree", "Sample: this is what the wait looks like.");
+    showDots(["agree", "agree", "agree"]);
+  } else if (SAMPLES[SAMPLE]) {
+    renderResult(SAMPLES[SAMPLE], { votes: SAMPLE_VOTES, sample: true });
+  }
+} else {
+  const q = params.get("claim");
+  if (q && /^\d+$/.test(q) && LIVE) readClaim(q).then((c) => renderResult(c)).catch(() => toast("Couldn't load that claim from the network.", "error"));
+}
 loadRecent();
 loadContract();

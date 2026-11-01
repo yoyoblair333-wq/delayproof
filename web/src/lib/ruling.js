@@ -5,13 +5,52 @@ export const OUTCOME_TEXT = {
   OWED: { headline: "You're owed compensation", tone: "good" },
   OWED_UNLESS_EXTRAORDINARY: { headline: "Owed, unless the airline proves extraordinary circumstances", tone: "good" },
   POSSIBLY_OWED_CANCELLATION: { headline: "Possibly owed: it depends on the notice you were given", tone: "maybe" },
+  BORDERLINE: { headline: "Right on the 3-hour line: this one needs a closer look", tone: "maybe" },
   NOT_OWED_UNDER_3H: { headline: "Not owed: arrived less than 3 hours late", tone: "no" },
+  LIKELY_EXTRAORDINARY: { headline: "Not owed this time: likely extraordinary circumstances", tone: "no" },
   NOT_OWED_EXTRAORDINARY: { headline: "Not owed: extraordinary circumstances", tone: "no" },
   NOT_COVERED: { headline: "Not covered by EU261 or UK261", tone: "no" },
   TOO_EARLY: { headline: "Too early: the flight hasn't landed yet", tone: "maybe" },
   FLIGHT_NOT_FOUND: { headline: "No record of this flight on this date", tone: "no" },
   INSUFFICIENT_DATA: { headline: "Not enough public data to decide", tone: "maybe" },
 };
+
+export const PAYABLE = new Set(["OWED", "OWED_UNLESS_EXTRAORDINARY"]);
+const REVIEW = new Set(["BORDERLINE", "POSSIBLY_OWED_CANCELLATION", "INSUFFICIENT_DATA", "TOO_EARLY"]);
+
+/**
+ * Which designed state a real on-chain claim maps to:
+ * owed | halved | appeal-upheld | paid | review | not-owed | pending.
+ * Only ever derived from the claim returned by get_claim.
+ */
+export function cardState(claim) {
+  const r = claim?.ruling;
+  if (!r) return "pending";
+  if (PAYABLE.has(r.outcome)) {
+    if (claim.paid) return "paid";
+    const prev = (claim.history ?? []).at(-1)?.ruling;
+    if (claim.tier > 1 && prev && !PAYABLE.has(prev.outcome)) return "appeal-upheld";
+    if (r.band === "long" && r.bucket === "H3_4") return "halved";
+    return "owed";
+  }
+  if (REVIEW.has(r.outcome)) return "review";
+  return "not-owed";
+}
+
+/** "3h 47m" from minutes; "" when unknown. */
+export function hm(min) {
+  const m = Number(min);
+  if (!Number.isFinite(m) || m < 0) return "";
+  return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
+}
+
+/** Validator votes from a GenLayer tx: [{v:"agree"|"disagree"|"idle"|...}] in a stable order. */
+export function voteDots(tx) {
+  const votes = tx?.consensus_data?.votes;
+  if (!votes || typeof votes !== "object") return [];
+  const order = { agree: 0, disagree: 1, timeout: 2, idle: 3 };
+  return Object.values(votes).map(String).sort((a, b) => (order[a] ?? 9) - (order[b] ?? 9));
+}
 
 export const BUCKET_TEXT = {
   NONE: "no arrival delay recorded",
@@ -109,6 +148,8 @@ export function checkInputs({ flight, date, note = "", evidence = [] }, today = 
   else if (date > today.toISOString().slice(0, 10)) errors.push("That date is in the future.");
   if (note.length > 280) errors.push("Keep the note under 280 characters.");
   if (/ignore (?:all |any |the )?(?:previous|prior|above)|system prompt|disregard/i.test(note)) errors.push("The note can't contain instructions to the analysts.");
+  if (/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(note)) errors.push("The note is public: please remove the email address.");
+  if (/\b(?:booking|pnr|reservation|confirmation|ref(?:erence)?)\b/i.test(note) && /\b(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{6}\b/.test(note)) errors.push("The note is public: please remove the booking reference.");
   if (evidence.length > 3) errors.push("At most 3 evidence links.");
   for (const u of evidence) if (!/^https:\/\/[A-Za-z0-9.-]+(\/\S*)?$/.test(u) || u.length > 300) errors.push(`Evidence link must be https: ${u}`);
   return { ok: errors.length === 0, errors, flight: m ? m[1] + String(Number(m[2])) + m[3] : f };

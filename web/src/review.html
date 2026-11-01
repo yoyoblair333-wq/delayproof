@@ -4,24 +4,30 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>For reviewers · DelayProof</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Schibsted+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="design/tokens.css">
+<link rel="stylesheet" href="design/components.css">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="dp-root">
 <a class="skip" href="#main">Skip to content</a>
-<div class="netbar">GenLayer testnet (studionet) · no real money · information, not legal advice</div>
-<header class="wrap top"><a class="brand" href="./"><span class="word">DELAY<b>PROOF</b></span></a><nav class="tabs"><a href="./">Check a flight</a><a href="rig.html">Check the code</a></nav></header>
-<main id="main" class="wrap page">
-  <h1>Two-minute review guide</h1>
+<div class="dp-testbar" role="status"><strong>Test mode</strong> GenLayer test network · no real money · information, not legal advice</div>
+<header class="top dp-container dp-container--wide"><a class="brand" href="./" aria-label="DelayProof home"><img src="assets/logo.svg" alt="" width="36" height="36"><span class="word dp-display">DelayProof</span></a><nav class="tabs" aria-label="Pages"><a href="./">Check a flight</a><a href="rig.html">Check the code</a></nav></header>
+<main id="main" class="dp-container page">
+  <h1 class="dp-display">Two-minute review guide</h1>
   <p>Each GenLayer quality-bar item, with where to see the proof.</p>
-  <table>
+  <div class="tablewrap" tabindex="0" role="region" aria-label="Quality bar table"><table>
     <tr><th>Quality bar</th><th>How DelayProof meets it</th><th>Proof</th></tr>
-    <tr><td>Solves a real trust problem</td><td>EU/UK law owes €250–600 (£220–520) for a flight 3+ hours late. The airline both holds the data and decides whether to pay; claim firms take 25–35%. Neither side can verify the other. Here the record and the ruling come from independent validators that must agree, and nobody can edit them afterwards.</td><td>README "The trust problem"; research/MARKET.md</td></tr>
+    <tr><td>Solves a real trust problem</td><td>EU/UK law owes €250–600 (£220–520) for a flight 3+ hours late. The airline both holds the data and decides whether to pay; claim firms can take up to 35% (AirHelp's published fee). Neither side can verify the other. Here the record and the ruling come from independent validators that must agree, and nobody can edit them afterwards.</td><td>README "The trust problem"; research/MARKET.md</td></tr>
     <tr><td>Uses live or authoritative data</td><td>Validators fetch the flight's route (adsbdb) and the date-specific scheduled/actual times (FlightStats) themselves, inside the consensus block, plus any public evidence pages either side attaches.</td><td>docs/FEASIBILITY.md; docs/LIVE_EVIDENCE.md (every source each validator loaded)</td></tr>
     <tr><td>Consensus does real work</td><td>Validators must agree on flight status, delay band and cause class, and on the route airports. The amount and eligibility then come from one deterministic rules table (EU261 + CJEU case law, UK261, Reg 2026/2202 for flights from 2027-10-23).</td><td>contracts/delay_proof.py (`records_agree`, `compute_ruling`); 90+ direct-mode tests</td></tr>
-    <tr><td>Frontend handles the full tx lifecycle</td><td>The page signs open_claim, assess and appeal with a per-browser testnet key and follows each transaction from pending to agreement to final, then reads the ruling back from the contract.</td><td>index.html → "Check a flight"</td></tr>
+    <tr><td>Frontend handles the full tx lifecycle</td><td>The page signs open_claim, assess, appeal, add_evidence, finalize and withdraw_payout with a per-browser testnet key, follows each transaction from pending to agreement to final, shows the real validator votes, and reads the ruling back from the contract to build the proof card and claim letter.</td><td>index.html → "Check a flight"</td></tr>
     <tr><td>Complete source and accurate docs</td><td>One-command verify script, pinned tools, lint, typecheck, tests; every claim in the docs maps to a file or tx.</td><td>README "Verify in 5 minutes"</td></tr>
     <tr><td>Meaningfully different, continued use</td><td>Appeal ladder (1 → 3 → 5 analysts), evidence from both sides, BORDERLINE handling where public data can't decide, and an optional testnet payout pool a card perk or insurer can pre-fund.</td><td>docs/LIVE_EVIDENCE.md pool section</td></tr>
-  </table>
+  </table></div>
   <h2>What this does not prove</h2>
   <ul>
     <li>Public flight data shows gate/on-block arrival, not door-open time (the legal test today), so near-threshold cases are marked BORDERLINE.</li>
@@ -30,5 +36,6 @@
     <li>Airlines are not bound by a DelayProof ruling. US law has no cash delay compensation, so US-only routes are out of scope.</li>
   </ul>
 </main>
+<footer class="foot dp-container"><p class="dp-honesty">Information, not legal advice. Airlines aren't legally bound by these rulings. Test network only.</p></footer>
 </body>
 </html>
