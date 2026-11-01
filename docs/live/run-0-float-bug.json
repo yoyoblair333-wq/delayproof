@@ -1,0 +1,226 @@
+{
+ "network": "studionet",
+ "startedAt": "2026-11-01T14:15:53.507Z",
+ "deployer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+ "contract": "0x552dda00B26AA5db68B386Ef094bD7c516472d3A",
+ "contract_file": "contracts/delay_proof.py",
+ "contract_code_sha256": "d15cd679341085955d5fd66bb43e79bd2def0fd39f4b99f2cd6dd038e0e142e8",
+ "steps": [
+  {
+   "label": "create_pool (earlier invocation)",
+   "fn": "create_pool",
+   "tx": "0xb755decabe4a7430115b8db59c98b5d73b17e317aa605ff65825fcbcd355bde2"
+  },
+  {
+   "label": "open BA117 2026-10-30 (appeal ladder)",
+   "fn": "open_claim",
+   "args": [
+    "BA117",
+    "2026-10-30",
+    "Checking whether this flight was late.",
+    "",
+    "0"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T14:15:56.168Z",
+   "tx": "0x5583bf773b1eef70822d003862e6500a389a147d564075f18b1784cef9a78818",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:15:56.776Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:16:02.219Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 4,
+     "idle": 1
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "assess #1",
+   "fn": "assess",
+   "args": [
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T14:16:02.221Z",
+   "tx": "0x539a13d0150e276b767fdeaa41b2fa9534bbd07e740a164a1734252b8ad92d04",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:16:02.817Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:16:08.201Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T14:16:18.966Z",
+     "status": "COMMITTING"
+    },
+    {
+     "at": "2026-11-01T14:16:24.300Z",
+     "status": "PROPOSING"
+    },
+    {
+     "at": "2026-11-01T14:16:56.676Z",
+     "status": "UNDETERMINED"
+    }
+   ],
+   "final": {
+    "status": "UNDETERMINED",
+    "result": "MAJORITY_DISAGREE",
+    "execution": "ERROR",
+    "votes": {
+     "disagree": 3,
+     "idle": 2
+    },
+    "error": null
+   },
+   "claim_id": 1
+  },
+  {
+   "label": "appeal #1",
+   "fn": "appeal",
+   "args": [
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T14:16:56.680Z",
+   "tx": "0xab1313fcf5859beda49e1babbc8dc09ec46d60a12824df75e5cda68d2cdbae4d",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:16:57.168Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:17:02.573Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T14:17:35.211Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "agree": 4,
+     "idle": 1
+    },
+    "error": "[EXPECTED] only an assessed, non-final claim can be appealed"
+   }
+  },
+  {
+   "label": "finalize #1",
+   "fn": "finalize",
+   "args": [
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T14:17:35.213Z",
+   "tx": "0x565d1d4753121f424c65f060ca2f25bee3b939964fd3fb2ab8466f39ea5afa2e",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:17:35.797Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:17:41.201Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "ERROR",
+    "votes": {
+     "idle": 2,
+     "agree": 3
+    },
+    "error": "[EXPECTED] only an assessed claim can be finalized"
+   }
+  },
+  {
+   "label": "open BA436 2026-10-31 (pool + evidence)",
+   "fn": "open_claim",
+   "args": [
+    "BA436",
+    "2026-10-31",
+    "",
+    "[\"https://example.com/\"]",
+    "1"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T14:17:43.414Z",
+   "tx": "0x207c6134fc6a9e309a39436bc7590f83dba8cc88df9af26c82285b37f1fc762a",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:17:43.945Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:17:49.115Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "idle": 2,
+     "agree": 3
+    },
+    "error": null
+   }
+  }
+ ],
+ "stored_code_sha256": "d15cd679341085955d5fd66bb43e79bd2def0fd39f4b99f2cd6dd038e0e142e8",
+ "code_matches": true,
+ "deploy": {
+  "tx": "0x688b5eb22f52a3e3c6d9b9831bfd8bc18910ca1bd9692fbbd670266818d3c6ae",
+  "note": "deployed in an earlier invocation of this script (it crashed on saving afterwards)"
+ },
+ "pool": {
+  "balance": "2000000000000000000",
+  "claims_paid": 0,
+  "id": 1,
+  "name": "Demo card-perk pool",
+  "paid_out": 0,
+  "payer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+  "regime": "ANY",
+  "units_per_currency": 1000000000000000
+ },
+ "claims": [
+  {
+   "analysts": 0,
+   "claimant": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+   "created_at": "2026-11-01T14:15:56.439277Z",
+   "date": "2026-10-30",
+   "evidence": [],
+   "flight": "BA117",
+   "history": [],
+   "id": 1,
+   "note": "Checking whether this flight was late.",
+   "paid": false,
+   "pool_id": 0,
+   "record": null,
+   "ruling": null,
+   "status": "open",
+   "tier": 0,
+   "updated_at": "2026-11-01T14:15:56.439277Z"
+  }
+ ]
+}

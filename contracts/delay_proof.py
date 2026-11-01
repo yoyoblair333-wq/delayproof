@@ -307,8 +307,8 @@ def compute_ruling(record: dict, claim_date: datetime, now: datetime) -> dict:
     status = record["status"]
     regime = _regime(route)
     km = -1
-    if route and all(isinstance(route.get(k), (int, float)) for k in ("origin_lat", "origin_lon", "dest_lat", "dest_lon")):
-        km = _haversine_km(route["origin_lat"], route["origin_lon"], route["dest_lat"], route["dest_lon"])
+    if route and all(isinstance(route.get(k), int) for k in ("origin_lat", "origin_lon", "dest_lat", "dest_lon")):
+        km = _haversine_km(route["origin_lat"] / 1e6, route["origin_lon"] / 1e6, route["dest_lat"] / 1e6, route["dest_lon"] / 1e6)
     date_s = claim_date.strftime("%Y-%m-%d")
     rule_set, threshold = _threshold_rule(regime, date_s) if regime else ("", DELAY_THRESHOLD_MIN)
     flags = []
@@ -363,6 +363,15 @@ def compute_ruling(record: dict, claim_date: datetime, now: datetime) -> dict:
 
 # ---- non-deterministic pieces (only called inside the nondet block) -------- #
 
+def _micro(deg) -> int:
+    """Degrees -> integer micro-degrees. GenVM calldata has no float type, so the
+    leader's result (which crosses the consensus boundary) carries integers only."""
+    v = int(round(float(deg) * 1_000_000))
+    if not -180_000_000 <= v <= 180_000_000:
+        raise ValueError("coordinate out of range")
+    return v
+
+
 def _route_from_adsbdb(body: bytes) -> dict:
     """adsbdb /v0/callsign/<flight> JSON -> route dict, or {} if unknown."""
     try:
@@ -371,9 +380,9 @@ def _route_from_adsbdb(body: bytes) -> dict:
         o, d, al = fr["origin"], fr["destination"], fr.get("airline") or {}
         return {
             "origin": str(o["iata_code"]), "origin_country": str(o["country_iso_name"]),
-            "origin_lat": float(o["latitude"]), "origin_lon": float(o["longitude"]),
+            "origin_lat": _micro(o["latitude"]), "origin_lon": _micro(o["longitude"]),
             "dest": str(d["iata_code"]), "dest_country": str(d["country_iso_name"]),
-            "dest_lat": float(d["latitude"]), "dest_lon": float(d["longitude"]),
+            "dest_lat": _micro(d["latitude"]), "dest_lon": _micro(d["longitude"]),
             "airline": str(al.get("iata") or ""), "airline_name": str(al.get("name") or "")[:60],
             "airline_country": str(al.get("country_iso") or al.get("country_iso_name") or "")[:2],
         }
@@ -483,7 +492,7 @@ def records_agree(leader: dict, mine: dict) -> bool:
         return False
     if lr and mr:
         for k in ("origin_lat", "origin_lon", "dest_lat", "dest_lon"):
-            if abs(float(lr[k]) - float(mr[k])) > 0.1:
+            if abs(int(lr[k]) - int(mr[k])) > 100_000:     # 0.1 degree
                 return False
         if (lr.get("origin_country"), lr.get("dest_country"), lr.get("airline_country")) != (
                 mr.get("origin_country"), mr.get("dest_country"), mr.get("airline_country")):

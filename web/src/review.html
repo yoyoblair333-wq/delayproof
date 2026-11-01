@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For reviewers · DelayProof</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="netbar">GenLayer testnet (studionet) · no real money · information, not legal advice</div>
+<header class="wrap top"><a class="brand" href="./"><span class="word">DELAY<b>PROOF</b></span></a><nav class="tabs"><a href="./">Check a flight</a><a href="rig.html">Check the code</a></nav></header>
+<main id="main" class="wrap page">
+  <h1>Two-minute review guide</h1>
+  <p>Each GenLayer quality-bar item, with where to see the proof.</p>
+  <table>
+    <tr><th>Quality bar</th><th>How DelayProof meets it</th><th>Proof</th></tr>
+    <tr><td>Solves a real trust problem</td><td>EU/UK law owes €250–600 (£220–520) for a flight 3+ hours late. The airline both holds the data and decides whether to pay; claim firms take 25–35%. Neither side can verify the other. Here the record and the ruling come from independent validators that must agree, and nobody can edit them afterwards.</td><td>README "The trust problem"; research/MARKET.md</td></tr>
+    <tr><td>Uses live or authoritative data</td><td>Validators fetch the flight's route (adsbdb) and the date-specific scheduled/actual times (FlightStats) themselves, inside the consensus block, plus any public evidence pages either side attaches.</td><td>docs/FEASIBILITY.md; docs/LIVE_EVIDENCE.md (every source each validator loaded)</td></tr>
+    <tr><td>Consensus does real work</td><td>Validators must agree on flight status, delay band and cause class, and on the route airports. The amount and eligibility then come from one deterministic rules table (EU261 + CJEU case law, UK261, Reg 2026/2202 for flights from 2027-10-23).</td><td>contracts/delay_proof.py (`records_agree`, `compute_ruling`); 90+ direct-mode tests</td></tr>
+    <tr><td>Frontend handles the full tx lifecycle</td><td>The page signs open_claim, assess and appeal with a per-browser testnet key and follows each transaction from pending to agreement to final, then reads the ruling back from the contract.</td><td>index.html → "Check a flight"</td></tr>
+    <tr><td>Complete source and accurate docs</td><td>One-command verify script, pinned tools, lint, typecheck, tests; every claim in the docs maps to a file or tx.</td><td>README "Verify in 5 minutes"</td></tr>
+    <tr><td>Meaningfully different, continued use</td><td>Appeal ladder (1 → 3 → 5 analysts), evidence from both sides, BORDERLINE handling where public data can't decide, and an optional testnet payout pool a card perk or insurer can pre-fund.</td><td>docs/LIVE_EVIDENCE.md pool section</td></tr>
+  </table>
+  <h2>What this does not prove</h2>
+  <ul>
+    <li>Public flight data shows gate/on-block arrival, not door-open time (the legal test today), so near-threshold cases are marked BORDERLINE.</li>
+    <li>Causes are rarely public: most rulings say "owed unless the airline proves extraordinary circumstances", which is the legal default.</li>
+    <li>The scraped sources are fine for a testnet demo; a production version needs a licensed flight-data feed (see FEASIBILITY.md).</li>
+    <li>Airlines are not bound by a DelayProof ruling. US law has no cash delay compensation, so US-only routes are out of scope.</li>
+  </ul>
+</main>
+</body>
+</html>

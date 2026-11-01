@@ -28,7 +28,7 @@ const CODE_PATH = path.join(HERE, "../contracts/delay_proof.py");
 const code = readFileSync(CODE_PATH, "utf8");
 const run = { network: "studionet", startedAt: iso(), deployer: account.address, contract: process.env.DP_ADDRESS ?? null,
   contract_file: "contracts/delay_proof.py", contract_code_sha256: createHash("sha256").update(code).digest("hex"), steps: [] };
-const save = () => writeFileSync(OUT, JSON.stringify(run, null, 1) + "\n");
+const save = () => writeFileSync(OUT, JSON.stringify(plain(run), null, 1) + "\n");
 
 function summarize(tx) {
   const p = plain(tx) ?? {};
@@ -80,14 +80,17 @@ run.code_matches = run.stored_code_sha256 === run.contract_code_sha256;
 save();
 
 // ---- pool (testnet GEN) ----
-let poolId = 0;
-if (PLAN.pool) {
+let poolId = Number(process.env.DP_POOL_ID ?? 0);
+if (process.env.DP_DEPLOY_TX) run.deploy = { tx: process.env.DP_DEPLOY_TX, note: "deployed in an earlier invocation of this script (it crashed on saving afterwards)" };
+if (process.env.DP_POOL_TX) run.steps.push({ label: "create_pool (earlier invocation)", fn: "create_pool", tx: process.env.DP_POOL_TX });
+if (poolId) run.pool = plain(await read("get_pool", [BigInt(poolId)]));
+if (PLAN.pool && !poolId) {
   await rpc("sim_fundAccount", [account.address, PLAN.pool.fund]);
   run.balance_before_pool = await rpc("eth_getBalance", [account.address, "latest"]);
   const s = await write("create_pool", "create_pool", [PLAN.pool.name, PLAN.pool.regime, BigInt(PLAN.pool.rate)], BigInt(PLAN.pool.deposit));
   if (s.final?.execution === "SUCCESS" || s.final?.status === "FINALIZED") {
     poolId = Number((await read("get_config", [])).get?.("next_pool") ?? plain(await read("get_config", [])).next_pool) - 1;
-    run.pool = plain(await read("get_pool", [poolId]));
+    run.pool = plain(await read("get_pool", [BigInt(poolId)]));
   }
 }
 
@@ -100,6 +103,8 @@ for (const c of PLAN.claims ?? []) {
   const id = before;
   const a = await write(`assess #${id}`, "assess", [BigInt(id)]);
   a.claim_id = id;
+  const assessed = a.final?.status === "FINALIZED" && a.final?.execution === "SUCCESS";
+  if (!assessed) { (run.claims ??= []).push(plain(await read("get_claim", [BigInt(id)]))); save(); console.log(`  claim #${id}: assessment did not finalize with SUCCESS`); continue; }
   if (c.appeal) await write(`appeal #${id}`, "appeal", [BigInt(id)]);
   if (c.finalize) await write(`finalize #${id}`, "finalize", [BigInt(id)], 0n, "ACCEPTED");
   const claim = plain(await read("get_claim", [BigInt(id)]));
@@ -111,7 +116,7 @@ for (const c of PLAN.claims ?? []) {
     w.balance_before = balBefore;
     await sleep(15000);
     w.balance_after = await rpc("eth_getBalance", [account.address, "latest"]);
-    run.pool_after = plain(await read("get_pool", [poolId]));
+    run.pool_after = plain(await read("get_pool", [BigInt(poolId)]));
     save();
   }
 }

@@ -1,0 +1,35 @@
+name: verify
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GENVM_VERSION: v0.2.16
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/gltest-direct
+          key: gltest-direct-${{ env.GENVM_VERSION }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/genvm-linter
+          key: genvm-linter-${{ env.GENVM_VERSION }}
+      - name: Chromium OS libraries
+        run: cd web && npm ci --no-audit --no-fund && npx --no-install playwright install --with-deps chromium
+      - name: Verify (same script as a fresh clone)
+        run: bash scripts/verify.sh

@@ -209,6 +209,15 @@ class TestRulings:
         finally:
             del conftest.ROUTES["XX1"]
 
+    def test_leader_result_is_calldata_encodable(self, direct_vm, dp):
+        # The leader's return crosses the consensus boundary as GenVM calldata,
+        # which has no float type (the first live run failed on exactly this).
+        from genlayer.py import calldata
+        cid, _ = open_and_assess(direct_vm, dp)
+        record = dp.get_claim(cid)["record"]
+        calldata.encode(record)
+        assert all(isinstance(record["route"][k], int) for k in ("origin_lat", "origin_lon", "dest_lat", "dest_lon"))
+
     def test_rules_version_recorded(self, direct_vm, dp):
         _, r = open_and_assess(direct_vm, dp)
         assert r["rules_version"] == dp.get_config()["rules_version"]
