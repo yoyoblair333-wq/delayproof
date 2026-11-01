@@ -131,5 +131,8 @@ code { font-family: var(--dp-font-mono); font-size: .85em; overflow-wrap: anywhe
   .top { padding-block: 6px; row-gap: 4px; }
   .tabs { gap: 12px; font-size: 13px; }
   .checker .dp-hint#flight-hint, .checker .dp-hint#date-hint { display: none; }
-  .checker { padding: 16px; }
+  .checker { padding: 14px; gap: 10px; }
+  .checker .more summary .dp-optional { display: none; }
+  .checker .dp-hint.center { display: none; }
+  .dp-testbar { line-height: 1.3; }
 }
