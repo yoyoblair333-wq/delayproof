@@ -16,3 +16,18 @@
   genvm-lint check + typecheck clean. 79 direct-mode tests pass (web + LLM mocked);
   mutation checks confirm the consensus and 3-hour threshold tests bite.
 - Blockers: none yet. Rules values are placeholders (research/RULES-placeholder.md).
+
+## 2026-11-01 ~07:50 PT — hour 2
+- Research RULES.md adopted as the single rules table: rule set by departure date
+  (EU261 + case law before 2027-10-23, Reg 2026/2202 after), UK261 separate, long-haul
+  3–4 h 50% cut, intra-EU >3,500 km = medium, BORDERLINE within 15 min of the line,
+  LIKELY_EXTRAORDINARY wording, near-band-edge flag. FlightAware dropped (ToS + it
+  resolved IATA numbers to an unrelated old flight).
+- **Live bug found and fixed:** first live assessment went UNDETERMINED because the
+  leader result carried float coordinates (GenVM calldata has no float). Now integer
+  micro-degrees; new test encodes the leader result with the SDK encoder.
+  Failed run kept as docs/live/run-0-float-bug.json.
+- Web app built (claim form, status rail, proof card, claim letter, appeal button,
+  recent rulings, code-hash page, reviewer guide). verify.sh: VERIFY: PASS
+  (91 contract tests, lint, typecheck, web build, 9 offline web tests incl. 375 px browser).
+- Live evidence run #2 in progress on `0x76b28bDC23C86CFB9AE80b3f29643482Aed4BC45`.

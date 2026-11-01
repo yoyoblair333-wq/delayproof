@@ -1,0 +1,120 @@
+{
+ "network": "studionet",
+ "startedAt": "2026-11-01T14:19:00.703Z",
+ "deployer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+ "contract": "0x76b28bDC23C86CFB9AE80b3f29643482Aed4BC45",
+ "contract_file": "contracts/delay_proof.py",
+ "contract_code_sha256": "cb2d3eb7f02b4b1dc8d4d5821ed3f5df8561641143f42f9873eae90773f19b87",
+ "steps": [
+  {
+   "label": "create_pool",
+   "fn": "create_pool",
+   "args": [
+    "Demo card-perk pool",
+    "ANY",
+    "1000000000000000"
+   ],
+   "value": "2000000000000000000",
+   "sentAt": "2026-11-01T14:19:39.960Z",
+   "tx": "0x8f479f998cde189d984b6e30f28c142ef9ab77d0ba7235802b8d3cb65129415d",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:19:40.439Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:19:45.884Z",
+     "status": "ACCEPTED"
+    },
+    {
+     "at": "2026-11-01T14:20:18.327Z",
+     "status": "FINALIZED"
+    }
+   ],
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "agree": 3,
+     "idle": 2
+    },
+    "error": null
+   }
+  },
+  {
+   "label": "open BA117 2026-10-30 (appeal ladder)",
+   "fn": "open_claim",
+   "args": [
+    "BA117",
+    "2026-10-30",
+    "Checking whether this flight was late.",
+    "",
+    "0"
+   ],
+   "value": "0",
+   "sentAt": "2026-11-01T14:20:22.649Z",
+   "tx": "0x5a84e1a0911ab62c0a91dbdf8e7658c2c0583f1488f0ba31fbc07c44ed407615",
+   "transitions": [
+    {
+     "at": "2026-11-01T14:20:23.319Z",
+     "status": "PENDING"
+    },
+    {
+     "at": "2026-11-01T14:20:28.699Z",
+     "status": "ACCEPTED"
+    }
+   ],
+   "final": {
+    "status": "ACCEPTED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": {
+     "idle": 1,
+     "agree": 4
+    },
+    "error": null
+   }
+  }
+ ],
+ "deploy": {
+  "tx": "0x80ec6b1a14ab7f4f014c80180c9f560240a269fa2ab3dfea914764e31d2d977d",
+  "transitions": [
+   {
+    "at": "2026-11-01T14:19:01.755Z",
+    "status": "PENDING"
+   },
+   {
+    "at": "2026-11-01T14:19:07.207Z",
+    "status": "ACCEPTED"
+   },
+   {
+    "at": "2026-11-01T14:19:39.727Z",
+    "status": "FINALIZED"
+   }
+  ],
+  "final": {
+   "status": "FINALIZED",
+   "result": "MAJORITY_AGREE",
+   "execution": "SUCCESS",
+   "votes": {
+    "agree": 3,
+    "idle": 2
+   },
+   "error": null
+  }
+ },
+ "stored_code_sha256": "cb2d3eb7f02b4b1dc8d4d5821ed3f5df8561641143f42f9873eae90773f19b87",
+ "code_matches": true,
+ "balance_before_pool": "0xabbcd4ef3775803e8",
+ "pool": {
+  "balance": "2000000000000000000",
+  "claims_paid": 0,
+  "id": 1,
+  "name": "Demo card-perk pool",
+  "paid_out": 0,
+  "payer": "0x34653Fb290480a8C99B4D92D4857123B5624c37d",
+  "regime": "ANY",
+  "units_per_currency": 1000000000000000
+ }
+}
