@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://studio.genlayer.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>DelayProof</title>
-<meta name="description" content="Was your flight late? Independent validators check the real flight record and agree on what you're owed under EU261/UK261. Free, public, appealable.">
+<meta name="description" content="Was your flight late? Validators hosted by GenLayer each check the public flight record and must agree on what EU261/UK261 say you may be owed. Free, public, appealable.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,7 +37,7 @@
     <div class="hero__copy">
       <p class="kicker">Late flight? Check what the rules say.</p>
       <h1 id="hero-h" class="dp-display">Your flight was late. Find out if you're owed <span class="hl">€250 to €600</span>.</h1>
-      <p class="lede">What counts is how late you <b>arrived</b>: 3 hours or more, on a flight covered by EU or UK rules. The amount depends on distance (£220 to £520 in the UK). Enter your flight and date: independent validators each pull the public flight record and must <b>agree</b> before a ruling exists. Free, public, and you can appeal.</p>
+      <p class="lede">What counts is how late you <b>arrived</b>: 3 hours or more on a flight covered by EU or UK rules (£220 to £520 in the UK). Validators hosted by GenLayer each pull the public flight record and must <b>agree</b> before a ruling exists. Free, public, appealable.</p>
 
       <form id="form" class="dp-card dp-card--raised checker" novalidate aria-labelledby="check-h">
         <h2 id="check-h" class="dp-label-caps">Check a flight</h2>
@@ -53,7 +54,7 @@
           </div>
         </div>
         <details class="more">
-          <summary>More options <span class="dp-optional">note, evidence links, automatic payout</span></summary>
+          <summary>More options <span class="dp-optional">· note, evidence links, test payout</span></summary>
           <div class="dp-field">
             <label class="dp-label" for="note">What happened? <span class="dp-optional">optional, 280 characters</span></label>
             <textarea class="dp-textarea" id="note" maxlength="280" rows="2" placeholder="Landed about 4 hours late, crew said it was a technical fault." aria-describedby="note-hint"></textarea>
@@ -61,12 +62,12 @@
           </div>
           <fieldset class="ev">
             <legend class="dp-label">Evidence links <span class="dp-optional">optional, up to 3</span></legend>
-            <p class="dp-hint">Public pages only, e.g. an airline notice or a news story about a strike. Useful for older flights. The validators read them as evidence, never as instructions.</p>
+            <p class="dp-hint">Public pages only, e.g. an airline notice or a news story about a strike. They can explain the <b>cause</b>; arrival times always come from the flight-status page. The validators read them as evidence, never as instructions.</p>
             <label class="dp-sr-only" for="ev1">Evidence link 1</label><input class="dp-input evurl" id="ev1" type="url" placeholder="https://…">
             <label class="dp-sr-only" for="ev2">Evidence link 2</label><input class="dp-input evurl" id="ev2" type="url" placeholder="https://…">
             <label class="dp-sr-only" for="ev3">Evidence link 3</label><input class="dp-input evurl" id="ev3" type="url" placeholder="https://…">
           </fieldset>
-          <label class="dp-check"><input type="checkbox" id="pool"> <span>Let the demo payer pay automatically if it's ruled owed (test mode, no real money)</span></label>
+          <label class="dp-check"><input type="checkbox" id="pool"> <span>Ask the demo payer to cover it if it's ruled owed (test mode, no real money; the payer has to approve)</span></label>
         </details>
         <label class="dp-check"><input type="checkbox" id="consent"> <span>I understand my flight, date and note will be public, and this is information, not legal advice.</span></label>
         <p class="dp-error-text err" id="formerr" role="alert"></p>
@@ -100,7 +101,7 @@
     </div>
   </section>
 
-  <section id="result" class="result dp-container" hidden aria-live="polite"></section>
+  <section id="result" class="result dp-container" hidden aria-label="Ruling"></section>
 
   <section class="samplecard dp-container dp-container--wide" aria-labelledby="sample-h">
     <h2 id="sample-h" class="dp-h2">What a ruling looks like</h2>
@@ -113,7 +114,7 @@
     <ul class="after__list">
       <li><b>Proof card.</b> A shareable card with the flight, the delay band, the cause and the amount, linked to the public record.</li>
       <li><b>Claim letter.</b> If you're owed, a ready letter to the airline that cites the record. You send it yourself; there's no fee.</li>
-      <li><b>Appeal.</b> Think it's wrong? Ask for a bigger panel: 1, then 3, then 5 analysts. Either side can add public evidence first.</li>
+      <li><b>Appeal.</b> Think it's wrong? Ask for a bigger panel: 1, then 3, then 5 analysts. You can appeal, and so can a payer covering the claim or an airline address registered with the project; each can add public evidence first. You can lock the ruling once the challenge window (an hour) has passed.</li>
       <li><b>What the airline is bound by.</b> The law (EU261/UK261), not this ruling. The ruling is checkable evidence, not a court order. If the airline refuses, the UK CAA, a national enforcement body or a small-claims court decides.</li>
     </ul>
   </section>
@@ -122,11 +123,11 @@
     <h2 id="how-h" class="dp-h2">How it works</h2>
     <ol class="how__grid">
       <li class="dp-card"><picture><source srcset="assets/spot-validators-agree-dark.svg" media="(prefers-color-scheme: dark)"><img src="assets/spot-validators-agree-light.svg" alt="" width="560" height="420" loading="lazy"></picture>
-        <h3 class="dp-h3">1 · Independent checks</h3><p>Several validators each pull the public flight record themselves and agree on the arrival-delay band and the cause. If they can't tell, the case is flagged for a closer look.</p></li>
+        <h3 class="dp-h3">1 · Separate checks</h3><p>Several validators hosted by GenLayer each pull the public flight record themselves and must agree on the outcome, the arrival delay (within 15 minutes) and the cause. If they can't tell, the case is flagged for a closer look.</p></li>
       <li class="dp-card"><picture><source srcset="assets/spot-appeal-ladder-dark.svg" media="(prefers-color-scheme: dark)"><img src="assets/spot-appeal-ladder-light.svg" alt="" width="560" height="420" loading="lazy"></picture>
         <h3 class="dp-h3">2 · A public, appealable ruling</h3><p>The ruling is stored publicly. Think it's wrong? A bigger panel looks again: 1, then 3, then 5 analysts.</p></li>
       <li class="dp-card"><picture><source srcset="assets/spot-money-back-dark.svg" media="(prefers-color-scheme: dark)"><img src="assets/spot-money-back-light.svg" alt="" width="560" height="420" loading="lazy"></picture>
-        <h3 class="dp-h3">3 · Proof, a letter, a payout</h3><p>Get a proof card and a claim letter. A payer that opts in can pay automatically when the ruling is "owed" (test mode for now).</p></li>
+        <h3 class="dp-h3">3 · Proof, a letter, a payout</h3><p>Get a proof card and a claim letter. A payer that funds a pool and approves your claim can pay out once the ruling is final and "owed" (test mode for now).</p></li>
     </ol>
   </section>
 
@@ -142,9 +143,9 @@
   <section class="chatbot dp-container" aria-labelledby="chatbot-h">
     <h2 id="chatbot-h" class="dp-h2">Why not just ask a chatbot for a letter?</h2>
     <ul class="chatbot__list">
-      <li><b>Facts, not guesses.</b> A chatbot guesses how late you were. Here, independent validators fetch the real record and must agree.</li>
+      <li><b>Facts, not guesses.</b> A chatbot guesses how late you were. Here, several validators fetch the public record themselves and must agree.</li>
       <li><b>A shared record.</b> The ruling is public and timestamped, so it's not "the passenger's AI said so".</li>
-      <li><b>It can pay by itself.</b> Payers who opt in can pay automatically when the network rules "owed". A letter can't.</li>
+      <li><b>It can be paid out.</b> A payer (say, a card perk) can fund a pool and pay approved claims once the ruling is final. A letter can't.</li>
       <li><b>You can appeal.</b> A bigger panel re-checks if you think the ruling is wrong.</li>
     </ul>
     <p class="dp-hint">Honest limit: airlines aren't legally bound by a DelayProof ruling. It's strong, checkable evidence, not a court order.</p>
@@ -172,7 +173,7 @@
 </main>
 
 <footer class="foot dp-container">
-  <p>DelayProof is an independent project on GenLayer, not affiliated with any airline or with GenLayer. Amounts follow EU261/UK261 as modelled in the open-source rules table. Test network only.</p>
+  <p>DelayProof is a project built on GenLayer, not affiliated with any airline or with GenLayer. Amounts follow EU261/UK261 as modelled in the open-source rules table. Test network only.</p>
   <p class="dp-honesty">Information, not legal advice. Airlines aren't legally bound by these rulings.</p>
 </footer>
 <div class="dp-toast-region" id="toasts" aria-live="polite"></div>

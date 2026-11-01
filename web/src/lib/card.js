@@ -1,7 +1,7 @@
 // Proof card: a shareable 1080x1350 SVG built only from a real on-chain claim
 // (get_claim) plus the validator votes of the tx that decided it. Pure: no DOM,
 // no network, unit-tested offline. app.js rasterises it to PNG for sharing.
-import { cardState, describe, hm, money, PAYABLE } from "./ruling.js";
+import { cardState, describe, hm, money, PAYABLE, regimeCurrency, shownRoute } from "./ruling.js";
 
 const X = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
@@ -9,13 +9,15 @@ const X = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<"
 const P = { bg: "#0E141D", bg2: "#161E2A", line: "#2A3646", text: "#F4F1EA", muted: "#AEB8C6", amber: "#FFB547", owed: "#5FD7A1", review: "#8FB1FF", appeal: "#B9A5FB", no: "#A3AEBF", paid: "#5FD7A1" };
 
 export const STATE_COPY = {
-  owed: { eyebrow: "THE VALIDATORS AGREED", title: "You're owed", accent: P.amber, seal: "AGREED BY INDEPENDENT VALIDATORS" },
-  "owed-unless": { eyebrow: "THE VALIDATORS AGREED", title: "Owed, unless the airline proves", accent: P.amber, seal: "AGREED BY INDEPENDENT VALIDATORS", sub: "extraordinary circumstances" },
-  halved: { eyebrow: "THE VALIDATORS AGREED", title: "You're owed", accent: P.amber, seal: "AGREED BY INDEPENDENT VALIDATORS", sub: "Long-haul, 3 to 4 hours late: the rules halve it" },
+  owed: { eyebrow: "THE VALIDATORS AGREED", title: "You're owed", accent: P.amber, seal: "AGREED BY GENLAYER-HOSTED VALIDATORS" },
+  "owed-unless": { eyebrow: "THE VALIDATORS AGREED", title: "Owed, unless the airline proves", accent: P.amber, seal: "AGREED BY GENLAYER-HOSTED VALIDATORS", sub: "extraordinary circumstances" },
+  halved: { eyebrow: "THE VALIDATORS AGREED", title: "You're owed", accent: P.amber, seal: "AGREED BY GENLAYER-HOSTED VALIDATORS", sub: "Long-haul, 3 to 4 hours late: the rules halve it" },
   "appeal-upheld": { eyebrow: "CHANGED ON APPEAL", title: "Appeal won: owed", accent: P.appeal, seal: "A BIGGER PANEL CHANGED THE RULING" },
   paid: { eyebrow: "TEST POOL PAYOUT", title: "Test payout", accent: P.paid, seal: "TEST POOL · NO REAL FUNDS" },
   review: { eyebrow: "FLAGGED, NOT GUESSED", title: "Needs a closer look", accent: P.review, seal: "VALIDATORS FLAGGED IT" },
-  "not-owed": { eyebrow: "THE VALIDATORS AGREED", title: "Not owed this time", accent: P.no, seal: "AGREED BY INDEPENDENT VALIDATORS" },
+  "not-owed": { eyebrow: "THE VALIDATORS AGREED", title: "Not owed this time", accent: P.no, seal: "AGREED BY GENLAYER-HOSTED VALIDATORS" },
+  "not-found": { eyebrow: "NO FLIGHT RECORD FOUND", title: "No record found", accent: P.review, seal: "NOTHING TO RULE ON YET" },
+  possibly: { eyebrow: "DEPENDS ON THE NOTICE", title: "Possibly owed, up to", accent: P.review, seal: "AGREED BY GENLAYER-HOSTED VALIDATORS", sub: "depending on the notice and rerouting you were given" },
   pending: { eyebrow: "WAITING FOR THE NETWORK", title: "Not assessed yet", accent: P.no, seal: "PENDING" },
 };
 
@@ -43,16 +45,20 @@ function tally(votes) {
  */
 export function proofCardSVG(claim, { votes = [], contract = "", sample = false } = {}) {
   const state = cardState(claim);
-  const k = STATE_COPY[state === "owed" && claim?.ruling?.outcome === "OWED_UNLESS_EXTRAORDINARY" ? "owed-unless" : state];
   const r = claim?.ruling ?? {};
+  const possibly = r.outcome === "POSSIBLY_OWED_CANCELLATION";
+  const k = STATE_COPY[possibly ? "possibly" : state === "owed" && r.outcome === "OWED_UNLESS_EXTRAORDINARY" ? "owed-unless" : state];
   const rec = claim?.record ?? {};
-  const route = rec.route ?? {};
-  const amount = PAYABLE.has(r.outcome) ? money(r.amount, r.currency) : state === "not-owed" ? (r.currency === "GBP" ? "£0" : "€0") : "";
-  const BAND = { NONE: "On time", LT_2H: "Under 2h late", H2_3: "2 to 3h late", H3_4: "3 to 4h late", H4_PLUS: "4h+ late" };
-  const delay = rec.status === "CANCELLED" ? "Cancelled (agreed)" : BAND[rec.bucket] ? `${BAND[rec.bucket]} (agreed)` : "";
+  const route = shownRoute(claim);
+  const cur = regimeCurrency(r.regime);
+  const amount = PAYABLE.has(r.outcome) || possibly ? money(r.amount, r.currency || cur) : state === "not-owed" && cur ? (cur === "GBP" ? "£0" : "€0") : "";
+  // NONE means "no arrival delay established" (unknown, cancelled or diverted), never "on time".
+  const BAND = { LT_2H: "Under 2h late", H2_3: "2 to 3h late", H3_4: "3 to 4h late", H4_PLUS: "4h+ late" };
+  const delay = rec.status === "CANCELLED" ? "Cancelled (agreed)" : rec.status === "DIVERTED" ? `Diverted${BAND[rec.bucket] ? `, ${BAND[rec.bucket].toLowerCase()}` : ""} (agreed)`
+    : BAND[rec.bucket] ? `${BAND[rec.bucket]} (agreed)` : rec.status === "LANDED" ? "Arrival delay not established" : "";
   const reported = rec.status !== "CANCELLED" && hm(rec.delay_min) ? `${hm(rec.delay_min)} at the gate, per the public record` : "";
   const d = describe(claim);
-  const why = state === "halved" ? k.sub : k.sub && state === "owed" ? `${k.sub}. ${r.explanation ?? ""}` : (r.explanation ?? "");
+  const why = state === "halved" ? k.sub : possibly ? `${k.sub}. Cancelled.` : k.sub && state === "owed" ? `${k.sub}. ${r.explanation ?? ""}` : (r.explanation ?? "");
   const wrapped = wrap(why, 52).slice(0, 3);
   const t = tally(votes);
   const alt = `${k.title}${amount ? " " + amount : ""}. Flight ${claim?.flight ?? ""} on ${claim?.date ?? ""}${route.origin ? `, ${route.origin} to ${route.dest}` : ""}${delay ? `, ${delay}` : ""}.${t ? " " + t + "." : ""} Information, not legal advice. Test mode.`;
@@ -66,7 +72,7 @@ export function proofCardSVG(claim, { votes = [], contract = "", sample = false 
 <text x="540" y="246" text-anchor="middle" font-family="'IBM Plex Mono',ui-monospace,monospace" font-weight="600" font-size="26" letter-spacing="4" fill="${k.accent}">${X(k.eyebrow)}</text>
 <text x="540" y="322" text-anchor="middle" font-family="'Schibsted Grotesk','Inter',system-ui,sans-serif" font-weight="800" font-size="64" fill="${P.text}">${X(k.title)}</text>
 ${amount ? tiles(amount, 540, 370, k.accent) : ""}
-${amount ? `<text x="540" y="572" text-anchor="middle" font-family="'Inter',system-ui,sans-serif" font-size="26" fill="${P.muted}">per passenger${r.regime ? ` · under ${X(r.regime === "UK261" ? "UK 261" : "EU 261/2004")}` : ""}</text>` : ""}
+${amount ? `<text x="540" y="572" text-anchor="middle" font-family="'Inter',system-ui,sans-serif" font-size="26" fill="${P.muted}">${possibly ? "maximum " : ""}per passenger${r.regime ? ` · under ${X(r.regime === "UK261" ? "UK 261" : "EU 261/2004")}` : ""}</text>` : ""}
 ${wrapped.map((l, i) => `<text x="540" y="${(amount ? 632 : 420) + i * 38}" text-anchor="middle" font-family="'Inter',system-ui,sans-serif" font-size="28" fill="${P.text}">${X(l)}</text>`).join("")}
 <g transform="translate(72 770)">
 <rect width="936" height="300" rx="24" fill="${P.bg2}" stroke="${P.line}"/>
@@ -76,7 +82,7 @@ ${wrapped.map((l, i) => `<text x="540" y="${(amount ? 632 : 420) + i * 38}" text
 <line x1="230" y1="124" x2="400" y2="124" stroke="${P.amber}" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round"/>
 <text x="430" y="150" font-family="'IBM Plex Mono',ui-monospace,monospace" font-weight="600" font-size="76" fill="${P.text}">${X(route.dest || "···")}</text>
 <text x="40" y="214" font-family="'Inter',system-ui,sans-serif" font-size="26" fill="${P.amber}">${X(delay || d.lines[1]?.replace("What happened: ", "") || "")}</text>
-<text x="40" y="256" font-family="'Inter',system-ui,sans-serif" font-size="24" fill="${P.muted}">${X(reported)}${r.distance_km > 0 ? `${reported ? " · " : ""}${Number(r.distance_km).toLocaleString("en-GB")} km` : ""}</text>
+<text x="40" y="256" font-family="'Inter',system-ui,sans-serif" font-size="24" fill="${P.muted}">${X(reported)}${r.distance_km > 0 && route.origin ? `${reported ? " · " : ""}${Number(r.distance_km).toLocaleString("en-GB")} km` : ""}</text>
 <text x="700" y="66" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="20" fill="${P.muted}">RULING</text>
 <text x="700" y="110" font-family="'IBM Plex Mono',ui-monospace,monospace" font-weight="600" font-size="34" fill="${P.text}">#${X(claim?.id ?? "")}</text>
 <text x="700" y="166" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="20" fill="${P.muted}">PANEL</text>

@@ -2,13 +2,14 @@
 
 **Flight-delay compensation, decided by validator consensus instead of by the airline.**
 
-A passenger enters a flight number and date. GenLayer validators each fetch the public
-flight record themselves, must agree on what happened (status, delay band, cause), and
-a deterministic EU261/UK261 rules table turns that agreed record into a ruling: owed,
-not owed, borderline, or owed unless the airline proves extraordinary circumstances.
-Either side can appeal to a bigger panel. The passenger gets a shareable ruling and a
-claim letter that cites the on-chain record. A card perk, insurer or travel group can
-pre-fund a testnet pool that pays out automatically on a final "owed" ruling.
+A passenger enters a flight number and date. Validators hosted by GenLayer each fetch the
+public flight record themselves and must agree on what happened (status, arrival delay
+within 15 minutes, cause) and on the outcome a deterministic EU261/UK261 rules table gives
+for it: owed, not owed, borderline, or owed unless the airline proves extraordinary
+circumstances. The passenger, a payer covering the claim, or an airline address registered
+with the project can appeal to a bigger panel. The passenger gets a shareable ruling and a
+claim letter that cites the on-chain record. A card perk, insurer or travel group can fund
+a testnet pool, approve the claims it covers, and pay them once the ruling is final.
 
 Testnet only (GenLayer studionet). No real money. **Information, not legal advice.
 Airlines are not bound by a DelayProof ruling.**
@@ -19,43 +20,75 @@ Airlines are not bound by a DelayProof ruling.**
   late for a reason within the airline's control (EU261 + CJEU case law; UK261).
 - The airline holds the flight data **and** decides whether to pay. A common answer is
   "extraordinary circumstances", which passengers can't check.
-- Most eligible passengers never claim; those who use a claim firm lose **25–50%**
-  (AirHelp's published fee is 35% incl. VAT, +15% for legal action). Sources and
-  confidence levels: [research/MARKET.md](research/MARKET.md).
+- Most eligible passengers never claim; claim firms keep **25–50%** of the payout
+  (AirHelp's published fee is 35% incl. VAT, plus 15% if legal action is needed).
+  Sources and confidence levels: [research/MARKET.md](research/MARKET.md).
 - Asking a chatbot for a letter doesn't fix this: one company's model, unverifiable
-  inputs, nothing the other side has to take seriously. Here the facts are fetched and
-  agreed by independent validators, the rules are public code, and the record is
-  permanent and checkable by anyone, including the airline.
+  inputs, nothing the other side has to take seriously. Here several validators fetch the
+  facts themselves and must agree, the rules are public code, and the ruling and its
+  transaction history are public on studionet for anyone to check, including the airline.
+  (Studionet is a test network; it can be reset, so this is not a permanent archive.)
 
 ## How it works
 
-1. `open_claim(flight, date, note, evidence, pool_id)` checks inputs deterministically
-   (flight code shape: IATA `BA117` or ICAO `LOG31`, real date, not in the future, under 6 years old, no
-   instruction-like text in the note, at most 3 https evidence links).
+1. `open_claim(flight, date, note, evidence, pool_id)` checks inputs deterministically:
+   flight code shape (IATA `BA117` or ICAO `LOG31`), a real date that is not in the future
+   and under 6 years old, a public note without emails or booking references, and at most
+   3 evidence links that must be `https://` on a public domain name (no IP addresses,
+   localhost, internal hosts or booking pages). One claim per flight, date and claimant.
 2. `assess(claim_id)` runs one non-deterministic block. The leader fetches:
    - the route from adsbdb (airports, countries, coordinates, operating airline),
-   - the **date-specific** FlightStats tracker page (scheduled and actual times),
-   - any evidence pages either side attached,
+   - the **date-specific** FlightStats tracker page (scheduled and actual times): the only
+     source allowed to set timing,
+   - any attached evidence pages (skipped if larger than 1.5 MB).
 
-   then runs 1 analyst pass (3 or 5 on appeal) that must return a bounded JSON verdict
-   (status enum, delay minutes, cause class, and the departure and scheduled arrival
-   airports it saw). This is where the AI judgement happens: reading unstructured pages,
-   deciding whether a stated cause counts as "extraordinary circumstances", and weighing
-   evidence pages from either side. Every validator repeats all of it and agrees only if
-   the route, status, delay bucket, cause class and seen airports match. If the airports
-   on the pages disagree with the route database, the ruling is INSUFFICIENT_DATA
+   Then two kinds of analyst pass run (1 each; 3 or 5 on appeal):
+   - **timing passes** see only the flight-status page and return status, arrival delay
+     and the airports shown;
+   - **cause passes** see the flight-status page, the agreed timing and the evidence pages,
+     and return only the cause class.
+
+   Web text is fenced with a per-transaction nonce and fence-like text is stripped from
+   pages, so an evidence page can't forge a "flight-status" block. Every validator repeats
+   the whole thing and accepts the leader's record only if the route, status, seen
+   airports and cause match exactly, the delay is within 15 minutes, and the computed
+   ruling (outcome, amount, currency, band, regime, flags) is identical. Records are
+   whitelisted and size-capped; ties between analysts become UNKNOWN. If the airports on
+   the page disagree with the route database, the ruling is INSUFFICIENT_DATA
    (`route_conflict`) instead of a wrong amount.
-3. `compute_ruling` (deterministic, outside consensus) applies
-   [research/RULES.md](research/RULES.md): coverage (EU261 / UK261 by departure airport,
-   arrival airport and carrier), great-circle distance band, the 3-hour threshold
-   (≥180 min under EU261 + case law; >180 min under UK261 and, for flights from
-   2027-10-23, under Reg (EU) 2026/2202), the 50% cut for long-haul delays of 3–4 h,
-   the intra-EU medium cap, and BORDERLINE when the gate delay is within 15 minutes under
-   the line (public data shows gate time, the law counts door-open).
-4. `appeal(claim_id)` re-runs it with 3, then 5 analyst passes. `add_evidence` lets the
-   claimant or the airline attach public pages before the claim is final.
-5. `finalize` → `withdraw_payout` pays the claimant once from a linked testnet pool
-   (`create_pool` / `top_up_pool` are payable).
+3. `compute_ruling` (deterministic) applies [research/RULES.md](research/RULES.md):
+   coverage (EU261 / UK261 by departure airport, arrival airport and carrier), great-circle
+   distance band, the 3-hour threshold (≥180 min under EU261 + case law; >180 min under
+   UK261 and, for flights from 2027-10-23, under Reg (EU) 2026/2202), the 50% cut for
+   long-haul delays of 3–4 h (flagged `near_4h_line` from 225 min), the intra-EU medium
+   cap, and BORDERLINE when the gate delay is within 15 minutes under the line (public data
+   shows gate time, the law counts door-open). A flight that hasn't landed leaves the claim
+   open to check again later.
+4. `appeal(claim_id)` re-runs it with 3, then 5 analyst passes. Claimant evidence can only
+   be added by the claimant; respondent evidence only by the linked pool's payer or the
+   airline's registered respondent address.
+5. `finalize`: the payer or registered respondent can accept a ruling at any time; the
+   claimant can lock it only after the **challenge window** (60 minutes by default,
+   restarted by each appeal), during which the other side can appeal.
+6. Pools: `create_pool(name, regime, rate, days_valid, max_per_flight, owed_only)` is
+   payable. The payer must `approve_claim` each claim it covers (at most `max_per_flight`
+   per flight and date); `withdraw_payout` then pays a final, payable ruling once. After
+   expiry, `withdraw_pool` returns unused funds to the payer.
+
+### Roles and powers
+
+| Role | Can | Cannot |
+|---|---|---|
+| Claimant | open, assess, appeal, add claimant evidence, finalize after the window, withdraw an approved payout | add respondent evidence, finalize early |
+| Pool payer | create/top up/close its pool, approve claims, appeal and add respondent evidence on claims in its pool, finalize them, reclaim funds after expiry | touch other pools or claims outside its pool |
+| Registered airline respondent | appeal, add respondent evidence and finalize on its airline's claims | anything else |
+| Owner | pause, register a respondent address per airline code, transfer ownership | assess, appeal, finalize, or move anyone's money |
+
+Pause blocks every claim and pool write except a payer reclaiming an expired pool.
+Registering an airline respondent is a trust step: a real deployment would verify the
+address with the airline first. Security review and fixes:
+[docs/SECURITY-R1.md](docs/SECURITY-R1.md); regression tests in
+`tests/direct/test_security_r1.py`.
 
 ## Verify in 5 minutes
 
@@ -77,10 +110,11 @@ Expected ending: `VERIFY: PASS`.
 
 ## Web app
 
-`web/` (esbuild, genlayer-js 1.1.8). A per-browser testnet key signs `open_claim`,
-`assess` and `appeal`; a status rail follows each transaction from pending to agreed to
-final; the ruling is read back from the contract and shown as a proof card with a
-claim letter. `rig.html` hashes the deployed code in your browser and compares it with
+`web/` (esbuild, genlayer-js 1.1.8, loaded on demand). A per-browser testnet key signs
+`open_claim`, `assess`, `appeal`, `add_evidence`, `finalize` and `withdraw_payout`; a status
+rail follows each transaction through ACCEPTED to FINALIZED; the ruling is read back from
+the contract and shown as a proof card with a claim letter. Shared links carry the
+deciding transaction, so the recipient sees its validator votes. `rig.html` hashes the deployed code in your browser and compares it with
 the pinned digest. `review.html` maps the GenLayer quality bar to proof.
 
 ```bash

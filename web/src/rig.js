@@ -24,13 +24,16 @@ async function main() {
     if (C.RAW_SOURCE_URL) { try { gh = await sha256Hex(canonical(await (await fetch(C.RAW_SOURCE_URL)).text())); } catch { gh = null; } }
     const pinned = C.CONTRACT_CODE_DIGEST;
     const ok = chain === pinned && (gh === null || gh === chain);
-    out.innerHTML = `<p class="${ok ? "verdict-ok" : "verdict-bad"}">${ok ? "MATCH: the deployed code is the published code." : "MISMATCH: do not trust this deployment."}</p>
+    const msg = !ok ? "MISMATCH: do not trust this deployment." : gh === null
+      ? "MATCH with this site's pinned digest. The published source file couldn't be fetched, so it wasn't compared."
+      : "MATCH: the deployed code is the published code.";
+    out.innerHTML = `<p class="${ok ? "verdict-ok" : "verdict-bad"}">${msg}</p>
       <table><tr><th>Deployed (hashed in your browser)</th><td><code>${chain}</code></td></tr>
       <tr><th>Pinned in this site</th><td><code>${pinned || "(not pinned)"}</code></td></tr>
       ${gh !== null ? `<tr><th>Source file</th><td><code>${gh}</code></td></tr>` : ""}</table>
       <p class="small">Contract <code>${C.CONTRACT_ADDRESS}</code>. Line endings are normalised before hashing because Windows editors change them; that cannot hide a code change.</p>`;
   } catch (e) {
-    out.innerHTML = `<p class="verdict-bad">Couldn't reach the network to check: ${String(e.message ?? e).slice(0, 120)}</p>`;
+    out.innerHTML = `<p class="verdict-bad">Couldn't reach the network to check: ${String(e.message ?? e).slice(0, 120).replace(/[&<>"']/g, "")}</p>`;
   }
 }
 main();

@@ -113,3 +113,23 @@ code { font-family: var(--dp-font-mono); font-size: .85em; overflow-wrap: anywhe
 .samplepreview svg{width:100%;height:auto;display:block}
 .after__list{padding-left:20px}
 .after__list li{margin:6px 0}
+
+/* Polish round 1 */
+.tabs a, .foot a, .samplebar a, .dp-hint a { display: inline-flex; align-items: center; min-height: 24px; }
+.tabs a { padding: 2px 0; }
+.dp-check { min-height: 24px; align-items: center; }
+.dp-check input[type="checkbox"] { width: 24px; height: 24px; flex: 0 0 24px; }
+.more summary { min-height: 24px; }
+.has-result .hero__art { display: none; }
+.has-result .result { margin-top: 16px; }
+.txline { margin-top: 6px; word-break: break-all; }
+@media (max-width: 600px) {
+  .hero { margin-top: 4px; gap: 16px; }
+  .hero h1 { font-size: 24px; margin-bottom: 4px; }
+  .hero .kicker, .hero .lede { display: none; }
+  .dp-testbar { font-size: 12px; padding-block: 4px; }
+  .top { padding-block: 6px; row-gap: 4px; }
+  .tabs { gap: 12px; font-size: 13px; }
+  .checker .dp-hint#flight-hint, .checker .dp-hint#date-hint { display: none; }
+  .checker { padding: 16px; }
+}

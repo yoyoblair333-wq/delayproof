@@ -18,6 +18,18 @@ export const OUTCOME_TEXT = {
 export const PAYABLE = new Set(["OWED", "OWED_UNLESS_EXTRAORDINARY"]);
 const REVIEW = new Set(["BORDERLINE", "POSSIBLY_OWED_CANCELLATION", "INSUFFICIENT_DATA", "TOO_EARLY"]);
 
+/** EUR for EU261, GBP for UK261, "" when no regime applies. */
+export function regimeCurrency(regime) {
+  return regime === "UK261" ? "GBP" : regime === "EU261" ? "EUR" : "";
+}
+
+/** The route to display: empty when the contract rejected it (route_conflict). */
+export function shownRoute(claim) {
+  const flags = claim?.ruling?.flags ?? [];
+  if (flags.includes("route_conflict")) return {};
+  return claim?.record?.route ?? {};
+}
+
 /**
  * Which designed state a real on-chain claim maps to:
  * owed | halved | appeal-upheld | paid | review | not-owed | pending.
@@ -33,6 +45,7 @@ export function cardState(claim) {
     if (r.band === "long" && r.bucket === "H3_4") return "halved";
     return "owed";
   }
+  if (r.outcome === "FLIGHT_NOT_FOUND") return "not-found";
   if (REVIEW.has(r.outcome)) return "review";
   return "not-owed";
 }
@@ -83,18 +96,22 @@ export function describe(claim) {
   const r = claim.ruling;
   const rec = claim.record ?? {};
   const o = OUTCOME_TEXT[r.outcome] ?? { headline: r.outcome, tone: "maybe" };
-  const route = rec.route && rec.route.origin ? `${rec.route.origin} → ${rec.route.dest}` : "route unknown";
+  const sr = shownRoute(claim);
+  const route = sr.origin ? `${sr.origin} → ${sr.dest}` : (r.flags ?? []).includes("route_conflict") ? "route disputed" : "route unknown";
+  const happened = rec.status === "LANDED" ? (rec.bucket === "NONE" ? "landed, arrival delay not established" : "landed, " + BUCKET_TEXT[rec.bucket])
+    : rec.status === "DIVERTED" ? `diverted${rec.bucket !== "NONE" ? ", " + BUCKET_TEXT[rec.bucket] : ""}` : (rec.status ?? "").toLowerCase().replace("_", " ");
   const lines = [
-    `${claim.flight} on ${claim.date}, ${route}${r.distance_km > 0 ? ` (${r.distance_km.toLocaleString("en-GB")} km)` : ""}`,
-    `What happened: ${rec.status === "LANDED" ? "landed, " + BUCKET_TEXT[rec.bucket] : (rec.status ?? "").toLowerCase().replace("_", " ")}`,
+    `${claim.flight} on ${claim.date}, ${route}${r.distance_km > 0 && sr.origin ? ` (${r.distance_km.toLocaleString("en-GB")} km)` : ""}`,
+    `What happened: ${happened}`,
     `Why: ${CAUSE_TEXT[rec.cause_class] ?? "unknown"}${rec.cause_label && rec.cause_label !== "not stated" ? ` (${rec.cause_label})` : ""}`,
   ];
-  if (r.regime) lines.push(`Rules: ${r.regime}${r.amount ? `, ${money(r.amount, r.currency)} per passenger` : ""}`);
+  if (r.regime) lines.push(`Rules: ${r.regime}${r.amount ? `, ${r.outcome === "POSSIBLY_OWED_CANCELLATION" ? "up to " : ""}${money(r.amount, r.currency)} per passenger` : ""}`);
   lines.push(r.explanation);
   return { headline: o.headline, tone: o.tone, amount: money(r.amount, r.currency), lines };
 }
 
-/** Claim letter text built only from the on-chain ruling. */
+/** Claim letter text built only from the on-chain ruling. It says which public
+ * source decided what, and never asserts a legal entitlement. */
 export function claimLetter(claim, { name = "[Your name]", booking = "[Booking reference]", contract, txHash, siteUrl } = {}) {
   const r = claim?.ruling;
   if (!r) return "";
@@ -105,10 +122,16 @@ export function claimLetter(claim, { name = "[Your name]", booking = "[Booking r
   const what = rec.status === "CANCELLED"
     ? "was cancelled"
     : `arrived ${BUCKET_TEXT[rec.bucket]} at its final destination`;
-  const route = rec.route?.origin ? ` from ${rec.route.origin} to ${rec.route.dest}` : "";
+  const sr = shownRoute(claim);
+  const route = sr.origin ? ` from ${sr.origin} to ${sr.dest}` : "";
   const ask = r.outcome === "POSSIBLY_OWED_CANCELLATION"
-    ? `Please confirm when I was told of the cancellation and what rerouting was offered, and pay the compensation due under ${reg} (${money(r.amount, r.currency)}) if the notice was under 14 days.`
-    : `Under ${reg} I am entitled to ${money(r.amount, r.currency)} in compensation.${r.outcome === "OWED_UNLESS_EXTRAORDINARY" ? " If you believe extraordinary circumstances applied, please provide evidence of them." : ""}`;
+    ? `Please confirm when I was told of the cancellation and what rerouting was offered. If the notice was under 14 days, compensation of up to ${money(r.amount, r.currency)} may be owed under ${reg}.`
+    : `On this record, compensation of ${money(r.amount, r.currency)} may be owed under ${reg}.${r.outcome === "OWED_UNLESS_EXTRAORDINARY" ? " No cause was published; if you believe extraordinary circumstances applied, please provide evidence of them." : ""} Please review my claim.`;
+  const ev = (claim.evidence ?? []).map((e) => e.url);
+  const timing = "The flight's status and arrival time come from the public flight-status page (FlightStats) for that date; attached pages were not used for timing.";
+  const cause = rec.cause_class === "UNKNOWN"
+    ? "No public source stated a cause."
+    : `The cause (${CAUSE_TEXT[rec.cause_class]}${rec.cause_label && rec.cause_label !== "not stated" ? `: ${rec.cause_label}` : ""}) was assessed from the flight-status page${ev.length ? ` and the attached public page${ev.length > 1 ? "s" : ""} ${ev.join(", ")}` : ""}.`;
   return [
     `Subject: Compensation claim, flight ${claim.flight} on ${claim.date}${booking ? `, booking ${booking}` : ""}`,
     "",
@@ -118,14 +141,14 @@ export function claimLetter(claim, { name = "[Your name]", booking = "[Booking r
     "",
     ask,
     "",
-    `This is supported by a public record: DelayProof claim #${claim.id}${contract ? ` on GenLayer studionet contract ${contract}` : ""}${txHash ? ` (transaction ${txHash})` : ""}. Independent validators each fetched the public flight data and agreed on the record above.${siteUrl ? ` It can be checked at ${siteUrl}?claim=${claim.id}.` : ""}`,
+    `Supporting public record: DelayProof claim #${claim.id}${contract ? ` on GenLayer studionet contract ${contract}` : ""}${txHash ? ` (transaction ${txHash})` : ""}. Validators hosted by GenLayer each fetched the public data themselves and agreed on this record. ${timing} ${cause}${siteUrl ? ` It can be checked at ${siteUrl}?claim=${claim.id}.` : ""}`,
     "",
     "Please reply within 14 days.",
     "",
     "Kind regards,",
     name,
     "",
-    "(Information only, not legal advice. Testnet record.)",
+    "(Information only, not legal advice. Testnet record; it does not bind the airline.)",
   ].join("\n");
 }
 
@@ -147,10 +170,14 @@ export function checkInputs({ flight, date, note = "", evidence = [] }, today = 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) errors.push("Pick the date the flight was scheduled to leave.");
   else if (date > today.toISOString().slice(0, 10)) errors.push("That date is in the future.");
   if (note.length > 280) errors.push("Keep the note under 280 characters.");
-  if (/ignore (?:all |any |the )?(?:previous|prior|above)|system prompt|disregard/i.test(note)) errors.push("The note can't contain instructions to the analysts.");
   if (/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(note)) errors.push("The note is public: please remove the email address.");
   if (/\b(?:booking|pnr|reservation|confirmation|ref(?:erence)?)\b/i.test(note) && /\b(?=[A-Z0-9]*\d)(?=[A-Z0-9]*[A-Z])[A-Z0-9]{6}\b/.test(note)) errors.push("The note is public: please remove the booking reference.");
   if (evidence.length > 3) errors.push("At most 3 evidence links.");
-  for (const u of evidence) if (!/^https:\/\/[A-Za-z0-9.-]+(\/\S*)?$/.test(u) || u.length > 300) errors.push(`Evidence link must be https: ${u}`);
+  for (const u of evidence) {
+    const host = (/^https:\/\/([A-Za-z0-9.-]+)(\/\S*)?$/.exec(u)?.[1] ?? "").toLowerCase();
+    if (!host || u.length > 300) errors.push(`Evidence link must be a plain https link: ${u}`);
+    else if (!host.includes(".") || host === "localhost" || /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || /\.(local|localhost|internal|lan|home|corp|intranet|arpa)$/.test(host)) errors.push(`Evidence link must use a public website name: ${u}`);
+    else if (/pnr|lastname|last_name|surname|bookingref|booking_ref|recordlocator|manage[-_]?booking|mytrips|my-trips|checkin|check-in/i.test(u)) errors.push(`That looks like a booking page; links are public, so use a notice or news page: ${u}`);
+  }
   return { ok: errors.length === 0, errors, flight: m ? m[1] + String(Number(m[2])) + m[3] : f };
 }
