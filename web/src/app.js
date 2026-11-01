@@ -38,7 +38,7 @@ async function readClaim(id) { return plain(await reader.readContract({ address:
 const STEPS = ["open", "fetch", "agree", "final"];
 function rail(step, note = "", failed = false) {
   $("progress").hidden = false;
-  const i = STEPS.indexOf(step);
+  const i = step === "done" ? STEPS.length : STEPS.indexOf(step);
   for (const li of $("progress").querySelectorAll("li")) {
     const j = STEPS.indexOf(li.dataset.step);
     li.className = j < i ? "done" : j === i ? (failed ? "fail" : "now") : "";
@@ -135,7 +135,7 @@ async function submit(ev) {
     rail("final", "Agreed. Reading the ruling back from the contract…");
     const claim = await readClaim(id);
     renderResult(claim, { assess: hash, votes: voteSummary(tx) });
-    rail("final", "Done: the ruling below is stored on-chain.");
+    rail("done", "Done: the ruling below is stored on-chain.");
     loadRecent();
   } catch (e) {
     rail("agree", String(e.message ?? e).slice(0, 240), true);
@@ -148,7 +148,7 @@ async function runAppeal(claim) {
   try {
     const { hash, tx } = await send("appeal", [BigInt(claim.id)], "fetch", `Appeal to ${claim.tier === 1 ? 3 : 5} analysts`);
     renderResult(await readClaim(claim.id), { assess: hash, votes: voteSummary(tx) });
-    rail("final", "Appeal decided.");
+    rail("done", "Appeal decided.");
   } catch (e) {
     rail("agree", String(e.message ?? e).slice(0, 240), true);
     btn.disabled = false;

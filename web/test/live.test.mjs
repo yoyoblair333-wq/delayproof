@@ -19,7 +19,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((r) => server.listen(0, r));
 const url = `http://127.0.0.1:${server.address().port}/`;
-const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined;
+const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY, bypass: "127.0.0.1,localhost" } : undefined;
 const browser = await chromium.launch({ proxy });
 const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 390, height: 900 } });
 const page = await ctx.newPage();

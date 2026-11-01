@@ -1,0 +1,22 @@
+{
+ "flight": "BA173",
+ "date": "2026-10-31",
+ "startedAt": "2026-11-01T14:24:19.350Z",
+ "rail": [
+  "Opening your claim: signing in your browser…",
+  "Opening your claim: sent (0x902b2505…)",
+  "Asking the validators: signing in your browser…",
+  "Validators are fetching the flight record and reading it…",
+  "Validators are comparing what they found…",
+  "Agreed. Reading the ruling back from the contract…"
+ ],
+ "headline": "Not owed: arrived less than 3 hours late",
+ "card": "\n      DELAYPROOF RULING · CLAIM #4 · FIRST REVIEW (1 ANALYST)\n      Not owed: arrived less than 3 hours late\n      \n      BA173 on 2026-10-31, LHR → JFK (5,540 km)What happened: landed, under 2 hours lateWhy: cause not stated publiclyRules: UK261Arrived less than 3 hours late.\n      \n      AGREED BY VALIDATORS\n      Airlines are not bound by this ruling. Information, not legal advice.\n    ",
+ "claimUrl": "<site>/?claim=4",
+ "howDecided": "How this was decided\n      Each GenLayer validator fetched these sources itself and ran 1 analyst pass. The ruling exists only because they agreed on the same flight status, delay band (under 2 hours late) and cause (cause not stated publicly).\n      adsbdb: loadedflightstats: loadedAnalyst 1: LANDED, 0 min, UNKNOWN\n      “According to flightstats, BA173 arrived at JFK at 15:19 EDT, which was 6 minutes earlier than the scheduled arrival time of 15:25 EDT.”\n      Assessment tx 0x369950dc7979306a5aaa67c7374226cc5b22dd4a3c66a8ec6b7813b7e0495f71 · validators: agree 3, idle 2\n      Rules: UK261 (more than 3 hours) · delayproof-rules-v1 (research/RULES.md, 2026-11-01)\n    ",
+ "letter": null,
+ "seconds": 33,
+ "console": [
+  "[error] Failed to load resource: net::ERR_FAILED"
+ ]
+}
