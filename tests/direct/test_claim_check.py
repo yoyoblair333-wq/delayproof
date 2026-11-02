@@ -45,7 +45,7 @@ def reader(vm, url, label, excerpt=""):
 @pytest.fixture
 def cc(direct_vm, direct_deploy, direct_alice, direct_bob):
     direct_vm.sender = direct_alice
-    c = direct_deploy(CC, hx(direct_bob))
+    c = direct_deploy(CC, hx(direct_bob), 0)     # cooldown off; TestCooldown deploys with it on
     set_tx_time(direct_vm, NOW)
     return c
 
@@ -87,7 +87,7 @@ class TestGates:
         ["https://a.example/1", "https://a.example:443/1#frag"],
     ])
     def test_one_site_cannot_vote_twice(self, direct_vm, cc, pair):
-        with direct_vm.expect_revert("different host"):
+        with direct_vm.expect_revert("different site"):
             cc.check(CLAIM, pair, 2)
 
     @pytest.mark.parametrize("k", [0, 3, -1, True])
@@ -538,7 +538,8 @@ class TestConsumer:
     def desk(self, direct_vm, direct_deploy, direct_alice):
         direct_vm.sender = direct_alice
         oracle = "0x" + "11" * 20
-        d = direct_deploy(CONSUMER, oracle)
+        d = direct_deploy(CONSUMER, oracle, 1)
+        set_tx_time(direct_vm, NOW)
         calls = {"view": [], "post": [], "answer": {"id": 0}}
         from genlayer.py import calldata
 
@@ -563,7 +564,7 @@ class TestConsumer:
         assert d.get_case(cid)["status"] == "requested"
         with direct_vm.expect_revert("no ClaimCheck result"):
             d.settle(cid)
-        calls["answer"] = {"id": 4, "verdict": "SUPPORTED", "fingerprint": "ab" * 32}
+        calls["answer"] = {"id": 4, "verdict": "SUPPORTED", "fingerprint": "ab" * 32, "checked_at": NOW}
         out = d.settle(cid)
         assert out["status"] == "settled" and out["outcome"] == "claim_upheld" and out["check_id"] == 4
         assert calls["view"][-1]["calldata"] == {"method": "find", "args": [CLAIM, [A, B], 2, ""]}
@@ -575,10 +576,10 @@ class TestConsumer:
     def test_non_settling_verdict_keeps_case_open(self, direct_vm, desk):
         d, calls, _ = desk
         cid = d.open_case(CLAIM, [A], 1)
-        calls["answer"] = {"id": 2, "verdict": "DISPUTED", "fingerprint": "x"}
+        calls["answer"] = {"id": 2, "verdict": "NOT_FOUND", "fingerprint": "x", "checked_at": NOW}
         out = d.settle(cid)
-        assert out["status"] == "open" and out["last_verdict"] == "DISPUTED" and out["outcome"] == ""
-        calls["answer"] = {"id": 3, "verdict": "CONTRADICTED", "fingerprint": "y"}
+        assert out["status"] == "open" and out["last_verdict"] == "NOT_FOUND" and out["outcome"] == ""
+        calls["answer"] = {"id": 3, "verdict": "CONTRADICTED", "fingerprint": "y", "checked_at": NOW}
         assert d.settle(cid)["outcome"] == "claim_rejected"
 
     @pytest.mark.parametrize("args,msg", [
@@ -593,4 +594,303 @@ class TestConsumer:
 
     def test_config(self, desk):
         d, _, oracle = desk
-        assert d.get_config() == {"oracle": oracle, "cases": 0}
+        assert d.get_config() == {"oracle": oracle, "min_k": 1, "cases": 0}
+
+    def test_disputed_escalates_and_can_still_settle(self, direct_vm, desk):
+        d, calls, _ = desk
+        cid = d.open_case(CLAIM, [A, B], 2)
+        calls["answer"] = {"id": 5, "verdict": "DISPUTED", "fingerprint": "z", "checked_at": NOW}
+        out = d.settle(cid)
+        assert out["status"] == "escalated" and out["outcome"] == ""
+        calls["answer"] = {"id": 6, "verdict": "SUPPORTED", "fingerprint": "w", "checked_at": NOW}
+        assert d.settle(cid)["outcome"] == "claim_upheld"
+
+    def test_stale_check_cannot_settle(self, direct_vm, desk):
+        # A check run before the case was opened (here: an hour earlier) is refused.
+        d, calls, _ = desk
+        cid = d.open_case(CLAIM, [A], 1)
+        calls["answer"] = {"id": 1, "verdict": "SUPPORTED", "fingerprint": "s", "checked_at": "2026-11-01T11:00:00Z"}
+        with direct_vm.expect_revert("predates this case"):
+            d.settle(cid)
+        assert d.get_case(cid)["status"] == "open"
+
+    def test_min_k_policy(self, direct_vm, direct_deploy, direct_alice):
+        direct_vm.sender = direct_alice
+        strict = direct_deploy(CONSUMER, "0x" + "11" * 20)        # default min_k = 2
+        assert strict.get_config()["min_k"] == 2
+        with direct_vm.expect_revert("requires k >= 2"):
+            strict.open_case(CLAIM, [A, B], 1)
+        assert strict.open_case(CLAIM, [A, B], 2) == 1
+
+    def test_min_k_bounds(self, direct_vm, direct_deploy, direct_alice):
+        direct_vm.sender = direct_alice
+        with direct_vm.expect_revert("min_k must be"):
+            direct_deploy(CONSUMER, "0x" + "11" * 20, 0)
+
+
+# ======================================================================= v2
+# Adversarial suites added for v2. Each class maps to a row of the
+# "vulnerable vs hardened" table in docs/CLAIM_CHECK.md.
+
+import sys
+
+EIFFEL = "The Eiffel Tower is located on the Champ de Mars in Paris."
+LEAD = "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France."
+
+
+def contract_module():
+    for m in list(sys.modules.values()):
+        if getattr(m, "SCHEMA_ID", None) == "claimcheck.v2" and hasattr(m, "select_context"):
+            return m
+    raise RuntimeError("claim_check module not loaded")
+
+
+def v1_select_context(m, page, claim, hint):
+    """The v1 retrieval, kept verbatim as the 'vulnerable' baseline: 1,500-char
+    hard chunks scored by summed substring IDF."""
+    if len(page) <= 7500:
+        return page
+    chunks = [page[i:i + 1500] for i in range(0, len(page), 1500)]
+    terms = []
+    for w in __import__("re").findall(r"[a-z0-9]{3,}", m.norm_for_match(claim + " " + hint)):
+        if w not in ("the", "and", "for", "that", "this", "with", "from", "was", "were", "are", "its") and w not in terms:
+            terms.append(w)
+    lows = [m.norm_for_match(ch) for ch in chunks]
+    df = {t: sum(1 for low in lows if t in low) for t in terms}
+    scored = sorted((-sum(1_000_000 // df[t] for t in terms if df[t] > 0 and t in low), i) for i, low in enumerate(lows))
+    keep, used = [], 0
+    for _n, i in scored:
+        if used + len(chunks[i]) > 7500:
+            break
+        keep.append(i)
+        used += len(chunks[i])
+    return "".join(chunks[i] for i in sorted(keep))
+
+
+def wiki_page() -> str:
+    """A ~75k-char article shaped like the live Wikipedia miss: ~8k chars of
+    navigation and infobox first, the fact in the lead, 'Champ de Mars' in a
+    quarter of the body sections, and the claim's rarer word ('located')
+    scattered next to 'Eiffel Tower' in unrelated paragraphs."""
+    nav = ("Jump to content Main menu Main page Contents Current events Random article About Wikipedia "
+           "Contact us Help Learn to edit Community portal Recent changes Upload file Search Donate "
+           "Create account Log in Contents hide (Top) 1 History 2 Design 3 Tourism 4 Popular culture ") * 30
+    lead = ("Eiffel Tower From Wikipedia, the free encyclopedia. This article is about the tower in Paris. "
+            "For other uses, see Eiffel Tower (disambiguation). " + LEAD +
+            " It is named after the engineer Gustave Eiffel, whose company designed and built the tower. ")
+    lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor. " * 9
+    body = []
+    for i in range(60):
+        body.append(f"Section {i}. Visitors to Paris queue at the base of the Eiffel Tower every morning and "
+                    "the lifts run until late at night. Painters repaint the structure every seven years. ")
+        if i % 4 == 0:
+            body.append(f"The park of the Champ de Mars hosted event number {i}. ")
+        body.append(lorem)
+        if i % 9 == 4:
+            body.append("A souvenir kiosk is located behind the Eiffel Tower ticket office. " + lorem)
+    return nav + lead + "".join(body)
+
+
+class TestWindowing:
+    def test_v1_baseline_misses_the_lead_v2_finds_it(self, cc):
+        m = contract_module()
+        text = m.clean_text(wiki_page())
+        assert len(text) > 60_000
+        assert m.norm_for_match(LEAD) not in m.norm_for_match(v1_select_context(m, text, EIFFEL, ""))
+        assert m.norm_for_match(LEAD) not in m.norm_for_match(text[:7500])   # "first 7,500 chars" also misses
+        ctx = m.select_context(text, EIFFEL, "")
+        assert m.norm_for_match(LEAD) in m.norm_for_match(ctx) and len(ctx) <= 7500 + 64
+
+    def test_long_page_supported_end_to_end(self, direct_vm, cc):
+        page(direct_vm, A, wiki_page())
+        # The only LLM mock answers when the model is shown the lead sentence.
+        direct_vm.mock_llm(r"lattice tower on the Champ de Mars in Paris", json.dumps(
+            {"label": "SUPPORTS", "excerpt": "lattice tower on the Champ de Mars in Paris"}))
+        r = cc.check(EIFFEL, [A], 1)
+        assert r["verdict"] == "SUPPORTED" and r["sources"][0]["detail"] == "excerpt_verified"
+        assert direct_vm.run_validator() is True
+
+    def test_selection_is_deterministic_and_input_bound(self, cc):
+        m = contract_module()
+        text = m.clean_text(wiki_page())
+        a = m.select_context(text, EIFFEL, "")
+        assert a == m.select_context(text, EIFFEL, "") == m.select_context(str(text), str(EIFFEL), "")
+        assert a != m.select_context(text, "Painters repaint the structure every seven years.", "")
+
+    def test_hint_window_always_kept_even_across_block_edges(self, cc):
+        m = contract_module()
+        text = m.clean_text(wiki_page())
+        bounds = m._blocks(text)
+        cut = bounds[40][1]                       # a block boundary deep in the body
+        hint = "QZX unique marker phrase"
+        text2 = text[:cut - 10] + " " + hint + " " + text[cut - 10:]
+        assert hint.lower() in m.select_context(text2, EIFFEL, hint).lower()
+
+    def test_windows_are_word_aligned_and_bounded(self, cc):
+        m = contract_module()
+        text = m.clean_text(wiki_page())
+        for a, b in m._blocks(text)[:-1]:
+            assert text[b - 1] == " " and b - a <= m.WINDOW_BLOCK + 65
+        ctx = m.select_context(text, EIFFEL, "")
+        assert ctx.count("[...]") >= 1 and len(ctx.replace("\n[...]\n", "")) <= m.CONTEXT_BUDGET
+
+    def test_coverage_beats_one_rare_word(self, cc):
+        m = contract_module()
+        text = m.clean_text(wiki_page())
+        scored = m.score_windows(text, EIFFEL, "")
+        lead_at = text.find(LEAD)
+        lead_win = max(sc for sc, _s, a, b in scored if a <= lead_at and lead_at + len(LEAD) <= b)
+        kiosk = [sc for sc, _s, a, b in scored if "kiosk is located" in text[a:b] and "Champ" not in text[a:b]]
+        assert kiosk and lead_win > max(kiosk)
+        assert lead_win == max(sc for sc, _s, _a, _b in scored)
+
+
+class TestUnicodeRobustness:
+    @pytest.mark.parametrize("body,excerpt", [
+        ("RFC 9110 inter­national HTTP Semantics, published June 2022.", "RFC 9110 international HTTP Semantics, published June 2022"),
+        ("Le site est près des Champs-Élysées; RFC 9110 parut en June 2022.", "RFC 9110 parut en June 2022"),
+        ("Il dit «RFC 9110 was published in June 2022» hier.", 'Il dit "RFC 9110 was published in June 2022"'),
+        ("RFC 9110 HTTP Semantics, published June 2022, obsoletes RFC 7231.", '..."RFC 9110 HTTP Semantics, published June 2022..."'),
+        ("RFC​ 9110 was pub‍lished in June⁠ 2022.", "RFC 9110 was published in June 2022"),
+        ("RFC ９１１０ was published in June ２０２２.", "RFC 9110 was published in June 2022"),
+        ("RFC 9110 was published in\nJune\t 2022.", "RFC 9110 was published in June 2022"),
+        ("RFC 9110 was publishéd in June 2022.", "RFC 9110 was publishéd in June 2022"),
+        ("The RFC–9110 text — published June 2022.", "The RFC-9110 text - published June 2022"),
+    ])
+    def test_excerpt_matches_through_unicode_noise(self, direct_vm, cc, body, excerpt):
+        r = run1(direct_vm, cc, body=body, excerpt=excerpt)
+        assert r["verdict"] == "SUPPORTED", r["sources"][0]
+
+    def test_accent_fold_cannot_fabricate_words(self, direct_vm, cc):
+        r = run1(direct_vm, cc, body="RFC 9110 was published in June 2022.", excerpt="RFC 9110 was published in July 2022")
+        assert r["sources"][0]["detail"] == "excerpt_not_in_page"
+
+
+class TestSybilSites:
+    @pytest.mark.parametrize("pair", [
+        ["https://en.wikipedia.org/wiki/X", "https://m.wikipedia.org/wiki/X"],
+        ["https://news.bbc.co.uk/a", "https://www.bbc.co.uk/b"],
+        ["https://alice.github.io/a", "https://bob.github.io/b"],
+        ["https://a.b.c.example.com/1", "https://example.com/2"],
+    ])
+    def test_one_registrable_domain_one_vote(self, direct_vm, cc, pair):
+        with direct_vm.expect_revert("different site"):
+            cc.check(CLAIM, pair, 2)
+
+    def test_distinct_registrable_domains_allowed(self, direct_vm, cc):
+        m = contract_module()
+        assert m.site_of("www.rfc-editor.org") == "rfc-editor.org" and m.site_of("datatracker.ietf.org") == "ietf.org"
+        assert m.site_of("news.bbc.co.uk") == "bbc.co.uk" != m.site_of("www.itv.co.uk")
+        assert m.site_of("raw.githubusercontent.com") == "githubusercontent.com"
+
+
+class TestLeaderCherryPick:
+    NAV = "Sign in to your account to continue reading"
+    BODY = PAGE + " " + NAV + "."
+
+    def test_off_topic_excerpt_downgraded(self, direct_vm, cc):
+        r = run1(direct_vm, cc, body=self.BODY, excerpt=self.NAV)
+        assert r["sources"][0]["label"] == "SILENT" and r["sources"][0]["detail"] == "excerpt_off_topic"
+
+    def test_validator_rejects_off_topic_leader_excerpt(self, direct_vm, cc):
+        r = run1(direct_vm, cc, body=self.BODY)
+        forged = {"verdict": "SUPPORTED", "sources": [{"label": "SUPPORTS", "excerpt": self.NAV, "detail": "excerpt_verified", "prev": "none"}]}
+        assert direct_vm.run_validator(leader_result=forged) is False
+        assert r["verdict"] == "SUPPORTED"
+
+    @pytest.mark.parametrize("label,detail", [
+        ("SUPPORTS", "verified_by_ietf"), ("SILENT", "excerpt_verified"), ("UNREACHABLE", "model_silent"),
+        ("INJECTED", "http_200x"), ("SILENT", "http_404"),
+    ])
+    def test_validator_rejects_forged_detail(self, direct_vm, cc, label, detail):
+        run1(direct_vm, cc, label=label, excerpt=SENT if label == "SUPPORTS" else "")
+        row = {"label": label, "excerpt": SENT if label == "SUPPORTS" else "", "detail": detail, "prev": "none"}
+        forged = {"verdict": cc.get_check(1)["verdict"], "sources": [row]}
+        assert direct_vm.run_validator(leader_result=forged) is False
+
+    def test_unreachable_http_codes_accepted_as_detail(self, direct_vm, cc):
+        page(direct_vm, A, "gone", status=451)
+        assert cc.check(CLAIM, [A], 1)["sources"][0]["detail"] == "http_451"
+        assert direct_vm.run_validator() is True
+
+    def test_excerpt_joined_across_gap_is_not_on_page(self, direct_vm, cc):
+        r = run1(direct_vm, cc, excerpt="Intro text about the web. [...] Some more unrelated words")
+        assert r["sources"][0]["detail"] == "excerpt_not_in_page"
+
+    def test_leader_cannot_choose_the_windows(self, direct_vm, cc):
+        # The validator recomputes its own windows from its own fetch: a leader that
+        # labelled from a context with the fact (when the deterministic one lacks it)
+        # is outvoted, because the validator's model, shown the real windows, says SILENT.
+        page(direct_vm, A, wiki_page())
+        direct_vm.mock_llm(r"fetched from", json.dumps({"label": "SILENT", "excerpt": ""}))
+        cc.check("Painters repaint the structure every seven years.", [A], 1)
+        forged = {"verdict": "SUPPORTED", "sources": [{"label": "SUPPORTS", "excerpt": "lattice tower on the Champ de Mars",
+                                                       "detail": "excerpt_verified", "prev": "none"}]}
+        assert direct_vm.run_validator(leader_result=forged) is False
+
+
+class TestCooldown:
+    @pytest.fixture
+    def slow(self, direct_vm, direct_deploy, direct_alice, direct_bob):
+        direct_vm.sender = direct_alice
+        c = direct_deploy(CC, hx(direct_bob))          # default cooldown
+        set_tx_time(direct_vm, NOW)
+        page(direct_vm, A)
+        reader(direct_vm, A, "SUPPORTS", SENT)
+        return c
+
+    def test_second_call_within_cooldown_reverts(self, direct_vm, slow):
+        assert slow.stats()["cooldown_seconds"] == 15
+        slow.check(CLAIM, [A], 1)
+        set_tx_time(direct_vm, "2026-11-01T12:00:14Z")
+        with direct_vm.expect_revert("cooldown"):
+            slow.check(CLAIM, [A], 1)
+        with direct_vm.expect_revert("cooldown"):
+            slow.recheck(1)
+        set_tx_time(direct_vm, "2026-11-01T12:00:15Z")
+        assert slow.recheck(1)["revision"] == 2
+
+    def test_cooldown_is_per_caller(self, direct_vm, slow, direct_bob):
+        slow.check(CLAIM, [A], 1)
+        direct_vm.sender = direct_bob
+        assert slow.check(CLAIM, [A], 1)["id"] == 2
+
+    def test_refused_input_does_not_consume_slot(self, direct_vm, slow):
+        with direct_vm.expect_revert("https://"):
+            slow.check(CLAIM, ["http://a.example/x"], 1)
+        assert slow.check(CLAIM, [A], 1)["id"] == 1
+
+    def test_owner_tunes_cooldown(self, direct_vm, slow, direct_bob):
+        with direct_vm.expect_revert("only owner"):
+            slow.set_cooldown(0)
+        direct_vm.sender = direct_bob
+        with direct_vm.expect_revert("cooldown must be"):
+            slow.set_cooldown(86_401)
+        slow.set_cooldown(0)
+        slow.check(CLAIM, [A], 1)
+        slow.check(CLAIM, [A], 1)
+        assert slow.stats()["total"] == 2 and slow.stats()["cooldown_seconds"] == 0
+
+
+class TestShortReads:
+    def test_record_key_find_by_key_and_checks_by(self, direct_vm, cc, direct_alice):
+        page(direct_vm, A)
+        page(direct_vm, B)
+        reader(direct_vm, A, "SUPPORTS", SENT)
+        reader(direct_vm, B, "SUPPORTS", SENT)
+        r1 = cc.check(CLAIM, [A, B], 2)
+        r2 = cc.check(CLAIM, [A], 1)
+        assert len(r1["key"]) == 64 and r1["key"] != r2["key"]
+        assert cc.find_by_key(r1["key"])["id"] == 1 == cc.find(CLAIM, [B, A], 2)["id"]
+        assert cc.find_by_key(r1["key"]) == cc.find(CLAIM, [A, B], 2) == cc.get_verdict(1)
+        assert cc.find_by_key("00" * 32) == {"id": 0}
+        assert [x["id"] for x in cc.checks_by(hx(direct_alice), 10)] == [2, 1]
+        assert cc.checks_by(hx(direct_alice), 1)[0]["key"] == r2["key"]
+        assert cc.checks_by("0x" + "22" * 20, 5) == [] and cc.checks_by("not an address", 5) == []
+
+    def test_newest_check_wins_the_key(self, direct_vm, cc):
+        run1(direct_vm, cc)
+        k = cc.get_check(1)["key"]
+        direct_vm.clear_mocks()
+        run1(direct_vm, cc, label="SILENT", excerpt="")
+        assert cc.find_by_key(k)["id"] == 2 and cc.find_by_key(k)["verdict"] == "NOT_FOUND"
