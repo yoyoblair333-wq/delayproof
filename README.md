@@ -29,6 +29,10 @@ Airlines are not bound by a DelayProof ruling.**
 > address), so a withdrawn payout leaves the pool but does not show in the wallet's balance.
 > Details and tx hashes: [docs/LIVE_EVIDENCE.md](docs/LIVE_EVIDENCE.md).
 
+> **Also in this repo: [ClaimCheck](docs/CLAIM_CHECK.md)**, a standalone, reusable k-of-n
+> web-evidence quorum oracle (`contracts/claim_check.py`) that other contracts and apps can
+> call to verify a claim against several independently fetched sources.
+
 ## The trust problem
 
 - EU and UK law owe **€250–600 / £220–520 per passenger** when a flight lands 3+ hours

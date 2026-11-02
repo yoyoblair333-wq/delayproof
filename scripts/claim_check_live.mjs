@@ -39,6 +39,18 @@ const run = { network: "studionet", rpc: RPC, startedAt: iso(), deployer: accoun
   contracts: { claim_check: { address: process.env.CC_ADDRESS ?? null, file: FILES.claim_check, source_sha256: sha(canon(src.claim_check)) },
                consumer: { address: process.env.CONSUMER_ADDRESS ?? null, file: FILES.consumer, source_sha256: sha(canon(src.consumer)) } },
   steps: [], reads: {} };
+// CC_APPEND=1: add the CC_PLAN checks to an existing run file (same deployment), then re-read
+// and follow only the new transactions to finality.
+const APPEND = process.env.CC_APPEND === "1";
+if (APPEND) {
+  const prev = JSON.parse(readFileSync(OUT, "utf8"));
+  for (const k of Object.keys(run.contracts)) {
+    if (prev.contracts[k].source_sha256 !== run.contracts[k].source_sha256) throw new Error(`${k} source changed since the run; deploy again instead`);
+    run.contracts[k] = prev.contracts[k];
+  }
+  Object.assign(run, { startedAt: prev.startedAt, steps: prev.steps, reads: prev.reads, appendedAt: iso() });
+}
+const firstNew = run.steps.length;
 const save = () => writeFileSync(OUT, JSON.stringify(plain(run), null, 1) + "\n");
 
 function summarize(tx) {
@@ -107,7 +119,7 @@ const RFC_TXT = "https://www.rfc-editor.org/rfc/rfc9110.txt";
 const RFC_HTML = "https://datatracker.ietf.org/doc/html/rfc9110";
 const WIKI = "https://en.wikipedia.org/wiki/Eiffel_Tower";
 const HOSTILE = "https://raw.githubusercontent.com/yoyoblair333-wq/delayproof/main/examples/claim-check/pages/injected-test-page.txt";
-const plan = JSON.parse(process.env.CC_PLAN ?? "null") ?? [
+const plan = (JSON.parse(process.env.CC_PLAN ?? "null") ?? null)?.map((p) => ({ ...p, args: p.args.map((a, i) => (i === 2 ? BigInt(a) : a)) })) ?? [
   { label: "1-supported-wikipedia", intent: "SUPPORTED, 1-of-1 (Wikipedia)", args: ["The Eiffel Tower is located on the Champ de Mars in Paris.", [WIKI], 1n, ""] },
   { label: "2-supported-2of2", intent: "SUPPORTED, 2-of-2 on two hosts (RFC Editor text + IETF Datatracker HTML)", args: ["RFC 9110, HTTP Semantics, was published in June 2022.", [RFC_TXT, RFC_HTML], 2n, ""] },
   { label: "3-contradicted", intent: "CONTRADICTED (wrong year)", args: ["RFC 9110, HTTP Semantics, was published in March 2015.", [RFC_TXT], 1n, ""] },
@@ -122,6 +134,8 @@ for (const p of plan) {
   save();
 }
 
+let caseId = 0n;
+if (!APPEND) {
 // ---- recheck of the 2-of-2 check ----
 const two = run.steps.find((s) => s.label === "2-supported-2of2")?.read_back;
 if (two?.id) {
@@ -133,7 +147,7 @@ if (two?.id) {
 // ---- consumer: open -> emit check -> poll find -> settle ----
 const caseArgs = ["RFC 9110 obsoletes RFC 7231.", [RFC_TXT], 1n];
 const open = await write("9-consumer-open-case", "consumer stores a case", DESK, "open_case", caseArgs);
-const caseId = BigInt((await read(DESK, "get_config", [])).cases ?? 1);
+caseId = BigInt((await read(DESK, "get_config", [])).cases ?? 1);
 const req = await write("10-consumer-request-check", "consumer emits ClaimCheck.check(...) (cross-contract message)", DESK, "request_check", [caseId]);
 let found = { id: 0 };
 const end = Date.now() + 1800000;
@@ -148,21 +162,24 @@ save();
 const st = await write("11-consumer-settle", "consumer reads ClaimCheck.find(...) via view() and settles", DESK, "settle", [caseId]);
 st.read_back = await read(DESK, "get_case", [caseId]);
 save();
+}
 
 // ---- reads ----
 run.reads.stats = await read(CC, "stats", []);
 run.reads.list_recent = await read(CC, "list_recent", [10n]);
-for (const s of run.steps) if (s.read_back?.id && s.fn === "check") run.reads[`get_check_${s.read_back.id}`] = await read(CC, "get_check", [BigInt(s.read_back.id)]);
-run.reads.consumer_case = await read(DESK, "get_case", [caseId]);
+// Every stored check by id (find() reads with long argument lists can fail on the RPC side,
+// so the per-step read_back is a convenience and these are the authoritative read-backs).
+for (let i = 1; i <= Number(run.reads.stats?.total ?? 0); i++) run.reads[`get_check_${i}`] = await read(CC, "get_check", [BigInt(i)]);
+if (!APPEND) run.reads.consumer_case = await read(DESK, "get_case", [caseId]);
 save();
 
 // ---- finality ----
-for (const s of [run.contracts.claim_check.deploy, run.contracts.consumer.deploy, ...run.steps]) {
+for (const s of APPEND ? run.steps.slice(firstNew) : [run.contracts.claim_check.deploy, run.contracts.consumer.deploy, ...run.steps]) {
   if (!s?.tx) continue;
   const { tx } = await settle(s.tx, `${s.label ?? "deploy"}-final`, "FINALIZED", 2400000);
   s.final = summarize(tx);
   save();
 }
-run.finishedAt = iso();
+run[APPEND ? "appendFinishedAt" : "finishedAt"] = iso();
 save();
 console.log("done");
