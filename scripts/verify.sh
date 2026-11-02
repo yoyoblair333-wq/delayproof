@@ -23,6 +23,7 @@ step "setup: python venv + pinned requirements" bash -c "$PY -m venv .venv && .v
 step "contract tests (pytest, direct mode)" bash -c ".venv/bin/python -m pytest -q 2>&1 | tail -n 5; exit \${PIPESTATUS[0]}"
 step "genvm-lint check" .venv/bin/genvm-lint check contracts/delay_proof.py
 step "genvm-lint typecheck" bash -c "PATH=\"$ROOT/.venv/bin:\$PATH\" .venv/bin/genvm-lint typecheck contracts/delay_proof.py"
+step "genvm-lint check + typecheck: ClaimCheck contracts" bash -c "for f in contracts/claim_check.py contracts/claim_check_consumer.py; do .venv/bin/genvm-lint check \$f && PATH=\"$ROOT/.venv/bin:\$PATH\" .venv/bin/genvm-lint typecheck \$f || exit 1; done"
 step "web: npm ci + Playwright Chromium" bash -c "cd web && npm ci --no-audit --no-fund --loglevel=error && npx --no-install playwright install chromium"
 step "web build" bash -c "cd web && npm run --silent build"
 step "web offline tests" bash -c "cd web && npm test 2>&1 | grep -E '^# (tests|pass|fail)|^not ok|^  error:'; exit \${PIPESTATUS[0]}"
