@@ -15,6 +15,7 @@ import { addTrip, emptyWallet, totals, tripsNewestFirst } from "../src/lib/walle
 import { SAMPLES } from "../src/lib/samples.js";
 import { readCallData, encodeCalldata, decodeCalldata } from "../src/lib/rpc.js";
 import { routeStatus, prettyDate, windowText } from "../src/lib/ruling.js";
+import { fmtGen, shortAddr, paysToWallet } from "../src/lib/gen.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.join(here, "../dist");
@@ -485,6 +486,90 @@ test("R2 P1-8: a closed demo pool disables the payout option instead of failing 
     await page.waitForFunction(() => document.querySelector("#poolnote").textContent.length > 0);
     assert.equal(await page.isDisabled("#pool"), true);
     assert.match(await page.textContent("#poolnote"), /closed/);
+  } finally { await browser.close(); server.close(); }
+});
+
+test("v4: GEN amounts and payout-wallet detection", () => {
+  assert.equal(fmtGen(250000000000000000n), "0.25 GEN");
+  assert.equal(fmtGen("0x" + (10n ** 19n + 25n * 10n ** 16n).toString(16)), "10.25 GEN");
+  assert.equal(fmtGen(0), "0 GEN");
+  assert.equal(fmtGen("nope"), "n/a");
+  assert.equal(shortAddr("0x" + "ab".repeat(20)), "0xababab…abab");
+  const me = "0x" + "11".repeat(20), w = "0x" + "a1".repeat(20);
+  assert.equal(paysToWallet({ claimant: me, payout_to: w }), true);
+  assert.equal(paysToWallet({ claimant: me, payout_to: me.toUpperCase().replace("0X", "0x") }), false, "own key is not a wallet");
+  assert.equal(paysToWallet({ claimant: me, paid_to: w }, "paid_to"), true);
+  assert.equal(paysToWallet({ claimant: me }), false, "v3 claims have no payout fields");
+});
+
+test("v4: My trips shows the registered payout wallet, its owner and the received balance; a paid claim names it", async (t) => {
+  let chromium;
+  try { ({ chromium } = await import("playwright")); } catch { t.skip("playwright not installed"); return; }
+  const { server, url } = await serve();
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(String(e)));
+    const me = "0x" + "22".repeat(20), w = "0x" + "a1".repeat(20);
+    await page.addInitScript((addr) => localStorage.setItem("delayproof.testnet-burner.v1", JSON.stringify({ privateKey: "0x" + "01".repeat(32), address: addr })), me);
+    const paid = { ...claim("OWED"), id: 4, claimant: me, status: "final", paid: true, pool_id: 1, approved: true, history: [], evidence: [], paid_to: w, payout_to: w };
+    const enc = (v) => Buffer.from(encodeCalldata(v)).toString("hex");
+    const methods = [];
+    const views = {
+      [readCallData("get_payout_wallet", [me])]: w,
+      [readCallData("get_info", [])]: { kind: "ClaimWallet", owner: me, balance: "250000000000000000", sent_total: "0", sends: 0 },
+      [readCallData("get_claim", [4])]: paid,
+      [readCallData("list_recent", [10])]: [paid],
+    };
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+    await page.route(/studio\.genlayer\.com/, (r) => {
+      const body = JSON.parse(r.request().postData() ?? "{}");
+      methods.push(body.method);
+      let v;
+      if (body.method === "gen_call") v = views[body.params[0].data];
+      else if (body.method === "eth_getBalance" && body.params[0].toLowerCase() === w) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, result: "0x" + (25n * 10n ** 16n).toString(16) }) });
+      if (v === undefined) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, error: { message: "execution failed" } }) });
+      return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, result: enc(v) }) });
+    });
+    await page.goto(`${url}?claim=4`);
+    await page.waitForSelector(".dp-verdict");
+    assert.match(await page.textContent(".paidwarn"), /payout wallet 0xa1a1a1…a1a1/);
+    await page.waitForFunction(() => /GEN/.test(document.querySelector("#payoutfacts").textContent));
+    const facts = await page.textContent("#payoutfacts");
+    assert.match(facts, new RegExp(w, "i"));
+    assert.match(facts, /this browser's key/);
+    assert.match(facts, /0\.25 GEN \(test\)/);
+    assert.equal(await page.isHidden("#payoutsetup"), true, "no set-up button once a wallet is registered");
+    assert.ok(!methods.some((m) => /sendRawTransaction/.test(m)), "reading the wallet never writes");
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); server.close(); }
+});
+
+test("v4: without a registered wallet the set-up button shows and the collect hint warns", async (t) => {
+  let chromium;
+  try { ({ chromium } = await import("playwright")); } catch { t.skip("playwright not installed"); return; }
+  const { server, url } = await serve();
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const me = "0x" + "33".repeat(20);
+    await page.addInitScript((addr) => localStorage.setItem("delayproof.testnet-burner.v1", JSON.stringify({ privateKey: "0x" + "02".repeat(32), address: addr })), me);
+    const ready = { ...claim("OWED"), id: 5, claimant: me, status: "final", paid: false, pool_id: 1, approved: true, history: [], evidence: [], paid_to: "", payout_to: me };
+    const enc = (v) => Buffer.from(encodeCalldata(v)).toString("hex");
+    const views = { [readCallData("get_payout_wallet", [me])]: "", [readCallData("get_claim", [5])]: ready, [readCallData("list_recent", [10])]: [ready] };
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+    await page.route(/studio\.genlayer\.com/, (r) => {
+      const body = JSON.parse(r.request().postData() ?? "{}");
+      const v = body.method === "gen_call" ? views[body.params[0].data] : undefined;
+      if (v === undefined) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, error: { message: "execution failed" } }) });
+      return r.fulfill({ contentType: "application/json", body: JSON.stringify({ jsonrpc: "2.0", id: body.id, result: enc(v) }) });
+    });
+    await page.goto(`${url}?claim=5`);
+    await page.waitForSelector("#withdraw");
+    assert.match(await page.textContent("#withdrawto"), /Set up a payout wallet/);
+    await page.waitForSelector("#payoutsetup", { state: "visible" });
+    assert.match(await page.textContent("#payoutfacts"), /none/);
   } finally { await browser.close(); server.close(); }
 });
 

@@ -14,20 +14,26 @@ a testnet pool, approve the claims it covers, and pay them once the ruling is fi
 Testnet only (GenLayer studionet). No real money. **Information, not legal advice.
 Airlines are not bound by a DelayProof ruling.**
 
-> **Deployment status (2026-11-01).** The site points at contract **v3**
-> `0x0f68cF95e2E735D0b2AbD8a55de6890D2c0eBfe1` on studionet, deployed by the owner from
-> Blair's wallet (`0x920fbbCf…a46A`, deploy tx `0xa7dd809f…6144`, challenge window 60 min).
-> Its stored code matches `contracts/delay_proof.py` (canonical sha256 `4aaea346…480b`;
-> check it yourself in `rig.html`). v2 `0x6F3dedC8…1FBF` is superseded and kept as history in
+> **Deployment status (2026-11-10): contract v4, payouts that actually arrive.** The site
+> points at **v4** [`0xa9bc7c88319649273292E432685C51121b44Af61`](https://explorer-studio.genlayer.com/address/0xa9bc7c88319649273292E432685C51121b44Af61)
+> on studionet (deployed by a throwaway test key, challenge window 10 min; stored code =
+> `contracts/delay_proof.py`, canonical sha256 `e12e8e7f…b2d0`, check it in `rig.html`).
+> What changed since v3: [MILESTONE.md](MILESTONE.md).
+>
+> **The v3 gap, closed.** On studionet a payout sent from a contract to a plain wallet
+> address is debited but never credited; contract-to-contract transfers are credited. In v4
+> a claimant registers a **payout wallet contract** (`contracts/claim_wallet.py`, which only
+> they can spend from) with `set_payout_wallet`, and `withdraw_payout` pays it there. Live
+> on v4: Ryanair FR1104 Palma → Manchester on 2026-11-09 arrived 3h 5m late (FlightStats);
+> validators agreed **owed unless the airline proves extraordinary circumstances, €400**
+> (EU261); the payer approved, the claimant withdrew, and the claimant's ClaimWallet
+> balance went **0 → 0.4 test GEN** on-chain. Tx hashes and balances:
 > [docs/LIVE_EVIDENCE.md](docs/LIVE_EVIDENCE.md).
 >
-> **First live OWED rulings.** Ryanair FR1029 Palermo → Milan Malpensa on 2026-11-01 arrived
-> 9h 20m late (FlightStats) after a technical fault on the aircraft (news report quoting the
-> airport operator). Validators agreed **OWED, €250** (EU261, 904 km): first on v2 (claim #7),
-> then again on v3 (claim #1) with a different claimant. **Known gap:** on studionet the
-> payout transfer to a plain wallet address fails (the network looks for a contract at that
-> address), so a withdrawn payout leaves the pool but does not show in the wallet's balance.
-> Details and tx hashes: [docs/LIVE_EVIDENCE.md](docs/LIVE_EVIDENCE.md).
+> History: v3 `0x0f68cF95…Bfe1` (owner deploy from Blair's wallet, 60-min window) produced
+> the first live OWED rulings (Ryanair FR1029 PMO → MXP, 2026-11-01, €250, on v2 and v3),
+> but its payouts left the pool without reaching the claimant's wallet. v3 and v2 stay
+> documented in LIVE_EVIDENCE as superseded.
 
 > **Also in this repo: [ClaimCheck](docs/CLAIM_CHECK.md)**, a standalone, reusable k-of-n
 > web-evidence quorum oracle (`contracts/claim_check.py`) that other contracts and apps can
@@ -111,12 +117,17 @@ Airlines are not bound by a DelayProof ruling.**
    pay, the reservation and the per-flight slot are released. After expiry,
    `withdraw_pool` returns only the unreserved balance. A reservation whose claimant never
    withdraws stays locked (testnet trade-off, see QUALITY-R2).
+7. Payout wallets (v4): `set_payout_wallet(wallet)` lets a claimant register a contract
+   (a ClaimWallet from `contracts/claim_wallet.py`) that `withdraw_payout` pays instead of
+   their key, because studionet credits contract-to-contract transfers but not
+   contract-to-key ones. Only the claimant sets or clears their own entry; with none set
+   the payout goes to the claimant's address as in v3. Each paid claim records `paid_to`.
 
 ### Roles and powers
 
 | Role | Can | Cannot |
 |---|---|---|
-| Claimant | open, request the first assessment, appeal, add claimant evidence, finalize after the window, withdraw an approved payout | add respondent evidence, finalize inside the window |
+| Claimant | open, request the first assessment, appeal, add claimant evidence, finalize after the window, set their payout wallet, withdraw an approved payout | add respondent evidence, finalize inside the window |
 | Pool payer | create/top up/close its pool, approve claims whose current ruling it pays, appeal and add respondent evidence on claims in its pool, finalize them after the window, reclaim unreserved funds after expiry | assess first, finalize inside the window, take back a reserved amount, touch other pools |
 | Registered airline respondent | appeal, add respondent evidence and finalize after the window on its airline's claims (any spelling of the code) | assess first, finalize inside the window, anything else |
 | Owner | pause, register a respondent address per airline code, transfer ownership | be a respondent or a payer (refused at registration and at `create_pool`, and every party check treats the current owner as a non-party), assess, appeal, finalize, or move anyone's money |
@@ -158,7 +169,9 @@ and shown as a proof card with a claim letter. After a check, the page URL and t
 link" button carry the deciding transaction (`?claim=N&tx=0x…`), and My trips links keep
 it, so the recipient sees its validator votes; a bare `?claim=N` link (for example from
 Recent rulings) shows the ruling without the votes, because the contract doesn't store the
-tx hash. `rig.html` hashes the deployed code in your browser and compares it with the
+tx hash. My trips has a **Payout wallet** panel (v4): it deploys a ClaimWallet from the
+browser's testnet key, registers it with `set_payout_wallet`, and shows the wallet's live
+balance. `rig.html` hashes the deployed code in your browser and compares it with the
 pinned digest and the source file on `main`. `review.html` maps the GenLayer quality bar
 to proof.
 
@@ -178,9 +191,10 @@ time, causes rarely public, one times source. US law has no cash delay compensat
 | Path | What |
 |---|---|
 | `contracts/delay_proof.py` | the Intelligent Contract |
+| `contracts/claim_wallet.py` | ClaimWallet: a claimant's payout wallet contract (v4) |
 | `contracts/probe.py` | feasibility probe (throwaway) |
 | `tests/direct/` | direct-mode tests (real SDK, web + LLM mocked) |
 | `research/RULES.md`, `research/MARKET.md` | rules with sources; market research |
-| `tools/live_run.mjs`, `tools/probe_live.mjs` | studionet evidence scripts |
+| `tools/live_run.mjs`, `tools/probe_live.mjs`, `scripts/v4_live.py` | studionet evidence scripts |
 | `docs/live/` | raw evidence JSON |
 | `web/` | the web app |

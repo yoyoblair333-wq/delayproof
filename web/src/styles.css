@@ -157,3 +157,9 @@ code { font-family: var(--dp-font-mono); font-size: .85em; overflow-wrap: anywhe
   .qtable td:first-child { font-weight: 700; }
   .qtable td:last-child { font-size: 14px; }
 }
+
+/* ---- payout wallet (v4) ---- */
+.payout { margin: 16px 0; display: grid; gap: 10px; }
+.payout dd { overflow-wrap: anywhere; }
+.payout__ok { color: var(--dp-color-success, inherit); font-weight: 700; }
+.payout [hidden] { display: none !important; }

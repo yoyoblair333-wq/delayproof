@@ -25,7 +25,7 @@ V2_NOTE = ("All guards above reverted with the expected `[EXPECTED]` reason; ACC
                 "The demo pool (id 1) expires 2026-11-03T16:50:17Z (read live with `get_pool(1)` on 2026-11-01); after that the site "
                 "disables the payout option. The first live OWED ruling (claim #7, FR1029) also ran on this v2 contract; see its own section above.\n")
 
-V3_NOTE = ("This is the deployment the site uses. Blair deployed `contracts/delay_proof.py` (v3) from her own wallet with "
+V3_NOTE = ("This was the deployment the site used until v4. Blair deployed `contracts/delay_proof.py` (v3) from her own wallet with "
            "`challenge_minutes = 60`; `get_config` reads owner `0x920fbbCf2106B693A857D1995c198e341220a46A` and challenge window 60, and "
            "the stored code's canonical sha256 (CRLF → LF, one final newline, the rule `rig.html` uses) equals the source file's. "
            "Every transaction after the deploy was signed by test keys, not the owner wallet: the demo pool (id 1, the one the site offers) was created and "
@@ -116,17 +116,102 @@ def render(run, w, heading):
 
 
 
+EXPLORER = "https://explorer-studio.genlayer.com/address/"
+
+
+def gen(wei):
+    v = int(wei)
+    return f"{v / 10**18:g} GEN"
+
+
+def render_v4(r, w):
+    """Contract v4 (payout wallets): docs/live/run-6-v4.json, written by scripts/v4_live.py."""
+    roles = r.get("roles", {})
+    w.append("## Current deployment: contract v4, payouts that actually arrive (2026-11-10)\n")
+    w.append("| Item | Value |\n|---|---|")
+    w.append(f"| DelayProof v4 | [`{r['contract']}`]({EXPLORER}{r['contract']}) |")
+    w.append(f"| Claimant's ClaimWallet | [`{r['wallet']}`]({EXPLORER}{r['wallet']}) (`contracts/claim_wallet.py`) |")
+    w.append(f"| Source | `contracts/delay_proof.py`, canonical sha256 `{r['source_sha256']}` |")
+    w.append(f"| Stored code sha256 | `{r['stored_code_sha256']}` ({'MATCH' if r.get('code_matches') else 'MISMATCH'}) |")
+    w.append(f"| `get_config` | contract_version `{r['config'].get('contract_version')}`, payout_wallets `{r['config'].get('payout_wallets')}`, "
+             f"owner `{r['config'].get('owner')}`, challenge window {r['config'].get('challenge_minutes')} min |")
+    w.append(f"| Roles (fresh throwaway test keys, funded with `sim_fundAccount`) | owner/deployer `{roles.get('owner')}`, payer `{roles.get('payer')}`, "
+             f"claimant `{roles.get('claimant')}` |")
+    w.append(f"| Run | {r.get('startedAt')} → {r.get('finishedAt', '(unfinished)')} |\n")
+    w.append("### Transactions\n")
+    w.append("| Step | Tx | Final status | Consensus | Execution | Validators |\n|---|---|---|---|---|---|")
+    for st in r["steps"]:
+        f = st.get("final") or {}
+        vs = {}
+        for v in f.get("votes") or []:
+            vs[v] = vs.get(v, 0) + 1
+        w.append(f"| {st['step']} | `{st['tx']}` | {f.get('status', '-')} | {f.get('result', '-')} | {f.get('execution', '-')} | {votes(vs)} |")
+        for ch in st.get("triggered", []):
+            cv = {}
+            for v in ch.get("votes") or []:
+                cv[v] = cv.get(v, 0) + 1
+            w.append(f"| ↳ triggered transfer {gen(ch['value'])} → `{ch.get('to')}` | `{ch['tx']}` | {ch.get('status')} | {ch.get('result')} | "
+                     f"value_credited: **{ch.get('value_credited')}** | {votes(cv)} |")
+    w.append("")
+    for att in r.get("earlier_attempts", []):
+        c = att.get("claim_assessed") or {}
+        rec, ru = c.get("record") or {}, c.get("ruling") or {}
+        w.append(f"**Claim #{att.get('claim_id')} ({att.get('claim_flight')}): {ru.get('outcome')}.** The same FR1029 flight that was OWED on v2 and v3 "
+                 f"was tried first with a new claimant, but FlightStats now answers \"DATE IS OUT OF RANGE\" for 2026-11-01 (it serves only the last few days), "
+                 f"so the validators agreed status {rec.get('status')} and the contract ruled {ru.get('outcome')} instead of guessing (its evidence page "
+                 f"could only inform the cause, {rec.get('cause_class')}). Nothing was approved or paid on it.\n")
+    c = r.get("claim_final") or r.get("claim_assessed") or {}
+    rec, ru = c.get("record") or {}, c.get("ruling") or {}
+    route = rec.get("route") or {}
+    w.append(f"### Claim #{c.get('id')}: {c.get('flight')} on {c.get('date')}\n")
+    w.append(f"- Agreed record: {rec.get('status')}, delay {rec.get('delay_min')} min ({rec.get('bucket')}), cause {rec.get('cause_class')}; "
+             f"airports seen on the status page {rec.get('seen_route')}; route database {route.get('origin')} → {route.get('dest')} ({route.get('airline_name')})")
+    w.append(f"- Sources each validator loaded: " + ", ".join(f"{s2['name']} {'ok' if s2['ok'] else 'FAILED'}" for s2 in rec.get("sources", [])))
+    w.append(f"- Leader's reason (not compared by validators): \"{rec.get('reason')}\"")
+    w.append(f"- **Ruling: {ru.get('outcome')}**: {ru.get('explanation')} Regime {ru.get('regime')}, distance {ru.get('distance_km')} km, "
+             f"band {ru.get('band')}, amount {ru.get('amount')} {ru.get('currency')}")
+    w.append(f"- Final claim: status {c.get('status')}, paid {c.get('paid')}, `paid_to` `{c.get('paid_to')}`\n")
+    b, a = r.get("balances_before") or {}, r.get("balances_after") or {}
+    if b and a:
+        w.append("### Did the payout arrive? Yes\n")
+        w.append("| Balance (`eth_getBalance`) | Before withdraw | After withdraw |\n|---|---|---|")
+        w.append(f"| ClaimWallet `{r['wallet']}` | {gen(b['wallet_eth_getBalance'])} | **{gen(a['wallet_eth_getBalance'])}** |")
+        w.append(f"| ClaimWallet `get_info().balance` | {gen(b['wallet_get_info']['balance'])} | {gen(a['wallet_get_info']['balance'])} |")
+        w.append(f"| DelayProof v4 contract | {gen(b['delayproof_contract'])} | {gen(a['delayproof_contract'])} |")
+        w.append(f"| Claimant key (unchanged: nothing is sent there) | {gen(b['claimant_key'])} | {gen(a['claimant_key'])} |\n")
+        w.append(f"The wallet's balance rose by **{gen(r.get('wallet_delta', 0))}**, exactly the ruled amount ({ru.get('amount')} {ru.get('currency')} × "
+                 f"{(r.get('pool_before') or {}).get('units_per_currency')} base units per currency unit). Pool before: `{json.dumps(r.get('pool_before'), sort_keys=True)}`; "
+                 f"pool after: `{json.dumps(r.get('pool_after'), sort_keys=True)}`.\n")
+    w.append(V4_NOTE)
+
+
+V4_NOTE = ("v4 differs from v3 only in where a pool payout is sent (see `MILESTONE.md`). The claimant deployed its own ClaimWallet, "
+           "registered it with `set_payout_wallet`, and `withdraw_payout` sent the payout to that contract, which studionet credits "
+           "(contract-to-contract), instead of to the claimant's key, which it does not (see the v3 section below). The payer's "
+           "`set_payout_wallet` call only set the payer's own entry: `get_payout_wallet(claimant)` still returned the claimant's wallet afterwards. "
+           "This run was deployed by a fresh throwaway key with a 10-minute challenge window (v3 was the owner's 60-minute deploy); the owner "
+           "can redeploy v4 from their own wallet with `deploy/OWNER_DEPLOY.md`. FR1104 was found by reading FlightStats pages (through a "
+           "throwaway scouting probe contract on studionet, `0x89fD1e691D966B2246207acd1B736939c0EE499C`, not part of this repo) for the return "
+           "legs of flights a news report listed as delayed at Manchester that morning (britbrief.co.uk, 2026-11-09, fog); the status page publishes "
+           "no cause and no evidence page was attached, so the cause is UNKNOWN and the ruling is owed unless the airline proves extraordinary "
+           "circumstances. Raw record: `docs/live/run-6-v4.json`; script: `scripts/v4_live.py`.\n")
+
+
 def main():
     w = []
     w.append("# Live evidence (GenLayer studionet)\n")
     w.append("Generated by `scripts/live_evidence.py` from `docs/live/*.json`. Every hash below can be looked up on studionet "
              "(`eth_getTransactionByHash` / `gen_getContractCode` at https://studio.genlayer.com/api). Testnet only, no real money. "
-             "The current deployment (v3) was deployed by the owner from Blair's wallet; every earlier one was from a throwaway test key. "
+             "The current deployment is v4 (payout wallets), deployed by a throwaway test key; v3 was deployed by the owner from Blair's wallet; "
+             "every earlier one was from a throwaway test key. "
              "Pools, claims and approvals below are always signed by test keys (a throwaway payer and a fresh claimant burner per run).\n")
+    v4 = LIVE / "run-6-v4.json"
+    if v4.exists():
+        render_v4(json.loads(v4.read_text()), w)
     v3 = LIVE / "run-5-v3.json"
     if v3.exists():
         cur3 = {**json.loads(v3.read_text()), **V3, "_current": True}
-        render(cur3, w, "## Current deployment (2026-11-01, contract v3, owner deploy from Blair's wallet)\n")
+        render(cur3, w, "## Previous deployment (2026-11-01, contract v3, owner deploy from Blair's wallet; superseded by v4)\n")
         w.append(V3_NOTE)
         chk3 = LIVE / "run-5-v3-payout-check.json"
         if chk3.exists():

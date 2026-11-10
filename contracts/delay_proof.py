@@ -56,6 +56,15 @@ create_pool refuses the owner, and every respondent check treats the current
 owner as a non-party. Airline codes are canonicalised (BAW117 == BA117) for
 uniqueness, the per-flight cap and respondent lookup.
 
+Payout wallets (v4): on GenLayer studionet a value transfer from a contract to a
+plain wallet address (EOA) is debited from the contract but never credited, while
+contract-to-contract transfers are. A claimant can therefore register a payout
+wallet contract (contracts/claim_wallet.py, which only its owner can spend from)
+with set_payout_wallet; withdraw_payout then sends the pool payout there instead
+of to the claimant's key. Only the claimant sets or clears their own wallet; with
+none registered the payout goes to the claimant's address as in v3. Each paid
+claim records where its payout went (paid_to).
+
 Information only, not legal advice; airlines are not bound by a ruling. Rules
 table and sources: research/RULES.md.
 
@@ -83,6 +92,7 @@ ERR_EXPECTED = "[EXPECTED]"
 ERR_LLM = "[LLM_ERROR]"
 
 RULES_VERSION = "delayproof-rules-v1 (research/RULES.md, 2026-11-01)"
+CONTRACT_VERSION = "v4"
 
 # EU member states + EEA (IS, LI, NO) + Switzerland, ISO 3166-1 alpha-2.
 EU_SET = frozenset((
@@ -203,6 +213,7 @@ class Claim:
     assessed_at: str          # tx time of the latest assess/appeal ("" if none)
     paid: bool
     reserved: u256            # pool units reserved for this claim by the payer's approval
+    paid_to: str              # v4: address the payout was sent to ("" until paid)
 
 
 @allow_storage
@@ -712,6 +723,7 @@ class DelayProof(gl.Contract):
     claim_keys: TreeMap[str, u256]       # "FLIGHTKEY|DATE|claimant" -> claim id (canonical flight key)
     flight_counts: TreeMap[str, u32]     # "pool|FLIGHTKEY|DATE" -> approved claims
     respondents: TreeMap[str, Address]   # canonical airline code -> registered respondent address
+    payout_wallets: TreeMap[str, Address]  # v4: claimant address (hex) -> payout wallet contract
 
     def __init__(self, challenge_minutes: int = DEFAULT_CHALLENGE_MIN):
         if int(challenge_minutes) < 1 or int(challenge_minutes) > 7 * 24 * 60:
@@ -893,7 +905,7 @@ class DelayProof(gl.Contract):
             id=cid, claimant=gl.message.sender_address, flight=code, date=date, note=clean_note,
             evidence_json=json.dumps(ev), pool_id=u256(int(pool_id)), approved=False, status=STATUS_OPEN, tier=u8(0),
             record_json="", ruling_json="", history_json="[]", created_at=self._now(),
-            updated_at=self._now(), assessed_at="", paid=False, reserved=u256(0),
+            updated_at=self._now(), assessed_at="", paid=False, reserved=u256(0), paid_to="",
         )
         self.claim_keys[key] = cid
         self.next_claim = u256(int(cid) + 1)
@@ -1072,6 +1084,41 @@ class DelayProof(gl.Contract):
         c.reserved = u256(reserve)
         c.approved = True
 
+    # ---------------------------------------------------------------- payout wallets (v4)
+
+    def _payout_dest(self, claimant: Address) -> Address:
+        w = self.payout_wallets.get(claimant.as_hex, None)
+        return w if w is not None else claimant
+
+    @gl.public.write
+    def set_payout_wallet(self, wallet: str) -> None:
+        """The caller registers the contract their pool payouts are sent to (a ClaimWallet
+        they own, see contracts/claim_wallet.py), or clears it with "". Applies to every
+        unpaid claim of the caller. Nobody else can set or change it."""
+        self._not_paused()
+        me = gl.message.sender_address
+        raw = str(wallet).strip()
+        if raw == "":
+            if me.as_hex in self.payout_wallets:
+                del self.payout_wallets[me.as_hex]
+            return
+        if not re.fullmatch(r"0x[0-9a-fA-F]{40}", raw):
+            _fail("wallet must be a 0x address of 40 hex characters")
+        addr = Address(raw)
+        if addr == Address("0x" + "00" * 20):
+            _fail("wallet cannot be the zero address")
+        if addr == gl.message.contract_address:
+            _fail("wallet cannot be this contract")
+        if addr == me:
+            _fail("that is your own address: clear the wallet with an empty value instead")
+        self.payout_wallets[me.as_hex] = addr
+
+    @gl.public.view
+    def get_payout_wallet(self, claimant: str) -> str:
+        """The payout wallet registered by this claimant, or "" (payouts then go to the claimant)."""
+        w = self.payout_wallets.get(Address(claimant).as_hex, None)
+        return w.as_hex if w is not None else ""
+
     @gl.public.write
     def withdraw_payout(self, claim_id: int) -> dict:
         self._not_paused()
@@ -1101,8 +1148,11 @@ class DelayProof(gl.Contract):
         p.balance = u256(int(p.balance) - amount)
         p.paid_out = u256(int(p.paid_out) + amount)
         p.claims_paid = u32(int(p.claims_paid) + 1)
-        gl.get_contract_at(c.claimant).emit_transfer(value=u256(amount))
-        return {"claim_id": int(c.id), "pool_id": int(p.id), "amount": amount}
+        dest = self._payout_dest(c.claimant)
+        c.paid_to = dest.as_hex
+        c.updated_at = self._now()
+        gl.get_contract_at(dest).emit_transfer(value=u256(amount))
+        return {"claim_id": int(c.id), "pool_id": int(p.id), "amount": amount, "to": dest.as_hex}
 
     @gl.public.write
     def withdraw_pool(self, pool_id: int) -> dict:
@@ -1163,6 +1213,7 @@ class DelayProof(gl.Contract):
             "history": json.loads(c.history_json), "created_at": c.created_at,
             "updated_at": c.updated_at, "assessed_at": c.assessed_at, "challenge_ends": window_end,
             "paid": bool(c.paid), "reserved": int(c.reserved), "flight_key": _flight_key(c.flight),
+            "paid_to": c.paid_to, "payout_to": c.paid_to if c.paid else self._payout_dest(c.claimant).as_hex,
         }
 
     @gl.public.view
@@ -1208,6 +1259,7 @@ class DelayProof(gl.Contract):
         return {
             "owner": self.owner.as_hex, "paused": self.paused, "challenge_minutes": int(self.challenge_min),
             "next_claim": int(self.next_claim), "next_pool": int(self.next_pool),
+            "contract_version": CONTRACT_VERSION, "payout_wallets": True,
             "rules_version": RULES_VERSION, "rules": RULES, "tier_analysts": {str(k): v for k, v in TIER_ANALYSTS.items()},
             "route_source": ROUTE_URL, "status_sources": [n for n, _ in STATUS_URLS],
             "delay_threshold_min": DELAY_THRESHOLD_MIN, "delay_tolerance_min": DELAY_TOLERANCE_MIN,

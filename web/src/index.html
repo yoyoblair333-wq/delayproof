@@ -158,6 +158,13 @@
     <p class="dp-hint">Kept only in this browser. Totals say "ruled owed", never money you've received.</p>
     <p class="wallet__total" id="wallettotal"></p>
     <ul class="wallet__list" id="wallet"></ul>
+    <div class="dp-card payout" id="payout" aria-labelledby="payout-h">
+      <h3 class="dp-h3" id="payout-h">Payout wallet</h3>
+      <p class="dp-hint">On the test network a payout sent to a plain key isn't credited. A payout wallet is a small contract that only this browser's key can spend from: DelayProof sends your test payouts there, and you can watch the balance arrive.</p>
+      <dl class="dp-facts" id="payoutfacts"></dl>
+      <button class="dp-btn" id="payoutsetup" type="button" hidden>Set up my payout wallet</button>
+      <p class="dp-hint" id="payoutnote" role="status"></p>
+    </div>
     <h3 class="dp-h3">Stamps</h3>
     <ul class="stamps" id="stamps"></ul>
   </section>

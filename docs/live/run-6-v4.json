@@ -1,0 +1,618 @@
+{
+ "network": "studionet (chain 61999, https://studio.genlayer.com/api)",
+ "version": "v4",
+ "startedAt": "2026-11-10T05:02:20.013606+00:00",
+ "steps": [
+  {
+   "step": "deploy DelayProof v4",
+   "tx": "0xc409bef58f2ee2cde3bf6038bd061acb23bd738926eb6e5476c36688862c648a",
+   "sentAt": "2026-11-10T05:02:28.469220+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "agree",
+     "idle"
+    ],
+    "error": null
+   },
+   "contract": "0xa9bc7c88319649273292E432685C51121b44Af61"
+  },
+  {
+   "step": "deploy ClaimWallet (claimant)",
+   "tx": "0x65d26d23e498c9d35b23d84baa20beae8393da9d84a7a1b7f165d7d97270508d",
+   "sentAt": "2026-11-10T05:03:11.333372+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "idle",
+     "idle"
+    ],
+    "error": null
+   },
+   "contract": "0x652461f32B72db04E404a40e1084ccfd01d00dc1"
+  },
+  {
+   "step": "set_payout_wallet (claimant registers its ClaimWallet)",
+   "tx": "0x6a50d65e816c6d23c1c954ae9206aae28d917a6dac9576fec9be545ab26def09",
+   "sentAt": "2026-11-10T05:03:56.139207+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "idle",
+     "idle"
+    ],
+    "error": null
+   }
+  },
+  {
+   "step": "guard: payer sets a wallet (only its own entry changes)",
+   "tx": "0xe426949adb1b553564978b457af72f513e56420d0a3b48dce47366319df6282a",
+   "sentAt": "2026-11-10T05:04:35.026913+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "agree",
+     "idle"
+    ],
+    "error": null
+   }
+  },
+  {
+   "step": "create_pool (payer, 2 GEN)",
+   "tx": "0x37b16b9b16b2406e834ac841e35e7a7f2235e9c6f306d0a80f1230525463bb4b",
+   "sentAt": "2026-11-10T05:05:15.943858+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "idle",
+     "idle"
+    ],
+    "error": null
+   }
+  },
+  {
+   "step": "open_claim FR1029 2026-11-01 (pool 1)",
+   "tx": "0x4573c5ab5dc9ff3a2477ea5e8450e2e45f26694587d14e779bd2faabe7e46a9d",
+   "sentAt": "2026-11-10T05:05:57.362294+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "idle",
+     "idle"
+    ],
+    "error": null
+   }
+  },
+  {
+   "step": "assess #1",
+   "tx": "0x04b2f1b3c00257fce2c24fdc0178bd726157a3a7bac9ca27a43b4262b28c7f3f",
+   "sentAt": "2026-11-10T05:06:42.166554+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "disagree",
+     "disagree"
+    ],
+    "error": null
+   }
+  },
+  {
+   "step": "open_claim FR1104 2026-11-09 (pool 1)",
+   "tx": "0xf2b4a59e89ec2355fdf90da121c7aac9633a48c4d71390945453ea072941ee39",
+   "sentAt": "2026-11-10T05:14:42.750463+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "idle",
+     "idle"
+    ],
+    "error": null
+   }
+  },
+  {
+   "step": "assess #2",
+   "tx": "0xe5d418384c9378281f32d67250e9dc12e09742ea150907aea9cfd5c433cbd373",
+   "sentAt": "2026-11-10T05:15:27.547081+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "idle",
+     "idle"
+    ],
+    "error": null
+   }
+  },
+  {
+   "step": "approve_claim #2 (payer consent)",
+   "tx": "0x514c950cc7099f98695dea6ede8e99da7c7edee73636dc2177d76c33dc0a503c",
+   "sentAt": "2026-11-10T05:16:40.598301+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "idle",
+     "idle"
+    ],
+    "error": null
+   }
+  },
+  {
+   "step": "finalize #2 (claimant, after window)",
+   "tx": "0x45f550f72b98ef2c9847a3f8a41bbfef5dcf55ac310b6bc3c6b7ff7fed854ad9",
+   "sentAt": "2026-11-10T05:26:13.980025+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "agree",
+     "idle"
+    ],
+    "error": null
+   }
+  },
+  {
+   "step": "withdraw_payout #2 (to the ClaimWallet)",
+   "tx": "0x08c4b0d768a954998b3572f36c30885b77c307b7e5bbddc859bb7e9454bc8687",
+   "sentAt": "2026-11-10T05:26:55.447592+00:00",
+   "final": {
+    "status": "FINALIZED",
+    "result": "MAJORITY_AGREE",
+    "execution": "SUCCESS",
+    "votes": [
+     "agree",
+     "agree",
+     "agree",
+     "idle",
+     "idle"
+    ],
+    "error": null
+   },
+   "triggered": [
+    {
+     "tx": "0xa42e50c8cbffc1980dd29f6117c3c08123fa034a4999af83d3de906a8b6b8f28",
+     "status": "FINALIZED",
+     "result": "MAJORITY_AGREE",
+     "execution": "ERROR",
+     "votes": [
+      "agree",
+      "agree",
+      "agree",
+      "agree",
+      "agree"
+     ],
+     "error": null,
+     "to": "0x652461f32B72db04E404a40e1084ccfd01d00dc1",
+     "value": "400000000000000000",
+     "value_credited": true
+    }
+   ]
+  }
+ ],
+ "roles": {
+  "owner": "0xBaD046e1f17e6016fd774793aA1D19d09F8E182c",
+  "payer": "0x38748123E5B7Eb11504B56FF2bE8AbaDDdE6b9F4",
+  "claimant": "0xFDE4AC7DF9E3529B2d78192659F955Ca84Ceb3Af"
+ },
+ "challenge_minutes": 10,
+ "funded": true,
+ "contract": "0xa9bc7c88319649273292E432685C51121b44Af61",
+ "source_sha256": "e12e8e7f72ca3bff1d349031c869bbe45e8a66fcb70c82c2ffaacca77c84b2d0",
+ "stored_code_sha256": "e12e8e7f72ca3bff1d349031c869bbe45e8a66fcb70c82c2ffaacca77c84b2d0",
+ "code_matches": true,
+ "config": {
+  "challenge_minutes": 10,
+  "contract_version": "v4",
+  "delay_threshold_min": 180,
+  "delay_tolerance_min": 15,
+  "long_km": 3500,
+  "next_claim": 2,
+  "next_pool": 2,
+  "owner": "0xBaD046e1f17e6016fd774793aA1D19d09F8E182c",
+  "paused": false,
+  "payout_wallets": true,
+  "route_source": "https://api.adsbdb.com/v0/callsign/{flight}",
+  "rules": {
+   "EU261": {
+    "currency": "EUR",
+    "long": 600,
+    "long_3_4h": 300,
+    "medium": 400,
+    "short": 250
+   },
+   "UK261": {
+    "currency": "GBP",
+    "long": 520,
+    "long_3_4h": 260,
+    "medium": 350,
+    "short": 220
+   }
+  },
+  "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+  "short_km": 1500,
+  "status_sources": [
+   "flightstats"
+  ],
+  "tier_analysts": {
+   "1": 1,
+   "2": 3,
+   "3": 5
+  }
+ },
+ "wallet": "0x652461f32B72db04E404a40e1084ccfd01d00dc1",
+ "wallet_info_initial": {
+  "balance": "0",
+  "kind": "ClaimWallet",
+  "owner": "0xFDE4AC7DF9E3529B2d78192659F955Ca84Ceb3Af",
+  "sends": 0,
+  "sent_total": "0"
+ },
+ "registered_wallet": "0x652461f32B72db04E404a40e1084ccfd01d00dc1",
+ "registered_wallet_after_payer": "0x652461f32B72db04E404a40e1084ccfd01d00dc1",
+ "pool_id": 1,
+ "pool_before": {
+  "active": true,
+  "balance": 2000000000000000000,
+  "claims_paid": 0,
+  "expires_at": "2026-12-10T05:05:15Z",
+  "id": 1,
+  "max_per_flight": 1,
+  "name": "Demo card-perk pool (v4)",
+  "owed_only": false,
+  "paid_out": 0,
+  "payer": "0x38748123E5B7Eb11504B56FF2bE8AbaDDdE6b9F4",
+  "regime": "ANY",
+  "reserved": 0,
+  "units_per_currency": 1000000000000000
+ },
+ "earlier_attempts": [
+  {
+   "claim_id": 1,
+   "claim_flight": "FR1029 2026-11-01",
+   "claim_assessed": {
+    "analysts": 1,
+    "approved": false,
+    "assessed_at": "2026-11-10T05:06:41.401948Z",
+    "challenge_ends": "2026-11-10T05:16:41Z",
+    "claimant": "0xFDE4AC7DF9E3529B2d78192659F955Ca84Ceb3Af",
+    "created_at": "2026-11-10T05:05:56.707016Z",
+    "date": "2026-11-01",
+    "evidence": [
+     {
+      "side": "claimant",
+      "url": "https://www.bigodino.it/attualita/volo-ryanair-palermo-milano-passeggeri-fatti-scendere-per-sicurezza-sette-ore-di-ritardo.html"
+     }
+    ],
+    "flight": "FR1029",
+    "flight_key": "FR1029",
+    "history": [],
+    "id": 1,
+    "note": "Arrived over 9 hours late after a technical problem with the aircraft.",
+    "paid": false,
+    "paid_to": "",
+    "payout_to": "0x652461f32B72db04E404a40e1084ccfd01d00dc1",
+    "pool_id": 1,
+    "record": {
+     "analysts": [
+      {
+       "cause_class": "CONTROLLABLE",
+       "delay_min": -1,
+       "status": "UNKNOWN"
+      }
+     ],
+     "bucket": "NONE",
+     "cause_class": "CONTROLLABLE",
+     "cause_label": "technical problem",
+     "delay_min": -1,
+     "reason": "The page says \"Flight Status Not Available\" and \"DATE IS OUT OF RANGE\"; it only shows another day: scheduled \"15:50 CET\" to \"17:35 CET\" for 10-Nov-2026. | Claimant evidence states passengers were deboarded for a technical problem and safety reasons on the Palermo-Milan flight on 2026-11-01.",
+     "route": {
+      "airline": "FR",
+      "airline_country": "IE",
+      "airline_name": "Ryanair",
+      "dest": "MXP",
+      "dest_country": "IT",
+      "dest_lat": 45630600,
+      "dest_lon": 8728110,
+      "origin": "PMO",
+      "origin_country": "IT",
+      "origin_lat": 38176000,
+      "origin_lon": 13091000
+     },
+     "seen_route": "-",
+     "sources": [
+      {
+       "name": "adsbdb",
+       "ok": true
+      },
+      {
+       "name": "flightstats",
+       "ok": true
+      },
+      {
+       "name": "evidence:claimant",
+       "ok": true
+      }
+     ],
+     "status": "UNKNOWN",
+     "timing_source": "flight-status page"
+    },
+    "reserved": 0,
+    "ruling": {
+     "amount": 0,
+     "band": "",
+     "bucket": "NONE",
+     "cause_class": "CONTROLLABLE",
+     "currency": "",
+     "delay_min": -1,
+     "distance_km": -1,
+     "explanation": "The flight-status source did not show enough to decide (for example, the date is outside its window).",
+     "flags": [],
+     "outcome": "INSUFFICIENT_DATA",
+     "regime": "",
+     "rule_set": "",
+     "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+     "timing_source": "flight-status page"
+    },
+    "status": "assessed",
+    "tier": 1,
+    "updated_at": "2026-11-10T05:06:41.401948Z"
+   },
+   "error": "ruling INSUFFICIENT_DATA is not payable; stopping before approval (FlightStats: \"DATE IS OUT OF RANGE\")"
+  }
+ ],
+ "claim_id": 2,
+ "claim_flight": "FR1104 2026-11-09",
+ "claim_assessed": {
+  "analysts": 1,
+  "approved": false,
+  "assessed_at": "2026-11-10T05:15:26.948402Z",
+  "challenge_ends": "2026-11-10T05:25:26Z",
+  "claimant": "0xFDE4AC7DF9E3529B2d78192659F955Ca84Ceb3Af",
+  "created_at": "2026-11-10T05:14:42.056825Z",
+  "date": "2026-11-09",
+  "evidence": [],
+  "flight": "FR1104",
+  "flight_key": "FR1104",
+  "history": [],
+  "id": 2,
+  "note": "",
+  "paid": false,
+  "paid_to": "",
+  "payout_to": "0x652461f32B72db04E404a40e1084ccfd01d00dc1",
+  "pool_id": 1,
+  "record": {
+   "analysts": [
+    {
+     "cause_class": "UNKNOWN",
+     "delay_min": 185,
+     "status": "LANDED"
+    }
+   ],
+   "bucket": "H3_4",
+   "cause_class": "UNKNOWN",
+   "cause_label": "not stated",
+   "delay_min": 185,
+   "reason": "Scheduled arrival 17:45 GMT, actual 20:50 GMT on 09-Nov-2026 | No cause stated on the flight-status page from flightstats.",
+   "route": {
+    "airline": "FR",
+    "airline_country": "IE",
+    "airline_name": "Ryanair",
+    "dest": "MAN",
+    "dest_country": "GB",
+    "dest_lat": 53349380,
+    "dest_lon": -2279520,
+    "origin": "PMI",
+    "origin_country": "ES",
+    "origin_lat": 39551700,
+    "origin_lon": 2738810
+   },
+   "seen_route": "PMI-MAN",
+   "sources": [
+    {
+     "name": "adsbdb",
+     "ok": true
+    },
+    {
+     "name": "flightstats",
+     "ok": true
+    }
+   ],
+   "status": "LANDED",
+   "timing_source": "flight-status page"
+  },
+  "reserved": 0,
+  "ruling": {
+   "amount": 400,
+   "band": "medium",
+   "bucket": "H3_4",
+   "cause_class": "UNKNOWN",
+   "currency": "EUR",
+   "delay_min": 185,
+   "distance_km": 1581,
+   "explanation": "Arrived 3+ hours late. May be owed unless the airline proves extraordinary circumstances (the burden is on the airline).",
+   "flags": [],
+   "outcome": "OWED_UNLESS_EXTRAORDINARY",
+   "regime": "EU261",
+   "rule_set": "EU261 + CJEU case law (3 hours or more, door-open)",
+   "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+   "timing_source": "flight-status page"
+  },
+  "status": "assessed",
+  "tier": 1,
+  "updated_at": "2026-11-10T05:15:26.948402Z"
+ },
+ "balances_before": {
+  "wallet_eth_getBalance": "0",
+  "wallet_get_info": {
+   "balance": "0",
+   "kind": "ClaimWallet",
+   "owner": "0xFDE4AC7DF9E3529B2d78192659F955Ca84Ceb3Af",
+   "sends": 0,
+   "sent_total": "0"
+  },
+  "claimant_key": "20000000000000000000",
+  "delayproof_contract": "2000000000000000000",
+  "at": "2026-11-10T05:26:52.500263+00:00"
+ },
+ "balances_after": {
+  "wallet_eth_getBalance": "400000000000000000",
+  "wallet_get_info": {
+   "balance": "400000000000000000",
+   "kind": "ClaimWallet",
+   "owner": "0xFDE4AC7DF9E3529B2d78192659F955Ca84Ceb3Af",
+   "sends": 0,
+   "sent_total": "0"
+  },
+  "claimant_key": "20000000000000000000",
+  "delayproof_contract": "1600000000000000000",
+  "at": "2026-11-10T05:28:22.865716+00:00"
+ },
+ "claim_final": {
+  "analysts": 1,
+  "approved": true,
+  "assessed_at": "2026-11-10T05:15:26.948402Z",
+  "challenge_ends": "2026-11-10T05:25:26Z",
+  "claimant": "0xFDE4AC7DF9E3529B2d78192659F955Ca84Ceb3Af",
+  "created_at": "2026-11-10T05:14:42.056825Z",
+  "date": "2026-11-09",
+  "evidence": [],
+  "flight": "FR1104",
+  "flight_key": "FR1104",
+  "history": [],
+  "id": 2,
+  "note": "",
+  "paid": true,
+  "paid_to": "0x652461f32B72db04E404a40e1084ccfd01d00dc1",
+  "payout_to": "0x652461f32B72db04E404a40e1084ccfd01d00dc1",
+  "pool_id": 1,
+  "record": {
+   "analysts": [
+    {
+     "cause_class": "UNKNOWN",
+     "delay_min": 185,
+     "status": "LANDED"
+    }
+   ],
+   "bucket": "H3_4",
+   "cause_class": "UNKNOWN",
+   "cause_label": "not stated",
+   "delay_min": 185,
+   "reason": "Scheduled arrival 17:45 GMT, actual 20:50 GMT on 09-Nov-2026 | No cause stated on the flight-status page from flightstats.",
+   "route": {
+    "airline": "FR",
+    "airline_country": "IE",
+    "airline_name": "Ryanair",
+    "dest": "MAN",
+    "dest_country": "GB",
+    "dest_lat": 53349380,
+    "dest_lon": -2279520,
+    "origin": "PMI",
+    "origin_country": "ES",
+    "origin_lat": 39551700,
+    "origin_lon": 2738810
+   },
+   "seen_route": "PMI-MAN",
+   "sources": [
+    {
+     "name": "adsbdb",
+     "ok": true
+    },
+    {
+     "name": "flightstats",
+     "ok": true
+    }
+   ],
+   "status": "LANDED",
+   "timing_source": "flight-status page"
+  },
+  "reserved": 0,
+  "ruling": {
+   "amount": 400,
+   "band": "medium",
+   "bucket": "H3_4",
+   "cause_class": "UNKNOWN",
+   "currency": "EUR",
+   "delay_min": 185,
+   "distance_km": 1581,
+   "explanation": "Arrived 3+ hours late. May be owed unless the airline proves extraordinary circumstances (the burden is on the airline).",
+   "flags": [],
+   "outcome": "OWED_UNLESS_EXTRAORDINARY",
+   "regime": "EU261",
+   "rule_set": "EU261 + CJEU case law (3 hours or more, door-open)",
+   "rules_version": "delayproof-rules-v1 (research/RULES.md, 2026-11-01)",
+   "timing_source": "flight-status page"
+  },
+  "status": "final",
+  "tier": 1,
+  "updated_at": "2026-11-10T05:26:54.628873Z"
+ },
+ "pool_after": {
+  "active": true,
+  "balance": 1600000000000000000,
+  "claims_paid": 1,
+  "expires_at": "2026-12-10T05:05:15Z",
+  "id": 1,
+  "max_per_flight": 1,
+  "name": "Demo card-perk pool (v4)",
+  "owed_only": false,
+  "paid_out": 400000000000000000,
+  "payer": "0x38748123E5B7Eb11504B56FF2bE8AbaDDdE6b9F4",
+  "regime": "ANY",
+  "reserved": 0,
+  "units_per_currency": 1000000000000000
+ },
+ "wallet_delta": "400000000000000000",
+ "finishedAt": "2026-11-10T05:28:26.248289+00:00"
+}

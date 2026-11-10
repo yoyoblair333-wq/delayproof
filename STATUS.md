@@ -127,3 +127,16 @@
   NO_MAJORITY / ERROR in `contract_not_found_handler` ("Contract 0x… not found"), `value_credited: false`, and the
   claimants' balances stayed 10 GEN. The site's "paid" banner now says the payout was released from the pool,
   not credited.
+
+## 2026-11-10 ~05:30 UTC — Milestone: contract v4, payouts that actually arrive
+- **Contract v4** `0xa9bc7c88319649273292E432685C51121b44Af61` (deploy tx `0xc409bef5…648a`, throwaway test key,
+  10-min window; stored code = source, canonical sha256 `e12e8e7f…b2d0`). New `set_payout_wallet` /
+  `get_payout_wallet`, `paid_to` per claim; `withdraw_payout` pays the claimant's registered wallet contract.
+  New `contracts/claim_wallet.py` (ClaimWallet). Full delta: MILESTONE.md.
+- **Live, payout credited:** Ryanair FR1104 PMI→MAN 2026-11-09 (FlightStats: arrived 3h 5m late) →
+  OWED_UNLESS_EXTRAORDINARY €400 (EU261, 1,581 km); approved, finalized after the window, withdrawn; the triggered
+  transfer `0xa42e50c8…8f28` is MAJORITY_AGREE with `value_credited: true`, and the claimant's ClaimWallet
+  `0x652461f3…0dc1` went 0 → 0.4 GEN. FR1029 2026-11-01 retried first: FlightStats "DATE IS OUT OF RANGE" →
+  INSUFFICIENT_DATA (claim #1), as designed.
+- Tests: contract 374 (34 new), web offline 33 (3 new); genvm-lint check + typecheck clean on both contracts.
+  The site now points at v4 and has a Payout wallet panel under My trips.

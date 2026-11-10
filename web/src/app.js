@@ -6,7 +6,8 @@
 // never write anything. Reads use plain fetch JSON-RPC (lib/rpc.js); genlayer-js
 // (and its signer) is loaded with import() only when this browser signs a write.
 import * as C from "./config.js";
-import { viewCall, getTx } from "./lib/rpc.js";
+import { viewCall, getTx, rpc } from "./lib/rpc.js";
+import { fmtGen, shortAddr, paysToWallet } from "./lib/gen.js";
 import { classifyTx, voteSummary, revertReason } from "./lib/finality.js";
 import { describe, claimLetter, tierName, checkInputs, cardState, hm, money, voteDots, PAYABLE, BUCKET_TEXT, CAUSE_TEXT, shownRoute, routeStatus, prettyDate, windowText } from "./lib/ruling.js";
 import { proofCardSVG, STATE_COPY } from "./lib/card.js";
@@ -210,7 +211,9 @@ function renderResult(claim, { txs = {}, votes = [], sample = false } = {}) {
       <p class="dp-verdict__eyebrow">${sample ? "Sample · " : ""}${esc(k.eyebrow.charAt(0) + k.eyebrow.slice(1).toLowerCase())}</p>
       <h2 class="dp-verdict__title" id="v-title" tabindex="-1">${esc(state === "pending" ? (claim.status === "open" && claim.tier === 0 && txs.assess ? "Too early: the flight hasn't landed yet" : d.headline) : possibly ? "Possibly owed: it depends on the notice you were given" : unless ? "Owed, unless the airline proves extraordinary circumstances" : k.title)}</h2>
       ${amount ? `<p class="dp-verdict__amount"><span class="dp-sr-only">${esc(amount)}</span>${[...amount].map((ch, i) => `<span class="tile" style="animation-delay:${i * 90}ms" aria-hidden="true">${esc(ch)}</span>`).join("")}</p><p class="dp-verdict__per">${possibly ? "at most, " : ""}per passenger · claim #${esc(claim.id)} · ${esc(tierName(claim.tier))}</p>` : `<p class="dp-verdict__per">Claim #${esc(claim.id)} · ${esc(tierName(claim.tier))}</p>`}
-      ${state === "paid" ? `<p class="paidwarn" role="note">TEST MODE · NOT A REAL PAYMENT. Released from the demo payer's pool; studionet doesn't yet credit it to your wallet balance.</p>` : ""}
+      ${state === "paid" ? (paysToWallet(claim, "paid_to")
+        ? `<p class="paidwarn" role="note">TEST MODE · NOT A REAL PAYMENT. Sent from the demo payer's pool to payout wallet <a href="${esc(C.EXPLORER_URL)}/address/${esc(claim.paid_to)}" rel="noopener" target="_blank"><code>${esc(shortAddr(claim.paid_to))}</code></a>; its balance is under My trips.</p>`
+        : `<p class="paidwarn" role="note">TEST MODE · NOT A REAL PAYMENT. Released from the demo payer's pool to the claimant's key; studionet doesn't credit transfers to a plain key, so it won't show in that balance. Set up a payout wallet before collecting.</p>`) : ""}
       <p class="dp-verdict__body">${esc(verdictBody(claim, state, votes))}</p>
       <div class="dp-verdict__actions">
         <a class="dp-btn dp-btn--primary" href="#proof">${icon("verified-seal")} Get my proof card</a>
@@ -219,6 +222,7 @@ function renderResult(claim, { txs = {}, votes = [], sample = false } = {}) {
         ${canAppeal ? `<button class="dp-btn" id="appeal" type="button">${icon("appeal")} Appeal to ${claim.tier === 1 ? 3 : 5} analysts</button>` : ""}
         ${canWithdraw ? `<button class="dp-btn" id="withdraw" type="button">${icon("payout")} Collect test payout</button>` : ""}
       </div>
+      ${canWithdraw ? `<p class="dp-hint" id="withdrawto">${paysToWallet(claim) ? `Goes to your payout wallet <code>${esc(shortAddr(claim.payout_to))}</code>.` : `No payout wallet yet: the payout would go to your key, which studionet doesn't credit. <a href="#payout-h">Set up a payout wallet</a> first.`}</p>` : ""}
       <div class="dp-verdict__foot">
         ${votes.length ? `<div class="dp-validators"><div class="dp-dots" aria-hidden="true">${votes.map((v) => `<i class="dp-dot ${v === "agree" ? "is-agree" : v === "disagree" ? "is-disagree" : ""}"></i>`).join("")}</div><span class="dp-validators__label">Validators: ${esc(tallyText(votes))}${claim.status === "final" ? " · final" : Number(claim.tier) >= 3 ? " · top tier, no further appeal" : mine ? " · open to appeal" : " · the parties can still appeal"}</span></div>` : ""}
         ${txs.assess ? `<p class="dp-hint dp-mono txline">Deciding tx <code title="${esc(txs.assess)}">${esc(txs.assess.slice(0, 10))}…${esc(txs.assess.slice(-6))}</code>${txs.votes ? ` · ${esc(txs.votes)}` : ""}</p>` : ""}
@@ -463,6 +467,7 @@ async function runWrite(fn, args, label, id, decides) {
     rail("done", `${label}: final.`);
     renderResult(await readClaim(id), { txs: decides ? { assess: hash, votes: voteSummary(tx) } : current.txs, votes });
     toast(`${label}: done.`, "success");
+    if (fn === "withdraw_payout") { renderPayout(); setTimeout(renderPayout, 20000); }
   } catch (e) {
     railFail(e.message ?? e);
     toast(String(e.message ?? e).slice(0, 160), "error");
@@ -500,11 +505,77 @@ async function loadContract() {
     try {
       const cfg = await configP();
       if (!cfg) throw new Error("unreachable");
+      if (cfg.contract_version) rows.push(["Version", `${cfg.contract_version}${cfg.payout_wallets ? " · payout wallets" : ""}`]);
       rows.push(["Rules", cfg.rules_version], ["Analysts per tier", Object.values(cfg.tier_analysts).join(" → ")], ["Challenge window", windowText(cfg.challenge_minutes)], ["Claims so far", String(cfg.next_claim - 1)]);
     } catch { rows.push(["Status", "network unreachable right now"]); }
   }
   $("contract").innerHTML = rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("");
 }
+
+// ------------------------------------------------------------------ payout wallet (contract v4)
+// Studionet doesn't credit contract-to-key transfers, but does credit contract-to-contract
+// ones, so the claimant deploys a ClaimWallet (contracts/claim_wallet.py) from this browser
+// and registers it with set_payout_wallet. Everything shown is read back from the chain.
+const claimWalletCode = () => import("./lib/claim_wallet_code.js").then((m) => m.default);
+const fact = (k, v) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`;
+async function renderPayout() {
+  const facts = $("payoutfacts"), btn = $("payoutsetup"), note = $("payoutnote");
+  if (!facts) return;
+  if (SAMPLE_MODE || !LIVE) { $("payout").hidden = true; return; }
+  const mine = await knownMe();
+  if (!mine) {
+    facts.innerHTML = fact("Payout wallet", "none yet");
+    btn.hidden = false;
+    note.textContent = "Setting one up creates this browser's testnet key, deploys your wallet contract and registers it (two transactions).";
+    return;
+  }
+  let w = "";
+  try { w = String((await readContract("get_payout_wallet", [mine])) ?? ""); }
+  catch { facts.innerHTML = ""; btn.hidden = true; note.textContent = "Couldn't read your payout wallet from the contract right now."; return; }
+  if (!/^0x[0-9a-fA-F]{40}$/.test(w)) {
+    facts.innerHTML = fact("Payout wallet", "none: payouts would go to your key, which studionet doesn't credit");
+    btn.hidden = false;
+    return;
+  }
+  btn.hidden = true;
+  let info = null, bal = null;
+  try { info = plain(await viewCall(C.RPC_URL, w, "get_info", [])); } catch { /* not a ClaimWallet or unreachable */ }
+  try { bal = BigInt(await rpc(C.RPC_URL, "eth_getBalance", [w, "latest"])); } catch { /* network */ }
+  const owned = info?.owner?.toLowerCase() === mine;
+  facts.innerHTML = [
+    fact("Payout wallet", `<a href="${esc(C.EXPLORER_URL)}/address/${esc(w)}" rel="noopener" target="_blank"><code>${esc(w)}</code></a>`),
+    fact("Owner", info ? (owned ? `<span class="payout__ok">this browser's key</span>` : `<code>${esc(info.owner)}</code> (not this browser)`) : "couldn't read the wallet"),
+    fact("Balance received", bal === null ? "n/a" : `${esc(fmtGen(bal))} (test)`),
+    info && info.sends ? fact("Sent out", esc(fmtGen(info.sent_total))) : "",
+  ].join("");
+  note.textContent = "Payouts for your approved, final claims go here. Test GEN only, no real money.";
+}
+async function setupPayout() {
+  const btn = $("payoutsetup"), note = $("payoutnote");
+  btn.disabled = true;
+  try {
+    note.textContent = "Creating your wallet contract (signed in this browser)…";
+    const [code, c] = await Promise.all([claimWalletCode(), writer()]);
+    const hash = await c.deployContract({ code, args: [] });
+    const { c: cls, tx } = await follow(hash, (s) => { note.textContent = `Creating your wallet: ${s.chainStatus.toLowerCase()} (${hash.slice(0, 10)}…)`; });
+    if (cls.execution === "ERROR" || cls.finality === "FINALIZED_ERROR") throw new Error(revertReason(tx) || "The wallet deploy failed.");
+    const addr = plain(tx)?.data?.contract_address ?? plain(tx)?.tx_data_decoded?.contract_address ?? "";
+    if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) throw new Error("The wallet was deployed but its address couldn't be read. Try again in a minute.");
+    const info = plain(await viewCall(C.RPC_URL, addr, "get_info", []));
+    if (info?.owner?.toLowerCase() !== me()) throw new Error("The new wallet's owner isn't this browser's key, so it wasn't registered.");
+    note.textContent = "Registering it with DelayProof…";
+    const h2 = await c.writeContract({ address: C.CONTRACT_ADDRESS, functionName: "set_payout_wallet", args: [addr], value: 0n });
+    const r2 = await follow(h2, (s) => { note.textContent = `Registering: ${s.chainStatus.toLowerCase()} (${h2.slice(0, 10)}…)`; });
+    if (r2.c.execution === "ERROR" || r2.c.finality === "FINALIZED_ERROR") throw new Error(revertReason(r2.tx) || "Registering the wallet was refused.");
+    await renderPayout();
+    toast("Payout wallet ready.", "success");
+    if (current.claim && !current.sample) renderResult(await readClaim(current.claim.id), current);
+  } catch (e) {
+    note.textContent = String(e.message ?? e).slice(0, 240);
+    toast("Couldn't set up the payout wallet.", "error");
+  } finally { btn.disabled = false; }
+}
+$("payoutsetup")?.addEventListener("click", setupPayout);
 
 // ------------------------------------------------------------------ boot
 $("form").addEventListener("submit", submit);
@@ -561,6 +632,7 @@ later(() => {
   loadRecent();
   loadContract();
   refreshPoolBox();
+  renderPayout();
   // window length comes from the contract, never hard-coded copy
   configP().then((cfg) => { if (cfg) for (const e of document.querySelectorAll("[data-window]")) e.textContent = windowText(cfg.challenge_minutes); });
 });
